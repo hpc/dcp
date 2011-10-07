@@ -21,13 +21,13 @@ char *DCOPY_SRC_PATH;
 char *DCOPY_DEST_PATH;
 
 void
-DCOPY_add_objects(CIRCLE_handle *handle)
+DCOPY_start(CIRCLE_handle *handle)
 {
     handle->enqueue(DCOPY_SRC_PATH);
 }
 
 void
-DCOPY_process_objects(CIRCLE_handle *handle)
+DCOPY_copy(CIRCLE_handle *handle)
 {
     DIR *current_dir;
     char temp[CIRCLE_MAX_STRING_LEN];
@@ -107,63 +107,10 @@ DCOPY_process_objects(CIRCLE_handle *handle)
     }
 }
 
-int
-DCOPY_copy_data(FILE *fin, FILE *fout)
+void
+print_usage(char *prog)
 {
-    char   *buffer = (char *)malloc(DCOPY_FILECOPY_BUFFER_SIZE);
-    size_t n;
-
-    LOG(DCOPY_LOG_DBG, "Copying the file.");
-
-    while ((n = fread(buffer, sizeof(char), sizeof(buffer), fin)) > 0)
-    {
-        if (fwrite(buffer, sizeof(char), n, fout) != n)
-        {
-            LOG(DCOPY_LOG_FATAL, "Writing a file failed.");
-            return -1;
-        }
-    }
-
-    return 0;
-}
-
-FILE *
-DCOPY_open_infile(char *infile)
-{
-    FILE *fin = fopen(infile, "rb");
-
-    if (fin == NULL) {
-        LOG(DCOPY_LOG_ERR, "Could not open the source file: %s", infile);
-        return NULL;
-    }
-
-    return fin;
-}
-
-FILE *
-DCOPY_open_outfile(char *outfile, FILE *fin)
-{
-    FILE *fout;
-
-    if(outfile == NULL)
-    {
-        LOG(DCOPY_LOG_ERR, "Attempted to open a bad filename.");
-        fclose(fin);
-        return NULL;
-    }
-    else
-    {
-        fout = fopen(outfile, "wb");
-    }
-
-    if (fout == NULL)
-    {
-        LOG(DCOPY_LOG_ERR, "Could not open the destination file: %s", outfile);
-        fclose(fin);
-        return NULL;
-    }
-
-    return fout;
+    fprintf(stdout, "Usage: %s -s <source> -d <destination>\n", prog);
 }
 
 int
@@ -171,6 +118,9 @@ main (int argc, char **argv)
 {
     int index;
     int c;
+
+    int src_flag = 0;
+    int dest_flag = 0;
 
     DCOPY_debug_stream = stdout;
     DCOPY_debug_level  = DCOPY_LOG_DBG;
@@ -182,11 +132,15 @@ main (int argc, char **argv)
         {
             case 'd':
                 DCOPY_DEST_PATH = realpath(optarg, NULL);
+                dest_flag = 1;
                 break;
             case 's':
                 DCOPY_SRC_PATH = realpath(optarg, NULL);
+                src_flag = 1;
                 break;
             case '?':
+                print_usage(argv[0]);
+
                 if (optopt == 'd' || optopt == 's')
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
                 else if (isprint (optopt))
@@ -203,12 +157,33 @@ main (int argc, char **argv)
     }
 
     for (index = optind; index < argc; index++)
+    {
+        print_usage(argv[0]);
         printf ("Non-option argument %s\n", argv[index]);
+
+        exit(EXIT_FAILURE);
+    }
+
+    if(src_flag == 0)
+    {
+        print_usage(argv[0]);
+        fprintf(stdout, "Error: You must specify a source.\n");
+
+        exit(EXIT_FAILURE);
+    }
+
+    if(dest_flag ==0)
+    {
+        print_usage(argv[0]);
+        fprintf(stdout, "Error: you must specify a destination.\n");
+
+        exit(EXIT_FAILURE);
+    }
 
     DCOPY_global_rank = CIRCLE_init(argc, argv);
 
-    CIRCLE_cb_create (&DCOPY_add_objects);
-    CIRCLE_cb_process(&DCOPY_process_objects);
+    CIRCLE_cb_create (&DCOPY_start);
+    CIRCLE_cb_process(&DCOPY_copy);
 
     CIRCLE_begin();
     CIRCLE_finalize();
