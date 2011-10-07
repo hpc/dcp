@@ -24,6 +24,8 @@ void
 DCOPY_start(CIRCLE_handle *handle)
 {
     handle->enqueue(DCOPY_SRC_PATH);
+    mkdir(DCOPY_DEST_PATH, 0755);
+    DCOPY_DEST_PATH = realpath(DCOPY_DEST_PATH, NULL);
 }
 
 void
@@ -37,7 +39,6 @@ DCOPY_copy(CIRCLE_handle *handle)
 
     /* Pop an item off the queue */
     handle->dequeue(temp);
-    LOG(DCOPY_LOG_DBG, "Popped [%s]", temp);
 
     /* Try and stat it, checking to see if it is a link */
     if(lstat(temp,&st) != EXIT_SUCCESS)
@@ -73,7 +74,6 @@ DCOPY_copy(CIRCLE_handle *handle)
                     strcat(stat_temp,"/");
                     strcat(stat_temp,current_ent->d_name);
 
-                    LOG(DCOPY_LOG_DBG, "Pushing [%s] <- [%s]", stat_temp, temp);
                     handle->enqueue(&stat_temp[0]);
                 }
             }
@@ -93,6 +93,8 @@ DCOPY_copy(CIRCLE_handle *handle)
         char out[1035];
 
         sprintf(cmd, "cp %s %s", temp, new_file_name);
+
+        LOG(DCOPY_LOG_DBG, "Running cmd: %s", cmd);
 
         fp = popen(cmd, "r");
         if (fp == NULL) {
@@ -131,7 +133,7 @@ main (int argc, char **argv)
         switch(c)
         {
             case 'd':
-                DCOPY_DEST_PATH = realpath(optarg, NULL);
+                DCOPY_DEST_PATH = optarg;
                 dest_flag = 1;
                 break;
             case 's':
