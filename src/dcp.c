@@ -84,43 +84,26 @@ DCOPY_process_objects(CIRCLE_handle *handle)
     else if(S_ISREG(st.st_mode)) {
         LOG(DCOPY_LOG_DBG, "Copying: %s", temp);
 
-        FILE *infile;
-        FILE *outfile;
+        char *base_name = basename(temp);
+        char *new_file_name = malloc(snprintf(NULL, 0, "%s/%s", DCOPY_DEST_PATH, base_name) + 1);
+        sprintf(new_file_name, "%s/%s", DCOPY_DEST_PATH, base_name);
 
-        if((infile = DCOPY_open_infile(temp)) == NULL)
-        {
-            LOG(DCOPY_LOG_ERR, "Something went wrong while trying to read in a source file.");
+        FILE *fp;
+        char cmd[CIRCLE_MAX_STRING_LEN + 10];
+        char out[1035];
+
+        sprintf(cmd, "cp %s %s", temp, new_file_name);
+
+        fp = popen(cmd, "r");
+        if (fp == NULL) {
+            printf("Failed to run command\n" );
         }
-        else
-        {
-            char *base_name = basename(temp);
-            char *new_file_name = malloc(snprintf(NULL, 0, "%s/%s", DCOPY_DEST_PATH, base_name) + 1);
-            sprintf(new_file_name, "%s/%s", DCOPY_DEST_PATH, base_name);
 
-            LOG(DCOPY_LOG_DBG, "Starting a copy from \"%s\" to \"%s\"", temp, new_file_name);
-
-            if((outfile = DCOPY_open_outfile(new_file_name, infile)) == NULL)
-            {
-                LOG(DCOPY_LOG_ERR, "Something went wrong while trying to open an output file.");
-            }
-            else
-            {
-                /* Looks like we have valid in and out files. Let's do this. */
-                if(DCOPY_copy_data(infile, outfile) < 0)
-                {
-                    LOG(DCOPY_LOG_ERR, "Something went wrong while trying to copy: %s", new_file_name);
-                    
-                }
-                else
-                {
-                    LOG(DCOPY_LOG_DBG, "Copying \"%s\" was successful.", new_file_name);
-                }
-            }
-
-            fclose(infile);
-            fclose(outfile);
-            free(new_file_name);
+        while (fgets(out, sizeof(out) - 1, fp) != NULL) {
+            printf("%s", out);
         }
+
+        pclose(fp);
     }
 }
 
