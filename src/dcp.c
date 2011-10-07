@@ -31,82 +31,84 @@ DCOPY_start(CIRCLE_handle *handle)
 void
 DCOPY_copy(CIRCLE_handle *handle)
 {
-    DIR *current_dir;
-    char temp[CIRCLE_MAX_STRING_LEN];
-    char stat_temp[CIRCLE_MAX_STRING_LEN];
-    struct dirent *current_ent;
+    char item[CIRCLE_MAX_STRING_LEN];
     struct stat st;
 
-    /* Pop an item off the queue */
-    handle->dequeue(temp);
+    handle->dequeue(item);
 
-    /* Try and stat it, checking to see if it is a link */
-    if(lstat(temp,&st) != EXIT_SUCCESS)
+    if(lstat(item, &st) < 0)
     {
-        LOG(DCOPY_LOG_ERR, "Error: Couldn't stat \"%s\"", temp);
-        //MPI_Abort(MPI_COMM_WORLD,-1);
+        LOG(DCOPY_LOG_ERR, "Error: Couldn't stat: %s", item);
     }
-    /* Check to see if it is a directory.  If so, put its children in the queue */
     else if(S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode)))
     {
-        current_dir = opendir(temp);
+        DCOPY_handle_directory(handle, &st, item);
+    }
+    else if(S_ISREG(st.st_mode))
+    {
+        DCOPY_handle_regular(handle, &st, item);
+    }
+}
 
-        if(!current_dir)
-        {
-            LOG(DCOPY_LOG_ERR, "Unable to open dir");
-        }
-        else
-        {
-            /* Since it's quick, just create the directory at the destination. */
-            char * new_dir_name = malloc(snprintf(NULL, 0, "%s/%s", DCOPY_DEST_PATH, temp) + 1);
-            sprintf(new_dir_name, "%s/%s", DCOPY_DEST_PATH, temp);
-            LOG(DCOPY_LOG_DBG, "Creating directory with name: %s", new_dir_name);
-            mkdir(new_dir_name, st.st_mode);
-            free(new_dir_name);
+void
+DCOPY_handle_regular(CIRCLE_handle *handle, struct stat *st, char *name)
+{
+    FILE *fp;
+    char cmd[CIRCLE_MAX_STRING_LEN + 10];
+    char out[1035];
 
-            /* Read in each directory entry */
-            while((current_ent = readdir(current_dir)) != NULL)
-            {
+    sprintf(cmd, "cp %s %s", name, "FOOBAR");
+
+    LOG(DCOPY_LOG_DBG, "Running cmd: %s", cmd);
+    fp = popen(cmd, "r");
+    if (fp == NULL) {
+        printf("Failed to run command\n" );
+    }
+
+    while (fgets(out, sizeof(out) - 1, fp) != NULL) {
+        printf("%s", out);
+    }
+
+    pclose(fp);
+}
+
+void
+DCOPY_handle_directory(CIRCLE_handle *handle, struct stat *st, char *name)
+{
+    char stat_temp[CIRCLE_MAX_STRING_LEN];
+    struct dirent *current_ent;
+    DIR *current_dir;
+
+    current_dir = opendir(name);
+
+    if(!current_dir)
+    {
+        LOG(DCOPY_LOG_ERR, "Unable to open dir");
+    }
+    else
+    {
+        /* Since it's quick, just create the directory at the destination. */
+        char * new_dir_name = malloc(4096);
+        sprintf(new_dir_name, "%s/%s", DCOPY_DEST_PATH, name);
+        LOG(DCOPY_LOG_DBG, "Creating directory with name: %s", new_dir_name);
+        mkdir(new_dir_name, st->st_mode);
+        free(new_dir_name);
+
+        /* Read in each directory entry */
+        while((current_ent = readdir(current_dir)) != NULL)
+        {
             /* We don't care about . or .. */
             if((strncmp(current_ent->d_name,".",2)) && (strncmp(current_ent->d_name,"..",3)))
-                {
-                    strcpy(stat_temp,temp);
-                    strcat(stat_temp,"/");
-                    strcat(stat_temp,current_ent->d_name);
+            {
+                strcpy(stat_temp, name);
+                strcat(stat_temp, "/");
+                strcat(stat_temp, current_ent->d_name);
 
-                    handle->enqueue(&stat_temp[0]);
-                }
+                handle->enqueue(&stat_temp[0]);
             }
         }
-        closedir(current_dir);
     }
-    //else if(S_ISREG(st.st_mode) && (st.st_size % 4096 == 0))
-    else if(S_ISREG(st.st_mode)) {
-        LOG(DCOPY_LOG_DBG, "Copying: %s", temp);
-
-        char *base_name = basename(temp);
-        char *new_file_name = malloc(snprintf(NULL, 0, "%s/%s", DCOPY_DEST_PATH, base_name) + 1);
-        sprintf(new_file_name, "%s/%s", DCOPY_DEST_PATH, base_name);
-
-        FILE *fp;
-        char cmd[CIRCLE_MAX_STRING_LEN + 10];
-        char out[1035];
-
-        sprintf(cmd, "cp %s %s", temp, new_file_name);
-
-        LOG(DCOPY_LOG_DBG, "Running cmd: %s", cmd);
-
-        fp = popen(cmd, "r");
-        if (fp == NULL) {
-            printf("Failed to run command\n" );
-        }
-
-        while (fgets(out, sizeof(out) - 1, fp) != NULL) {
-            printf("%s", out);
-        }
-
-        pclose(fp);
-    }
+    closedir(current_dir);
 }
 
 void
@@ -189,9 +191,6 @@ main (int argc, char **argv)
 
     CIRCLE_begin();
     CIRCLE_finalize();
-
-    free(DCOPY_DEST_PATH);
-    free(DCOPY_SRC_PATH);
 
     exit(EXIT_SUCCESS);
 }
