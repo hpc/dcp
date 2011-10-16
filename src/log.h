@@ -3,8 +3,7 @@
 
 #include <stdio.h>
 
-typedef enum
-{
+typedef enum {
     DCOPY_LOG_FATAL = 1,
     DCOPY_LOG_ERR   = 2,
     DCOPY_LOG_WARN  = 3,
@@ -22,7 +21,7 @@ typedef enum
     } while (0)
 
 extern int DCOPY_global_rank;
-extern FILE *DCOPY_debug_stream;
+extern FILE* DCOPY_debug_stream;
 extern DCOPY_loglevel DCOPY_debug_level;
 
 #endif /* LOG_H */
