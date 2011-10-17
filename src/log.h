@@ -13,14 +13,14 @@ typedef enum {
 
 #define LOG(level, ...) do {  \
         if (level <= DCOPY_debug_level) { \
-            fprintf(DCOPY_debug_stream,"%d:%s:%d:", DCOPY_global_rank, __FILE__, __LINE__); \
+            fprintf(DCOPY_debug_stream,"%d:%s:%d:", CIRCLE_global_rank, __FILE__, __LINE__); \
             fprintf(DCOPY_debug_stream, __VA_ARGS__); \
             fprintf(DCOPY_debug_stream, "\n"); \
             fflush(DCOPY_debug_stream); \
         } \
     } while (0)
 
-extern int DCOPY_global_rank;
+extern int CIRCLE_global_rank;
 extern FILE* DCOPY_debug_stream;
 extern DCOPY_loglevel DCOPY_debug_level;
 
