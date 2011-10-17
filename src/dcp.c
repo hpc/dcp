@@ -74,7 +74,7 @@ do_checksum(operation_t * op, CIRCLE_handle * handle)
     {
         LOG(DCOPY_LOG_ERR,"Incorrect checksum, requeueing file (%s).",op->operand);
         char *newop = encode_operation(STAT,0,op->operand);
-//        handle->enqueue(newop);
+        handle->enqueue(newop);
         free(newop);
     }
     else
