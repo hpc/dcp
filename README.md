@@ -9,3 +9,11 @@ The purpose of dcp is to perform a large number of file copy operations (such
 as a directory tree with billions of files) across many different nodes in a
 cluster. Using a filesystem that benefits from heavy parallel reads and writes
 is recommended.
+
+Usage
+-----
+
+```dcp -s <source> -d <destination> [-l <debug>]```
+
+dcp copies a file tree from 'source' to 'destination'. 'debug' may be an
+integer value from 1-5 with an increasing level of debug output.
