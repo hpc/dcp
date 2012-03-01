@@ -1,19 +1,28 @@
-#ifndef WARNUSERS_H
-#define WARNUSERS_H
+#ifndef __DCP_H_
+#define __DCP_H_
 
 #include <libcircle.h>
 
-void add_objects(CIRCLE_handle* handle);
-void process_objects(CIRCLE_handle* handle);
-int warnusers_create_redis_attr_cmd(char* buf, struct stat* st, char* filename, char* filekey);
-int warnusers_redis_run_zadd(char* filekey, long val, char* zset, char* filename);
-int warnusers_redis_run_scard(char* set);
-int warnusers_redis_run_get(char* key);
-int warnusers_redis_run_get_str(char* key, char* str);
-int warnusers_redis_run_cmd(char* cmd, char* filename);
-int warnusers_redis_keygen(char* buf, char* filename);
-void warnusers_get_uids(CIRCLE_handle* handle);
-void print_usage(char** argv);
-void warnusers_redis_run_sadd(int uid);
-int warnusers_redis_run_spop(char* uid);
-#endif /* WARNUSERS_H */
+#define CHUNK_SIZE 4194304
+
+typedef enum {
+    COPY, CHECKSUM, STAT
+} DCOPY_operation_code_t;
+
+typedef struct {
+    DCOPY_operation_code_t code;
+    int chunk;
+    char* operand;
+} DCOPY_operation_t;
+
+char* DCOPY_encode_operation(DCOPY_operation_code_t op, int chunk, char* operand);
+DCOPY_operation_t* DCOPY_decode_operation(char* op);
+
+void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle);
+void DCOPY_process_dir(char* dir, CIRCLE_handle* handle);
+void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle);
+void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle);
+void DCOPY_add_objects(CIRCLE_handle* handle);
+void DCOPY_process_objects(CIRCLE_handle* handle);
+
+#endif /* __DCP_H_ */

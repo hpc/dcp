@@ -1,1 +1,1 @@
-AM_CFLAGS = -Wall -Wextra -std=gnu99 -g
+AM_CFLAGS = -Wall -Wextra -Werror -std=gnu99 -g
