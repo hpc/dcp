@@ -15,5 +15,5 @@ Usage
 
 ```dcp -s <source> -d <destination> [-l <debug>]```
 
-dcp copies a file tree from 'source' to 'destination'. 'debug' may be an
-integer value from 1-5 with an increasing level of debug output.
+dcp copies a file tree from *source* to *destination*. *debug* may be an
+integer ranging from 1-5 which results in an increasing level of debug output.
