@@ -302,6 +302,12 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
     return;
 }
 
+void DCOPY_usage(char* prog_name)
+{
+    fprintf(stdout, "Usage:\n");
+    fprintf(stdout, "\t%s -s <source> -d <destination> [-l <debug>]\n", prog_name);
+}
+
 int main(int argc, char** argv)
 {
     int c;
@@ -332,6 +338,7 @@ int main(int argc, char** argv)
                 break;
 
             case '?':
+                DCOPY_usage(argv[0]);
 
                 if(optopt == 'l') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
