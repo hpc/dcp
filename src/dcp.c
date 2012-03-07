@@ -1,7 +1,3 @@
-/*
- * A distributed copy tool.
- */
-
 #include "log.h"
 #include "dcp.h"
 
