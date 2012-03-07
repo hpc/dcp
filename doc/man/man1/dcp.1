@@ -4,7 +4,7 @@
 dcp \- copy a file in parallel on a distributed system.
 
 .SH "SYNOPSIS"
-\fBdcp\fR [\fIOPTIONS\fR...] SOURCE ... [SPECIAL:]DESTINATION
+\fBdcp\fR [\fI-dhVv\fR] <source> ... [<special>:]<destination>
 
 .SH "DESCRIPTION"
 \fBdcp\fR is used to copy extremely large files in parallel on a distributed
@@ -17,33 +17,47 @@ system without centralized state.
 Specify the level of debug information to output.
 
 .TP
-\fB\-\-usage\fR
-Print a brief message listing the \fBdcp\fR options.
+\fB\-h\fR, \fB\-\-help\fR
+Print a brief message listing the \fBdcp\fR options and usage.
 
 .TP
-\fB\-v\fR, \fB\-\-version\fR
+\fB\-V\fR, \fB\-\-version\fR
 Print version information and exit.
 
-.SH "SYNOPSIS FIELD DESCRIPTIONS"
 .TP
-\fBSOURCE\fR
-The path of the source file to be used in the copy operation.
+\fB\-v\fR, \fB\-\-verbose\fR
+Enable verbose logging messages.
+
+.SH "FIELDS"
+
 .TP
-\fBDESTINATION\fR
-The path of the destination file to be used in the copy operation. If the
-DESTINATION is a file, it will be overwritten by the SOURCE file. If the
-DESTINATION is a directory, the SOURCE file(s) will be copied into the
+\fBsource\fR
+The path of the source to be used in the copy operation. The source may be
+a directory or file object.
+
+.TP
+\fBdestination\fR
+The path of the destination to be used in the copy operation. If the
+destination is a file, it will be overwritten by the source file. If the
+destination is a directory, the source file(s) will be copied into the
 specified directory
+
 .TP
-\fBSPECIAL\fR
+\fBspecial\fR
 For future use. Currently unimplemented.
 
 .SH "EXAMPLES"
 .eo
-Copy a file from a source to a destination:
+Copy a single file from a source to a destination file:
 .nf
-
 > dcp from.txt to.txt
+.fi
+.ec
+
+.eo
+Copy two files destination directory:
+.nf
+> dcp from1.txt from2.txt my_dir
 .fi
 .ec
 
