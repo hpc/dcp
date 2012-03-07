@@ -34,6 +34,7 @@ FILE* DCOPY_debug_stream;
 /** What rank the current process is. */
 int CIRCLE_global_rank;
 
+/** A table of function pointers used for core operation. */
 void (*DCOPY_jump_table[4])(DCOPY_operation_t* op, CIRCLE_handle* handle);
 
 char* DCOPY_encode_operation(DCOPY_operation_code_t op, int chunk, char* operand)
@@ -41,58 +42,6 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t op, int chunk, char* operand
     char* result = (char*) malloc(sizeof(char) * 4096);
     sprintf(result, "%d:%d:%s", chunk, op, operand);
     return result;
-}
-
-void DCOPY_process_dir(char* dir, CIRCLE_handle* handle)
-{
-    DIR* current_dir;
-    char parent[2048];
-    struct dirent* current_ent;
-    char path[4096];
-    int is_top_dir = !strcmp(dir, TOP_DIR);
-
-    if(is_top_dir) {
-        sprintf(path, "%s", dir);
-    }
-    else {
-        sprintf(path, "%s/%s", TOP_DIR, dir);
-    }
-
-    current_dir = opendir(path);
-
-    if(!current_dir) {
-        LOG(DCOPY_LOG_ERR, "Unable to open dir: %s", path);
-    }
-    else {
-        /* Read in each directory entry */
-        while((current_ent = readdir(current_dir)) != NULL) {
-            /* We don't care about . or .. */
-            if((strncmp(current_ent->d_name, ".", 2)) && (strncmp(current_ent->d_name, "..", 3))) {
-                LOG(DCOPY_LOG_DBG, "Dir entry %s / %s", dir, current_ent->d_name);
-
-                if(is_top_dir) {
-                    strcpy(parent, "");
-                }
-                else {
-                    strcpy(parent, dir);
-                }
-
-                LOG(DCOPY_LOG_DBG, "Parent %s", parent);
-
-                strcat(parent, "/");
-                strcat(parent, current_ent->d_name);
-
-                LOG(DCOPY_LOG_DBG, "Pushing [%s] <- [%s]", parent, dir);
-
-                char* newop = DCOPY_encode_operation(STAT, 0, parent);
-                handle->enqueue(newop);
-                free(newop);
-            }
-        }
-    }
-
-    closedir(current_dir);
-    return;
 }
 
 DCOPY_operation_t* DCOPY_decode_operation(char* op)
@@ -139,20 +88,6 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
     return;
 }
 
-void DCOPY_print_usage(char* prog_name)
-{
-    fprintf(stdout, "\n  Usage: %s [-dhvV] <source> ... [<special>:]<destination>\n\n", "foo");
-    fprintf(stdout, "    Options:\n");
-    fprintf(stdout, "      -d <level> - Set debug level to output.\n");
-    fprintf(stdout, "      -h         - Print this usage message.\n");
-    fprintf(stdout, "      -v         - Enable full verbose output.\n");
-    fprintf(stdout, "      -V         - Print the version string.\n\n");
-    fprintf(stdout, "    Field Descriptions:\n");
-    fprintf(stdout, "      source      - A source path to copy from.\n");
-    fprintf(stdout, "      destination - A destination path to copy to.\n");
-    fprintf(stdout, "      special     - Not implemented, for future use.\n\n");
-}
-
 void DCOPY_epilogue(DCOPY_statistics_t* stats)
 {
     double rate = stats->total_bytes_copied / end;
@@ -181,6 +116,20 @@ void DCOPY_prologue(void)
     DCOPY_jump_table[2] = DCOPY_do_stat;
 
     time(&(statistics.time_started));
+}
+
+void DCOPY_print_usage(char* prog_name)
+{
+    fprintf(stdout, "\n  Usage: %s [-dhvV] <source> ... [<special>:]<destination>\n\n", "foo");
+    fprintf(stdout, "    Options:\n");
+    fprintf(stdout, "      -d <level> - Set debug level to output.\n");
+    fprintf(stdout, "      -h         - Print this usage message.\n");
+    fprintf(stdout, "      -v         - Enable full verbose output.\n");
+    fprintf(stdout, "      -V         - Print the version string.\n\n");
+    fprintf(stdout, "    Field Descriptions:\n");
+    fprintf(stdout, "      source      - A source path to copy from.\n");
+    fprintf(stdout, "      destination - A destination path to copy to.\n");
+    fprintf(stdout, "      special     - Not implemented, for future use.\n\n");
 }
 
 int main(int argc, char** argv)
