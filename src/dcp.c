@@ -5,10 +5,6 @@
 #include "log.h"
 #include "dcp.h"
 
-#include "copy.h"
-#include "filestat.h"
-#include "checksum.h"
-
 #include <ctype.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -37,6 +33,9 @@ int CIRCLE_global_rank;
 /** A table of function pointers used for core operation. */
 void (*DCOPY_jump_table[4])(DCOPY_operation_t* op, CIRCLE_handle* handle);
 
+/**
+ * Encode an operation code for use on the distributed queue structure.
+ */
 char* DCOPY_encode_operation(DCOPY_operation_code_t op, int chunk, char* operand)
 {
     char* result = (char*) malloc(sizeof(char) * 4096);
@@ -44,6 +43,9 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t op, int chunk, char* operand
     return result;
 }
 
+/**
+ * Decode the operation code from a message on the distributed queue structure.
+ */
 DCOPY_operation_t* DCOPY_decode_operation(char* op)
 {
     DCOPY_operation_t* ret = (DCOPY_operation_t*) malloc(sizeof(DCOPY_operation_t));
@@ -56,16 +58,20 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
     return ret;
 }
 
+/**
+ * The initial seeding callback for items to process on the distributed queue
+ * structure.
+ */
 void DCOPY_add_objects(CIRCLE_handle* handle)
 {
-    TOP_DIR_LEN = strlen(TOP_DIR);
     char* op = DCOPY_encode_operation(STAT, 0, TOP_DIR);
-
     handle->enqueue(op);
-
     free(op);
 }
 
+/**
+ * The process callback for items found on the distributed queue structure.
+ */
 void DCOPY_process_objects(CIRCLE_handle* handle)
 {
     char op[2048];
@@ -88,6 +94,19 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
     return;
 }
 
+/**
+ * Initialize the jump table for handling queue item types.
+ */
+void DCOPY_init_jump_table(void)
+{
+    DCOPY_jump_table[0] = DCOPY_do_copy;
+    DCOPY_jump_table[1] = DCOPY_do_checksum;
+    DCOPY_jump_table[2] = DCOPY_do_stat;
+}
+
+/**
+ * Print out information on the results of the file copy.
+ */
 void DCOPY_epilogue(DCOPY_statistics_t* stats)
 {
     double rate = stats->total_bytes_copied / end;
@@ -109,15 +128,9 @@ void DCOPY_epilogue(DCOPY_statistics_t* stats)
     LOG(DCOPY_LOG_INFO, "Transfer rate: %ld bytes in %lf seconds.", stats->total_bytes_copied, end);
 }
 
-void DCOPY_prologue(void)
-{
-    DCOPY_jump_table[0] = DCOPY_do_copy;
-    DCOPY_jump_table[1] = DCOPY_do_checksum;
-    DCOPY_jump_table[2] = DCOPY_do_stat;
-
-    time(&(statistics.time_started));
-}
-
+/**
+ * Print a usage message.
+ */
 void DCOPY_print_usage(char* prog_name)
 {
     fprintf(stdout, "\n  Usage: %s [-dhvV] <source> ... [<special>:]<destination>\n\n", "foo");
@@ -198,6 +211,9 @@ int main(int argc, char** argv)
         LOG(DCOPY_LOG_ERR, "Unable to parse non-getopt options.");
         exit(EXIT_FAILURE);
     }
+
+    /* Save the time we're starting for benchmark purposes. */
+    time(&(statistics.time_started));
 
     /* Initialize state required for performing a copy. */
     DCOPY_prologue();

@@ -18,8 +18,8 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
 
     char newfile[4096];
-    char buf[CHUNK_SIZE];
-    //    void * buf = (void*) malloc(CHUNK_SIZE);
+    char buf[DCOPY_CHUNK_SIZE];
+    //    void * buf = (void*) malloc(DCOPY_CHUNK_SIZE);
     sprintf(newfile, "%s/%s", DEST_DIR, op->operand);
     int outfd = open(newfile, O_RDWR | O_CREAT, 00644);
 
@@ -28,13 +28,13 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
         return;
     }
 
-    if(fseek(in, CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
+    if(fseek(in, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek %s", op->operand);
         perror("fseek");
         return;
     }
 
-    size_t bytes = fread((void*)buf, 1, CHUNK_SIZE, in);
+    size_t bytes = fread((void*)buf, 1, DCOPY_CHUNK_SIZE, in);
 
     if(bytes <= 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't read %s", op->operand);
@@ -44,7 +44,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     LOG(DCOPY_LOG_DBG, "Read %ld bytes.", bytes);
 
-    lseek(outfd, CHUNK_SIZE * op->chunk, SEEK_SET);
+    lseek(outfd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
     int qty = write(outfd, buf, bytes);
 
     if(qty > 0) {

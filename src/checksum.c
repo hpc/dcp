@@ -17,8 +17,8 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
 
     char newfile[4096];
-    void* newbuf = (void*) malloc(CHUNK_SIZE);
-    void* oldbuf = (void*) malloc(CHUNK_SIZE);
+    void* newbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
+    void* oldbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
     sprintf(newfile, "%s/%s", DEST_DIR, op->operand);
     FILE* new = fopen(newfile, "rb");
 
@@ -31,10 +31,10 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
         return;
     }
 
-    fseek(new, CHUNK_SIZE * op->chunk, SEEK_SET);
-    fseek(old, CHUNK_SIZE * op->chunk, SEEK_SET);
-    size_t newbytes = fread(newbuf, 1, CHUNK_SIZE, new);
-    size_t oldbytes = fread(oldbuf, 1, CHUNK_SIZE, old);
+    fseek(new, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
+    fseek(old, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
+    size_t newbytes = fread(newbuf, 1, DCOPY_CHUNK_SIZE, new);
+    size_t oldbytes = fread(oldbuf, 1, DCOPY_CHUNK_SIZE, old);
 
     if(newbytes != oldbytes || memcmp(newbuf, oldbuf, newbytes) != 0) {
         LOG(DCOPY_LOG_ERR, "Incorrect checksum, requeueing file (%s).", op->operand);

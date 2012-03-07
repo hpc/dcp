@@ -1,9 +1,7 @@
 #ifndef __DCP_H_
 #define __DCP_H_
 
-#include <libcircle.h>
-
-#define CHUNK_SIZE 4194304
+#define DCOPY_CHUNK_SIZE 4194304
 
 typedef enum {
     COPY, CHECKSUM, STAT
@@ -25,6 +23,12 @@ typedef struct {
     char* dest_path;
     char** src_path;
 } DCOPY_options_t;
+
+#include <libcircle.h>
+
+#include "copy.h"
+#include "filestat.h"
+#include "checksum.h"
 
 char* DCOPY_encode_operation(DCOPY_operation_code_t op, int chunk, char* operand);
 DCOPY_operation_t* DCOPY_decode_operation(char* op);

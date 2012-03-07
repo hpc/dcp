@@ -39,8 +39,8 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
         DCOPY_process_dir(op->operand, handle);
     }
     else {
-        int num_chunks = st.st_size / CHUNK_SIZE;
-        LOG(DCOPY_LOG_DBG, "File size: %ld Chunks:%d Total: %d", st.st_size, num_chunks, num_chunks * CHUNK_SIZE);
+        int num_chunks = st.st_size / DCOPY_CHUNK_SIZE;
+        LOG(DCOPY_LOG_DBG, "File size: %ld Chunks:%d Total: %d", st.st_size, num_chunks, num_chunks * DCOPY_CHUNK_SIZE);
         int i = 0;
 
         for(i = 0; i < num_chunks; i++) {
@@ -49,7 +49,7 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
             free(newop);
         }
 
-        if(num_chunks * CHUNK_SIZE < st.st_size) {
+        if(num_chunks * DCOPY_CHUNK_SIZE < st.st_size) {
             char* newop = DCOPY_encode_operation(COPY, i, op->operand);
             handle->enqueue(newop);
             free(newop);
