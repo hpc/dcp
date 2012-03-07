@@ -21,3 +21,5 @@ Usage
 
 dcp copies a file tree from *source* to *destination*. *debug* may be an
 integer ranging from 1-5 which results in an increasing level of debug output.
+
+See the dcp(1) man page for a complete description of options.
