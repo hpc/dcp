@@ -1,5 +1,11 @@
+#include <stdlib.h>
+#include <string.h>
+
 #include "log.h"
 #include "checksum.h"
+
+/** Options specified by the user. */
+extern DCOPY_options_t DCOPY_user_opts;
 
 /** The loglevel that this instance of dcopy will output. */
 extern DCOPY_loglevel  DCOPY_debug_level;
@@ -8,7 +14,7 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     LOG(DCOPY_LOG_DBG, "Checksum %s chunk %d", op->operand, op->chunk);
     char path[4096];
-    sprintf(path, "%s/%s", TOP_DIR, op->operand);
+    sprintf(path, "%s/%s", DCOPY_user_opts.src_path[0], op->operand);
     FILE* old = fopen(path, "rb");
 
     if(!old) {
@@ -19,7 +25,7 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
     char newfile[4096];
     void* newbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
     void* oldbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
-    sprintf(newfile, "%s/%s", DEST_DIR, op->operand);
+    sprintf(newfile, "%s/%s", DCOPY_user_opts.dest_path, op->operand);
     FILE* new = fopen(newfile, "rb");
 
     if(!new) {

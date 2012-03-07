@@ -1,6 +1,9 @@
 #ifndef __DCP_H_
 #define __DCP_H_
 
+#include <time.h>
+#include <libcircle.h>
+
 #define DCOPY_CHUNK_SIZE 4194304
 
 typedef enum {
@@ -15,7 +18,9 @@ typedef struct {
 
 typedef struct {
     time_t time_started;
-    time_t time_finished;
+    time_t time_ended;
+    double wtime_started;
+    double wtime_ended;
     size_t total_bytes_copied;
 } DCOPY_statistics_t;
 
@@ -23,12 +28,6 @@ typedef struct {
     char* dest_path;
     char** src_path;
 } DCOPY_options_t;
-
-#include <libcircle.h>
-
-#include "copy.h"
-#include "filestat.h"
-#include "checksum.h"
 
 char* DCOPY_encode_operation(DCOPY_operation_code_t op, int chunk, char* operand);
 DCOPY_operation_t* DCOPY_decode_operation(char* op);

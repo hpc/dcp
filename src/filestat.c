@@ -1,18 +1,33 @@
+#include <dirent.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include "dcp.h"
+#include "filestat.h"
+#include "log.h"
+
+/** Options specified by the user. */
+extern DCOPY_options_t DCOPY_user_opts;
+
 /** The loglevel that this instance of dcopy will output. */
-extern DCOPY_loglevel  DCOPY_debug_level;
+extern DCOPY_loglevel DCOPY_debug_level;
 
 void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     static struct stat st;
     static int status;
-    int is_top_dir = !strcmp(op->operand, TOP_DIR);
+    int is_top_dir = !strcmp(op->operand, DCOPY_user_opts.src_path[0]);
     char path[4096];
 
     if(is_top_dir) {
-        sprintf(path, "%s", TOP_DIR);
+        sprintf(path, "%s", DCOPY_user_opts.src_path[0]);
     }
     else {
-        sprintf(path, "%s/%s", TOP_DIR, op->operand);
+        sprintf(path, "%s/%s", DCOPY_user_opts.src_path[0], op->operand);
     }
 
     status = lstat(path, &st);
@@ -23,13 +38,13 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
     else if(S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode))) {
         char dir[2048];
-        LOG(DCOPY_LOG_DBG, "Operand: %s Dir: %s", op->operand, DEST_DIR);
+        LOG(DCOPY_LOG_DBG, "Operand: %s Dir: %s", op->operand, DCOPY_user_opts.dest_path);
 
         if(is_top_dir) {
             sprintf(dir, "mkdir -p %s", op->operand);
         }
         else {
-            sprintf(dir, "mkdir -p %s/%s", DEST_DIR, op->operand);
+            sprintf(dir, "mkdir -p %s/%s", DCOPY_user_opts.dest_path, op->operand);
         }
 
         LOG(DCOPY_LOG_DBG, "Creating %s", dir);
@@ -65,13 +80,13 @@ void DCOPY_process_dir(char* dir, CIRCLE_handle* handle)
     char parent[2048];
     struct dirent* current_ent;
     char path[4096];
-    int is_top_dir = !strcmp(dir, TOP_DIR);
+    int is_top_dir = !strcmp(dir, DCOPY_user_opts.src_path[0]);
 
     if(is_top_dir) {
         sprintf(path, "%s", dir);
     }
     else {
-        sprintf(path, "%s/%s", TOP_DIR, dir);
+        sprintf(path, "%s/%s", DCOPY_user_opts.src_path[0], dir);
     }
 
     current_dir = opendir(path);

@@ -1,24 +1,24 @@
+#include <ctype.h>
+#include <getopt.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #include "log.h"
 #include "dcp.h"
 
-#include <ctype.h>
-#include <dirent.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <time.h>
-#include <unistd.h>
+#include "checksum.h"
+#include "copy.h"
+#include "filestat.h"
 
 /** The loglevel that this instance of dcopy will output. */
-DCOPY_loglevel  DCOPY_debug_level;
+DCOPY_loglevel DCOPY_debug_level;
 
 /** Where we should keep statistics related to this file copy. */
-DCOPY_statistics_t statistics;
+DCOPY_statistics_t DCOPY_statistics;
 
 /** Where we should store options specified by the user. */
-DCOPY_options_t opts;
+DCOPY_options_t DCOPY_user_opts;
 
 /** Where debug output should go. */
 FILE* DCOPY_debug_stream;
@@ -60,7 +60,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
  */
 void DCOPY_add_objects(CIRCLE_handle* handle)
 {
-    char* op = DCOPY_encode_operation(STAT, 0, TOP_DIR);
+    char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0]);
     handle->enqueue(op);
     free(op);
 }
@@ -103,33 +103,41 @@ void DCOPY_init_jump_table(void)
 /**
  * Print out information on the results of the file copy.
  */
-void DCOPY_epilogue(DCOPY_statistics_t* stats)
+void DCOPY_epilogue(void)
 {
-    double rate = stats->total_bytes_copied / end;
+    double rate = DCOPY_statistics.total_bytes_copied / DCOPY_statistics.wtime_ended;
 
-    time(&(stats->time_finished));
+    time(&(DCOPY_statistics.time_ended));
 
     char starttime_str[256];
     char endtime_str[256];
 
-    struct tm* localstart = localtime(&(stats->time_started));
-    struct tm* localend = localtime(&(stats->time_finished));
+    struct tm* localstart = localtime(&(DCOPY_statistics.time_started));
+    struct tm* localend = localtime(&(DCOPY_statistics.time_ended));
 
     strftime(starttime_str, 256, "%b-%d-%Y,%H:%M:%S", localstart);
     strftime(endtime_str, 256, "%b-%d-%Y,%H:%M:%S", localend);
 
     LOG(DCOPY_LOG_INFO, "Filecopy run started at: %s", starttime_str);
     LOG(DCOPY_LOG_INFO, "Filecopy run completed at: %s", endtime_str);
-    LOG(DCOPY_LOG_INFO, "Filecopy total time (seconds) for this run: %f", difftime(stats->time_finished, stats->time_started));
-    LOG(DCOPY_LOG_INFO, "Transfer rate: %ld bytes in %lf seconds.", stats->total_bytes_copied, end);
+    LOG(DCOPY_LOG_INFO, "Filecopy total time (seconds) for this run: %f", difftime(DCOPY_statistics.time_ended, DCOPY_statistics.time_ended));
+    LOG(DCOPY_LOG_INFO, "Transfer rate: %ld bytes in %lf seconds.", DCOPY_statistics.total_bytes_copied, DCOPY_statistics.wtime_ended);
+}
+
+/**
+ * Print the current version.
+ */
+void DCOPY_print_version(char** argv)
+{
+    fprintf(stdout, "%s v0.1pre1\n", argv[0]);
 }
 
 /**
  * Print a usage message.
  */
-void DCOPY_print_usage(char* prog_name)
+void DCOPY_print_usage(char** argv)
 {
-    fprintf(stdout, "\n  Usage: %s [-dhvV] <source> ... [<special>:]<destination>\n\n", "foo");
+    fprintf(stdout, "\n  Usage: %s [-dhvV] <source> ... [<special>:]<destination>\n\n", argv[0]);
     fprintf(stdout, "    Options:\n");
     fprintf(stdout, "      -d <level> - Set debug level to output.\n");
     fprintf(stdout, "      -h         - Print this usage message.\n");
@@ -144,7 +152,6 @@ void DCOPY_print_usage(char* prog_name)
 int main(int argc, char** argv)
 {
     int c;
-    int index;
     int option_index = 0;
 
     DCOPY_debug_stream = stdout;
@@ -167,7 +174,7 @@ int main(int argc, char** argv)
                 break;
 
             case 'h':
-                DCOPY_print_usage();
+                DCOPY_print_usage(argv);
                 exit(EXIT_SUCCESS);
                 break;
 
@@ -177,7 +184,7 @@ int main(int argc, char** argv)
                 break;
 
             case 'V':
-                DCOPY_print_version();
+                DCOPY_print_version(argv);
                 exit(EXIT_SUCCESS);
                 break;
 
@@ -203,16 +210,21 @@ int main(int argc, char** argv)
     }
 
     /** Parse the remaining arguments that getopt didn't recognize. */
-    if(!DCOPY_parse_path_args(&opts, argv, optind)) {
-        LOG(DCOPY_LOG_ERR, "Unable to parse non-getopt options.");
-        exit(EXIT_FAILURE);
-    }
+    // FIXME: actually parse the options 
+    //if(!DCOPY_parse_path_args(argv, optind)) {
+    //    LOG(DCOPY_LOG_ERR, "Unable to parse non-getopt options.");
+    //    exit(EXIT_FAILURE);
+    //}
+
+    char tmp_src_path[2][256] = { "test_src_file1", "test_src_file2" };
+    DCOPY_user_opts.src_path = &tmp_src_path;
+    DCOPY_user_opts.dest_path = "test_dest_file";
 
     /* Save the time we're starting for benchmark purposes. */
-    time(&(statistics.time_started));
+    time(&(DCOPY_statistics.time_started));
 
-    /* Initialize state required for performing a copy. */
-    DCOPY_prologue();
+    /* Initialize our jump table for core operations. */
+    DCOPY_init_jump_table();
 
     /* Initialize our processing library. */
     CIRCLE_global_rank = CIRCLE_init(argc, argv, CIRCLE_DEFAULT_FLAGS);
@@ -224,13 +236,13 @@ int main(int argc, char** argv)
     CIRCLE_cb_process(&DCOPY_process_objects);
 
     /* Grab a start time for benchmarking results. */
-    statistics.start_time = CIRCLE_wtime();
+    DCOPY_statistics.wtime_started = CIRCLE_wtime();
 
     /* Perform the actual file copy. */
     CIRCLE_begin();
 
     /* Determine the end time for benchmarking results. */
-    statistics.end_time = CIRCLE_wtime() - start;
+    DCOPY_statistics.wtime_ended = CIRCLE_wtime() - DCOPY_statistics.wtime_started;
 
     /* Let the processing library cleanup. */
     CIRCLE_finalize();
