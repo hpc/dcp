@@ -1,0 +1,56 @@
+.TH DCP "1" "March 2012" "dcp 0.1" "Distributed File Copy Tool"
+
+.SH "NAME"
+dcp \- copy a file in parallel on a distributed system.
+
+.SH "SYNOPSIS"
+\fBdcp\fR [\fIOPTIONS\fR...] SOURCE ... [SPECIAL:]DESTINATION
+
+.SH "DESCRIPTION"
+\fBdcp\fR is used to copy extremely large files in parallel on a distributed
+system without centralized state.
+
+.SH "OPTIONS"
+
+.TP
+\fB\-d <level>\fR, \fB\-\-debug=<level>\fR
+Specify the level of debug information to output.
+
+.TP
+\fB\-\-usage\fR
+Print a brief message listing the \fBdcp\fR options.
+
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+Print version information and exit.
+
+.SH "SYNOPSIS FIELD DESCRIPTIONS"
+.TP
+\fBSOURCE\fR
+The path of the source file to be used in the copy operation.
+.TP
+\fBDESTINATION\fR
+The path of the destination file to be used in the copy operation. If the
+DESTINATION is a file, it will be overwritten by the SOURCE file. If the
+DESTINATION is a directory, the SOURCE file(s) will be copied into the
+specified directory
+.TP
+\fBSPECIAL\fR
+For future use. Currently unimplemented.
+
+.SH "EXAMPLES"
+.eo
+Copy a file from a source to a destination:
+.nf
+
+> dcp from.txt to.txt
+.fi
+.ec
+
+.SH "COPYING"
+Copyright (C) 2011-2012 Los Alamos National Security.
+
+.SH "AUTHORS"
+Jharrod LaFon <jlafon@lanl.gov>
+.br
+Jon Bringhurst <jonb@lanl.gov>

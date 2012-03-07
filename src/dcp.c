@@ -15,6 +15,7 @@
 #include <time.h>
 #include <unistd.h>
 
+/** The loglevel that this instance of dcopy will output. */
 DCOPY_loglevel  DCOPY_debug_level;
 
 FILE* DCOPY_debug_stream;
@@ -315,6 +316,7 @@ int main(int argc, char** argv)
     DCOPY_jump_table[0] = DCOPY_do_copy;
     DCOPY_jump_table[1] = DCOPY_do_checksum;
     DCOPY_jump_table[2] = DCOPY_do_stat;
+
     DCOPY_total_bytes_copied = 0.0;
 
     DCOPY_debug_stream = stdout;
