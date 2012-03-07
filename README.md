@@ -17,7 +17,7 @@ systems that you don't care about or you'll regret it!**
 Usage
 -----
 
-```dcp -s <source> -d <destination> [-l <debug>]```
+```dcp [-hvV] [-d <level>] <source> ... [<special>:]<destination>```
 
 dcp copies a file tree from *source* to *destination*. *debug* may be an
 integer ranging from 1-5 which results in an increasing level of debug output.
