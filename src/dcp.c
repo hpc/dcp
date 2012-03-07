@@ -22,20 +22,17 @@
 /** The loglevel that this instance of dcopy will output. */
 DCOPY_loglevel  DCOPY_debug_level;
 
+/** Where we should keep statistics related to this file copy. */
+DCOPY_statistics_t statistics;
+
+/** Where we should store options specified by the user. */
+DCOPY_options_t opts;
+
+/** Where debug output should go. */
 FILE* DCOPY_debug_stream;
-int   CIRCLE_global_rank;
 
-char* DEST_DIR;
-char* TOP_DIR;
-int   TOP_DIR_LEN;
-
-char* DCOPY_op_string_table[] = {
-    "COPY", "CHECKSUM", "STAT"
-};
-
-time_t DCOPY_time_started;
-time_t DCOPY_time_finished;
-size_t DCOPY_total_bytes_copied;
+/** What rank the current process is. */
+int CIRCLE_global_rank;
 
 void (*DCOPY_jump_table[4])(DCOPY_operation_t* op, CIRCLE_handle* handle);
 
@@ -123,6 +120,9 @@ void DCOPY_add_objects(CIRCLE_handle* handle)
 void DCOPY_process_objects(CIRCLE_handle* handle)
 {
     char op[2048];
+    char* DCOPY_op_string_table[] = {
+        "COPY", "CHECKSUM", "STAT"
+    };
 
     /* Pop an item off the queue */
     LOG(DCOPY_LOG_DBG, "Popping, queue has %d elements", handle->local_queue_size());
@@ -139,100 +139,143 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
     return;
 }
 
-void DCOPY_usage(char* prog_name)
+void DCOPY_print_usage(char* prog_name)
 {
-    fprintf(stdout, "Usage:\n");
-    fprintf(stdout, "\t%s -s <source> -d <destination> [-l <debug>]\n", prog_name);
+    fprintf(stdout, "\n  Usage: %s [-dhvV] <source> ... [<special>:]<destination>\n\n", "foo");
+    fprintf(stdout, "    Options:\n");
+    fprintf(stdout, "      -d <level> - Set debug level to output.\n");
+    fprintf(stdout, "      -h         - Print this usage message.\n");
+    fprintf(stdout, "      -v         - Enable full verbose output.\n");
+    fprintf(stdout, "      -V         - Print the version string.\n\n");
+    fprintf(stdout, "    Field Descriptions:\n");
+    fprintf(stdout, "      source      - A source path to copy from.\n");
+    fprintf(stdout, "      destination - A destination path to copy to.\n");
+    fprintf(stdout, "      special     - Not implemented, for future use.\n\n");
 }
 
-int main(int argc, char** argv)
+void DCOPY_epilogue(DCOPY_statistics_t* stats)
 {
-    int c;
+    double rate = stats->total_bytes_copied / end;
 
-    DCOPY_jump_table[0] = DCOPY_do_copy;
-    DCOPY_jump_table[1] = DCOPY_do_checksum;
-    DCOPY_jump_table[2] = DCOPY_do_stat;
-
-    DCOPY_total_bytes_copied = 0.0;
-
-    DCOPY_debug_stream = stdout;
-    DCOPY_debug_level = DCOPY_LOG_DBG;
-
-    int CIRCLE_global_rank = CIRCLE_init(argc, argv, CIRCLE_DEFAULT_FLAGS);
-    opterr = 0;
-
-    TOP_DIR = DEST_DIR = NULL;
-
-    while((c = getopt(argc, argv, "l:s:d:")) != -1) {
-        switch(c) {
-            case 's':
-                TOP_DIR = optarg;
-                break;
-            case 'd':
-                DEST_DIR = optarg;
-                break;
-            case 'l':
-                DCOPY_debug_level = atoi(optarg);
-                break;
-
-            case '?':
-                DCOPY_usage(argv[0]);
-
-                if(optopt == 'l') {
-                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-                    exit(EXIT_FAILURE);
-                }
-                else if(isprint(optopt)) {
-                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                    exit(EXIT_FAILURE);
-                }
-                else {
-                    fprintf(stderr,
-                            "Unknown option character `\\x%x'.\n",
-                            optopt);
-                    exit(EXIT_FAILURE);
-                }
-
-            default:
-                abort();
-        }
-    }
-
-    if((TOP_DIR == NULL || DEST_DIR == NULL) && CIRCLE_global_rank == 0) {
-        LOG(DCOPY_LOG_ERR, "You must specify a source and destination path.");
-        exit(1);
-    }
-
-    time(&DCOPY_time_started);
-
-    CIRCLE_cb_create(&DCOPY_add_objects);
-    CIRCLE_cb_process(&DCOPY_process_objects);
-
-    double start = CIRCLE_wtime();
-
-    CIRCLE_begin();
-
-    double end = CIRCLE_wtime() - start;
-
-    CIRCLE_finalize();
-
-    //double rate = DCOPY_total_bytes_copied / end;
-
-    time(&DCOPY_time_finished);
+    time(&(stats->time_finished));
 
     char starttime_str[256];
     char endtime_str[256];
 
-    struct tm* localstart = localtime(&DCOPY_time_started);
-    struct tm* localend = localtime(&DCOPY_time_finished);
+    struct tm* localstart = localtime(&(stats->time_started));
+    struct tm* localend = localtime(&(stats->time_finished));
 
     strftime(starttime_str, 256, "%b-%d-%Y,%H:%M:%S", localstart);
     strftime(endtime_str, 256, "%b-%d-%Y,%H:%M:%S", localend);
 
     LOG(DCOPY_LOG_INFO, "Filecopy run started at: %s", starttime_str);
     LOG(DCOPY_LOG_INFO, "Filecopy run completed at: %s", endtime_str);
-    LOG(DCOPY_LOG_INFO, "Filecopy total time (seconds) for this run: %f", difftime(DCOPY_time_finished, DCOPY_time_started));
-    LOG(DCOPY_LOG_INFO, "Transfer rate: %ld bytes in %lf seconds.", DCOPY_total_bytes_copied, end);
+    LOG(DCOPY_LOG_INFO, "Filecopy total time (seconds) for this run: %f", difftime(stats->time_finished, stats->time_started));
+    LOG(DCOPY_LOG_INFO, "Transfer rate: %ld bytes in %lf seconds.", stats->total_bytes_copied, end);
+}
+
+void DCOPY_prologue(void)
+{
+    DCOPY_jump_table[0] = DCOPY_do_copy;
+    DCOPY_jump_table[1] = DCOPY_do_checksum;
+    DCOPY_jump_table[2] = DCOPY_do_stat;
+
+    time(&(statistics.time_started));
+}
+
+int main(int argc, char** argv)
+{
+    int c;
+    int index;
+    int option_index = 0;
+
+    DCOPY_debug_stream = stdout;
+    DCOPY_debug_level = DCOPY_LOG_DBG;
+
+    static struct option long_options[] = {
+        {"debug"  , required_argument, 0, 'd'},
+        {"help"   , no_argument      , 0, 'h'},
+        {"verbose", no_argument      , 0, 'v'},
+        {"version", no_argument      , 0, 'V'},
+        {0        , 0                , 0, 0  }
+    };
+
+    /* Parse options */
+    while((c = getopt_long(argc, argv, "d:hvV", long_options, &option_index)) != -1) {
+        switch(c) {
+            case 'd':
+                DCOPY_debug_level = atoi(optarg);
+                LOG(DCOPY_LOG_DBG, "Verbose mode enabled.");
+                break;
+
+            case 'h':
+                DCOPY_print_usage();
+                exit(EXIT_SUCCESS);
+                break;
+
+            case 'v':
+                DCOPY_debug_level = DCOPY_LOG_DBG;
+                LOG(DCOPY_LOG_DBG, "Verbose mode enabled.");
+                break;
+
+            case 'V':
+                DCOPY_print_version();
+                exit(EXIT_SUCCESS);
+                break;
+
+             case '?':
+                 if(optopt == 'd') {
+                     DCOPY_print_usage(argv);
+                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                 }
+                 else if(isprint(optopt)) {
+                     DCOPY_print_usage(argv);
+                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                 }
+                 else {
+                     DCOPY_print_usage(argv);
+                     fprintf(stderr,
+                             "Unknown option character `\\x%x'.\n",
+                             optopt);
+                 }
+ 
+                 exit(EXIT_FAILURE);
+                 break;
+        }
+    }
+
+    /** Parse the remaining arguments that getopt didn't recognize. */
+    if(!DCOPY_parse_path_args(&opts, argv, optind)) {
+        LOG(DCOPY_LOG_ERR, "Unable to parse non-getopt options.");
+        exit(EXIT_FAILURE);
+    }
+
+    /* Initialize state required for performing a copy. */
+    DCOPY_prologue();
+
+    /* Initialize our processing library. */
+    CIRCLE_global_rank = CIRCLE_init(argc, argv, CIRCLE_DEFAULT_FLAGS);
+
+    /* Initialize the processing library with the root object(s) callback. */
+    CIRCLE_cb_create(&DCOPY_add_objects);
+
+    /* Initialize processing library with the processing callback. */
+    CIRCLE_cb_process(&DCOPY_process_objects);
+
+    /* Grab a start time for benchmarking results. */
+    statistics.start_time = CIRCLE_wtime();
+
+    /* Perform the actual file copy. */
+    CIRCLE_begin();
+
+    /* Determine the end time for benchmarking results. */
+    statistics.end_time = CIRCLE_wtime() - start;
+
+    /* Let the processing library cleanup. */
+    CIRCLE_finalize();
+
+    /* Print the results to the user. */
+    DCOPY_epilogue();
 
     exit(EXIT_SUCCESS);
 }

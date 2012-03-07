@@ -15,6 +15,17 @@ typedef struct {
     char* operand;
 } DCOPY_operation_t;
 
+typedef struct {
+    time_t time_started;
+    time_t time_finished;
+    size_t total_bytes_copied;
+} DCOPY_statistics_t;
+
+typedef struct {
+    char* dest_path;
+    char** src_path;
+} DCOPY_options_t;
+
 char* DCOPY_encode_operation(DCOPY_operation_code_t op, int chunk, char* operand);
 DCOPY_operation_t* DCOPY_decode_operation(char* op);
 
