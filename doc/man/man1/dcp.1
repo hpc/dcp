@@ -1,7 +1,7 @@
 .TH DCP "1" "March 2012" "dcp 0.1" "Distributed File Copy Tool"
 
 .SH "NAME"
-dcp \- copy a file in parallel on a distributed system.
+dcp \- copy a file or directory in parallel on a distributed system.
 
 .SH "SYNOPSIS"
 \fBdcp\fR [\fI-hVv\fR] [\fI-d <level>\fR] <source> ... [<special>:]<destination>
@@ -10,6 +10,9 @@ dcp \- copy a file in parallel on a distributed system.
 \fBdcp\fR is a file and directory copy tool that evenly distributes work
 across a large cluster without centralized state. It is designed for copying
 files which are located on a parallel file system (such as Lustre or PanFS).
+The core algorithm used in the file copy process is a self-stabilization
+process which enables per-node autonomous processing and a token passing scheme
+to detect termination.
 
 .SH "OPTIONS"
 
