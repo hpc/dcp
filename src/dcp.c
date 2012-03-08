@@ -152,12 +152,8 @@ void DCOPY_parse_path_args(char** argv, int optind, int argc)
     }
 
     /* The destination will always be the last item. */
-    DCOPY_user_opts.dest_path = realpath(argv[last_arg_index], NULL);
-    if(!DCOPY_user_opts.dest_path) {
-        LOG(DCOPY_LOG_ERR, "Could not determine the path for \"%s\". %s", \
-            argv[last_arg_index], strerror(errno));
-        exit(EXIT_FAILURE);
-    }
+    DCOPY_user_opts.dest_path = (char*) malloc(sizeof(char) * (PATH_MAX + 1));
+    strncpy(DCOPY_user_opts.dest_path, argv[last_arg_index], PATH_MAX);
 
     /* Now lets go back and get everything else for the source paths. */
     DCOPY_user_opts.src_path = (char**) malloc((ARG_MAX + 1) * sizeof(void *));
