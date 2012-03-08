@@ -1,3 +1,5 @@
+/* See the file "COPYING" for the full license governing this code. */
+
 #include <stdlib.h>
 #include <string.h>
 

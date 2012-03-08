@@ -1,3 +1,5 @@
+/* See the file "COPYING" for the full license governing this code. */
+
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>

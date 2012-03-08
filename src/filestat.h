@@ -1,3 +1,5 @@
+/* See the file "COPYING" for the full license governing this code. */
+
 #ifndef __DCP_FILESTAT_H
 #define __DCP_FILESTAT_H
 

@@ -1,3 +1,5 @@
+/* See the file "COPYING" for the full license governing this code. */
+
 #include <ctype.h>
 #include <getopt.h>
 #include <stdlib.h>
