@@ -143,6 +143,7 @@ void DCOPY_parse_path_args(char** argv, int optind, int argc)
     size_t num_args = argc - optind;
     int last_arg_index = num_args + optind - 1;
     char** dbg_p;
+    char* cwd_path;
     
     if(argv == NULL || num_args < 2) {
         DCOPY_print_usage(argv);
@@ -154,6 +155,17 @@ void DCOPY_parse_path_args(char** argv, int optind, int argc)
     /* The destination will always be the last item. */
     DCOPY_user_opts.dest_path = (char*) malloc(sizeof(char) * (PATH_MAX + 1));
     strncpy(DCOPY_user_opts.dest_path, argv[last_arg_index], PATH_MAX);
+
+    /* Figure out if the dest path is absolute. */
+    if(*DCOPY_user_opts.dest_path != '/') {
+       cwd_path = (char*) malloc(sizeof(char) * PATH_MAX);
+       if(!getcwd(cwd_path, PATH_MAX)) {
+           LOG(DCOPY_LOG_ERR, "Could not determine the current working directory. %s", \
+               strerror(errno));
+       }
+       sprintf(DCOPY_user_opts.dest_path, "%s/%s", cwd_path, argv[last_arg_index]);
+       free(cwd_path);
+    }
 
     /* Now lets go back and get everything else for the source paths. */
     DCOPY_user_opts.src_path = (char**) malloc((ARG_MAX + 1) * sizeof(void *));

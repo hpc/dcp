@@ -23,7 +23,12 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
     static struct stat st;
     static int status;
 
-    int is_top_dir = !strcmp(op->operand, DCOPY_user_opts.src_path[0]);
+    int is_top_dir = strcmp(op->operand, DCOPY_user_opts.src_path[0]) == 0 ? 1 : 0;
+
+    if(is_top_dir) {
+        LOG(DCOPY_LOG_DBG, "This is the top directory: operand=\"%s\", src=\"%s\".", \
+            op->operand, DCOPY_user_opts.src_path[0]);
+    }
 
     char path[4096];
 
@@ -45,7 +50,7 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
         LOG(DCOPY_LOG_DBG, "Operand: %s Dir: %s", op->operand, DCOPY_user_opts.dest_path);
 
         if(is_top_dir) {
-            sprintf(dir, "mkdir -p %s", op->operand);
+            sprintf(dir, "mkdir -p %s", DCOPY_user_opts.dest_path);
         }
         else {
             sprintf(dir, "mkdir -p %s/%s", DCOPY_user_opts.dest_path, op->operand);
@@ -85,6 +90,8 @@ void DCOPY_process_dir(char* dir, CIRCLE_handle* handle)
     struct dirent* current_ent;
     char path[4096];
     int is_top_dir = !strcmp(dir, DCOPY_user_opts.src_path[0]);
+
+    
 
     if(is_top_dir) {
         sprintf(path, "%s", dir);
