@@ -7,8 +7,9 @@ dcp \- copy a file in parallel on a distributed system.
 \fBdcp\fR [\fI-hVv\fR] [\fI-d <level>\fR] <source> ... [<special>:]<destination>
 
 .SH "DESCRIPTION"
-\fBdcp\fR is used to copy extremely large files in parallel on a distributed
-system without centralized state.
+\fBdcp\fR is a file and directory copy tool that evenly distributes work
+across a large cluster without centralized state. It is designed for copying
+files which are located on a parallel file system (such as Lustre or PanFS).
 
 .SH "OPTIONS"
 
