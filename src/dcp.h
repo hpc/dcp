@@ -32,8 +32,12 @@ typedef struct {
 char* DCOPY_encode_operation(DCOPY_operation_code_t op, int chunk, char* operand);
 DCOPY_operation_t* DCOPY_decode_operation(char* op);
 
-void DCOPY_process_dir(char* dir, CIRCLE_handle* handle);
 void DCOPY_add_objects(CIRCLE_handle* handle);
 void DCOPY_process_objects(CIRCLE_handle* handle);
+
+void DCOPY_init_jump_table(void);
+void DCOPY_epilogue(void);
+void DCOPY_print_version(char** argv);
+void DCOPY_print_usage(char** argv);
 
 #endif /* __DCP_H_ */
