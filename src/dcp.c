@@ -132,31 +132,6 @@ void DCOPY_epilogue(void)
 }
 
 /**
- * Print the current version.
- */
-void DCOPY_print_version(char** argv)
-{
-    fprintf(stdout, "%s 0.0.0-pre0\n", argv[0]);
-}
-
-/**
- * Print a usage message.
- */
-void DCOPY_print_usage(char** argv)
-{
-    fprintf(stdout, "\n  Usage: %s [-dhvV] <source> ... [<special>:]<destination>\n\n", argv[0]);
-    fprintf(stdout, "    Options:\n");
-    fprintf(stdout, "      -d <level> - Set debug level to output.\n");
-    fprintf(stdout, "      -h         - Print this usage message.\n");
-    fprintf(stdout, "      -v         - Enable full verbose output.\n");
-    fprintf(stdout, "      -V         - Print the version string.\n\n");
-    fprintf(stdout, "    Field Descriptions:\n");
-    fprintf(stdout, "      source      - A source path to copy from.\n");
-    fprintf(stdout, "      destination - A destination path to copy to.\n");
-    fprintf(stdout, "      special     - Not implemented, for future use.\n\n");
-}
-
-/**
  * Parse the source and destination paths that the user has provided.
  */
 void DCOPY_parse_path_args(char** argv, int optind, int argc)
@@ -193,6 +168,31 @@ void DCOPY_parse_path_args(char** argv, int optind, int argc)
         *dbg_p++;
     }
     LOG(DCOPY_LOG_DBG, "Found a destination path with name: %s", DCOPY_user_opts.dest_path);
+}
+
+/**
+ * Print the current version.
+ */
+void DCOPY_print_version(char** argv)
+{
+    fprintf(stdout, "%s 0.0.0-pre0\n", argv[0]);
+}
+
+/**
+ * Print a usage message.
+ */
+void DCOPY_print_usage(char** argv)
+{
+    fprintf(stdout, "\n  Usage: %s [-dhvV] <source> ... [<special>:]<destination>\n\n", argv[0]);
+    fprintf(stdout, "    Options:\n");
+    fprintf(stdout, "      -d <level> - Set debug level to output.\n");
+    fprintf(stdout, "      -h         - Print this usage message.\n");
+    fprintf(stdout, "      -v         - Enable full verbose output.\n");
+    fprintf(stdout, "      -V         - Print the version string.\n\n");
+    fprintf(stdout, "    Field Descriptions:\n");
+    fprintf(stdout, "      source      - A source path to copy from.\n");
+    fprintf(stdout, "      destination - A destination path to copy to.\n");
+    fprintf(stdout, "      special     - Not implemented, for future use.\n\n");
 }
 
 int main(int argc, char** argv)
@@ -258,29 +258,24 @@ int main(int argc, char** argv)
     /** Parse the source and destination paths. */
     DCOPY_parse_path_args(argv, optind, argc);
 
-    /* Save the time we're starting for benchmark purposes. */
-    time(&(DCOPY_statistics.time_started));
-
     /* Initialize our jump table for core operations. */
     DCOPY_init_jump_table();
 
-    /* Initialize our processing library. */
+    /* Initialize our processing library and related callbacks. */
     CIRCLE_global_rank = CIRCLE_init(argc, argv, CIRCLE_DEFAULT_FLAGS);
-
-    /* Initialize the processing library with the root object(s) callback. */
     CIRCLE_cb_create(&DCOPY_add_objects);
-
-    /* Initialize processing library with the processing callback. */
     CIRCLE_cb_process(&DCOPY_process_objects);
 
-    /* Grab a start time for benchmarking results. */
+    /* Grab a relative and actual start time for the epilogue. */
+    time(&(DCOPY_statistics.time_started));
     DCOPY_statistics.wtime_started = CIRCLE_wtime();
 
     /* Perform the actual file copy. */
     CIRCLE_begin();
 
-    /* Determine the end time for benchmarking results. */
-    DCOPY_statistics.wtime_ended = CIRCLE_wtime() - DCOPY_statistics.wtime_started;
+    /* Determine the actual and relative end time for the epilogue. */
+    DCOPY_statistics.wtime_ended = CIRCLE_wtime();
+    time(&(DCOPY_statistics.time_ended));
 
     /* Let the processing library cleanup. */
     CIRCLE_finalize();

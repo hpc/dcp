@@ -39,6 +39,7 @@ void DCOPY_process_objects(CIRCLE_handle* handle);
 
 void DCOPY_init_jump_table(void);
 void DCOPY_epilogue(void);
+void DCOPY_parse_path_args(char** argv, int optind, int argc)
 void DCOPY_print_version(char** argv);
 void DCOPY_print_usage(char** argv);
 
