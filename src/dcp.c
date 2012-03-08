@@ -113,7 +113,8 @@ void DCOPY_init_jump_table(void)
  */
 void DCOPY_epilogue(void)
 {
-    double rate = DCOPY_statistics.total_bytes_copied / DCOPY_statistics.wtime_ended;
+    double rel_time = DCOPY_statistics.wtime_ended - DCOPY_statistics.wtime_started;
+    double rate = DCOPY_statistics.total_bytes_copied / rel_time;
 
     char starttime_str[256];
     char endtime_str[256];
@@ -131,7 +132,7 @@ void DCOPY_epilogue(void)
         difftime(DCOPY_statistics.time_started, DCOPY_statistics.time_ended));
 
     LOG(DCOPY_LOG_INFO, "Transfer rate: %lf bytes per second (%ld bytes in %lf seconds).", \
-        rate, DCOPY_statistics.total_bytes_copied, DCOPY_statistics.wtime_started - DCOPY_statistics.wtime_ended);
+        rate, DCOPY_statistics.total_bytes_copied, rel_time);
 }
 
 /**
