@@ -160,7 +160,7 @@ void DCOPY_parse_path_args(char** argv, int optind, int argc)
     }
 
     /* Now lets go back and get everything else for the source paths. */
-    DCOPY_user_opts.src_path = (char*) malloc((ARG_MAX + 1) * sizeof(void *));
+    DCOPY_user_opts.src_path = (char**) malloc((ARG_MAX + 1) * sizeof(void *));
     memset(DCOPY_user_opts.src_path, 0, (ARG_MAX + 1) * sizeof(char));
 
     for(index = optind; index < last_arg_index; index++) {
@@ -176,7 +176,7 @@ void DCOPY_parse_path_args(char** argv, int optind, int argc)
     dbg_p = DCOPY_user_opts.src_path;
     while(*dbg_p != NULL) {
         LOG(DCOPY_LOG_DBG, "Found a source path with name: %s", *dbg_p);
-        *dbg_p++;
+        dbg_p++;
     }
     LOG(DCOPY_LOG_DBG, "Found a destination path with name: %s", DCOPY_user_opts.dest_path);
 }
