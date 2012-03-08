@@ -2,6 +2,7 @@
 
 #include <ctype.h>
 #include <getopt.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -131,7 +132,7 @@ void DCOPY_epilogue(void)
  */
 void DCOPY_print_version(char** argv)
 {
-    fprintf(stdout, "%s v0.1pre1\n", argv[0]);
+    fprintf(stdout, "%s 0.0.0-pre0\n", argv[0]);
 }
 
 /**
@@ -149,6 +150,34 @@ void DCOPY_print_usage(char** argv)
     fprintf(stdout, "      source      - A source path to copy from.\n");
     fprintf(stdout, "      destination - A destination path to copy to.\n");
     fprintf(stdout, "      special     - Not implemented, for future use.\n\n");
+}
+
+/**
+ * Parse the source and destination paths that the user has provided.
+ */
+void DCOPY_parse_path_args(char** argv, int optind, int argc)
+{
+    int index;
+    size_t num_args = argc - optind;
+    int last_arg_index = num_args + optind - 1;
+    
+    if(argv == NULL || num_args < 2) {
+        DCOPY_print_usage(argv);
+        LOG(DCOPY_LOG_ERR, "You must specify a source and destination path.");
+
+        exit(EXIT_FAILURE);
+    }
+
+    /* The destination will always be the last item. */
+    DCOPY_user_opts.dest_path = (char*) malloc(PATH_MAX * sizeof(char));
+    strncpy(DCOPY_user_opts.dest_path, argv[last_arg_index], PATH_MAX);
+    LOG(DCOPY_LOG_DBG, "Found a destination path with name: %s", DCOPY_user_opts.dest_path);
+
+    for(index = optind; index < last_arg_index; index++) {
+        LOG(DCOPY_LOG_DBG, "Found a source path with name: %s", argv[index]);
+    }
+
+    exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char** argv)
@@ -212,12 +241,7 @@ int main(int argc, char** argv)
     }
 
     /** Parse the source and destination paths. */
-    if(!DCOPY_parse_path_args(argv, optind)) {
-        DCOPY_print_usage(argv);
-        LOG(DCOPY_LOG_ERR, "Unable to determine source and destination paths.");
-
-        exit(EXIT_FAILURE);
-    }
+    DCOPY_parse_path_args(argv, optind, argc);
 
     /* Save the time we're starting for benchmark purposes. */
     time(&(DCOPY_statistics.time_started));
