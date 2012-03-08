@@ -190,37 +190,34 @@ int main(int argc, char** argv)
                 exit(EXIT_SUCCESS);
                 break;
 
-             case '?':
-                 if(optopt == 'd') {
-                     DCOPY_print_usage(argv);
-                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
-                 }
-                 else if(isprint(optopt)) {
-                     DCOPY_print_usage(argv);
-                     fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                 }
-                 else {
-                     DCOPY_print_usage(argv);
-                     fprintf(stderr,
-                             "Unknown option character `\\x%x'.\n",
-                             optopt);
-                 }
- 
-                 exit(EXIT_FAILURE);
-                 break;
+            case '?':
+                if(optopt == 'd') {
+                    DCOPY_print_usage(argv);
+                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                }
+                else if(isprint(optopt)) {
+                    DCOPY_print_usage(argv);
+                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                }
+                else {
+                    DCOPY_print_usage(argv);
+                    fprintf(stderr,
+                            "Unknown option character `\\x%x'.\n",
+                            optopt);
+                }
+
+                exit(EXIT_FAILURE);
+                break;
         }
     }
 
-    /** Parse the remaining arguments that getopt didn't recognize. */
-    // FIXME: actually parse the options 
-    //if(!DCOPY_parse_path_args(argv, optind)) {
-    //    LOG(DCOPY_LOG_ERR, "Unable to parse non-getopt options.");
-    //    exit(EXIT_FAILURE);
-    //}
+    /** Parse the source and destination paths. */
+    if(!DCOPY_parse_path_args(argv, optind)) {
+        DCOPY_print_usage(argv);
+        LOG(DCOPY_LOG_ERR, "Unable to determine source and destination paths.");
 
-    char tmp_src_path[2][256] = { "test_src_file1", "test_src_file2" };
-    DCOPY_user_opts.src_path = &tmp_src_path;
-    DCOPY_user_opts.dest_path = "test_dest_file";
+        exit(EXIT_FAILURE);
+    }
 
     /* Save the time we're starting for benchmark purposes. */
     time(&(DCOPY_statistics.time_started));
