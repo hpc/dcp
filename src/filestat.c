@@ -22,7 +22,9 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     static struct stat st;
     static int status;
+
     int is_top_dir = !strcmp(op->operand, DCOPY_user_opts.src_path[0]);
+
     char path[4096];
 
     if(is_top_dir) {

@@ -1,6 +1,7 @@
 /* See the file "COPYING" for the full license governing this code. */
 
 #include <ctype.h>
+#include <errno.h>
 #include <getopt.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -41,7 +42,7 @@ void (*DCOPY_jump_table[4])(DCOPY_operation_t* op, CIRCLE_handle* handle);
  */
 char* DCOPY_encode_operation(DCOPY_operation_code_t op, int chunk, char* operand)
 {
-    char* result = (char*) malloc(sizeof(char) * 4096);
+    char* result = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
     sprintf(result, "%d:%d:%s", chunk, op, operand);
     return result;
 }
@@ -53,7 +54,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
 {
     DCOPY_operation_t* ret = (DCOPY_operation_t*) malloc(sizeof(DCOPY_operation_t));
 
-    ret->operand = (char*) malloc(sizeof(char) * 4096);
+    ret->operand = (char*) malloc(sizeof(char) * PATH_MAX);
     ret->chunk = atoi(strtok(op, ":"));
     ret->code = atoi(strtok(NULL, ":"));
     ret->operand = strtok(NULL, ":");
@@ -151,16 +152,24 @@ void DCOPY_parse_path_args(char** argv, int optind, int argc)
     }
 
     /* The destination will always be the last item. */
-    DCOPY_user_opts.dest_path = (char*) malloc((PATH_MAX + 1) * sizeof(char));
-    realpath(argv[last_arg_index], DCOPY_user_opts.dest_path);
+    DCOPY_user_opts.dest_path = realpath(argv[last_arg_index], NULL);
+    if(!DCOPY_user_opts.dest_path) {
+        LOG(DCOPY_LOG_ERR, "Could not determine the path for \"%s\". %s", \
+            argv[last_arg_index], strerror(errno));
+        exit(EXIT_FAILURE);
+    }
 
     /* Now lets go back and get everything else for the source paths. */
-    DCOPY_user_opts.src_path = (char*) malloc((ARG_MAX + 1) * sizeof(char));
+    DCOPY_user_opts.src_path = (char*) malloc((ARG_MAX + 1) * sizeof(void *));
     memset(DCOPY_user_opts.src_path, 0, (ARG_MAX + 1) * sizeof(char));
 
     for(index = optind; index < last_arg_index; index++) {
-        DCOPY_user_opts.src_path[index - optind] = (char*) malloc((PATH_MAX + 1) * sizeof(char));
-        realpath(argv[index], DCOPY_user_opts.src_path[index - optind]);
+        DCOPY_user_opts.src_path[index - optind] = realpath(argv[index], NULL);
+        if(!DCOPY_user_opts.dest_path) {
+            LOG(DCOPY_LOG_ERR, "Could not determine the path for \"%s\". %s", \
+                argv[index], strerror(errno));
+            exit(EXIT_FAILURE);
+        }
     }
 
     /* Now we can print it out for debugging purposes. */
