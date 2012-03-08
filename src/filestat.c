@@ -18,19 +18,38 @@ extern DCOPY_options_t DCOPY_user_opts;
 /** The loglevel that this instance of dcopy will output. */
 extern DCOPY_loglevel DCOPY_debug_level;
 
+/**
+ * Check to see if the path is in the user supplied arguments.
+ */
+int DCOPY_is_a_starting_file(char* path)
+{
+    int is_top = -1;
+    char* curr = DCOPY_user_opts.src_path;
+
+    while(*curr != NULL) {
+        if(strcmp(path, curr) == 0) {
+            is_top = 1;
+            break;
+        }
+        curr++;
+    }
+
+    return is_top;
+}
+
 void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     static struct stat st;
     static int status;
 
-    int is_top_dir = strcmp(op->operand, DCOPY_user_opts.src_path[0]) == 0 ? 1 : 0;
+    char path[PATH_MAX];
+
+    int is_top_dir = DCOPY_is_a_starting_file(op->operand);
 
     if(is_top_dir) {
-        LOG(DCOPY_LOG_DBG, "This is the top directory: operand=\"%s\", src=\"%s\".", \
-            op->operand, DCOPY_user_opts.src_path[0]);
+        LOG(DCOPY_LOG_DBG, "This is a top directory: \"%s\"", \
+            op->operand);
     }
-
-    char path[4096];
 
     if(is_top_dir) {
         sprintf(path, "%s", DCOPY_user_opts.src_path[0]);
