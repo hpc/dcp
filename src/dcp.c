@@ -131,7 +131,7 @@ void DCOPY_epilogue(void)
         difftime(DCOPY_statistics.time_started, DCOPY_statistics.time_ended));
 
     LOG(DCOPY_LOG_INFO, "Transfer rate: %lf bytes per second (%ld bytes in %lf seconds).", \
-        rate, DCOPY_statistics.total_bytes_copied, DCOPY_statistics.wtime_ended);
+        rate, DCOPY_statistics.total_bytes_copied, DCOPY_statistics.wtime_started - DCOPY_statistics.wtime_ended);
 }
 
 /**
@@ -220,7 +220,9 @@ int main(int argc, char** argv)
     int option_index = 0;
 
     DCOPY_debug_stream = stdout;
-    DCOPY_debug_level = DCOPY_LOG_DBG;
+    DCOPY_debug_level = DCOPY_LOG_INFO;
+
+    int CIRCLE_debug = CIRCLE_LOG_FATAL;
 
     static struct option long_options[] = {
         {"debug"  , required_argument, 0, 'd'},
@@ -235,6 +237,7 @@ int main(int argc, char** argv)
         switch(c) {
             case 'd':
                 DCOPY_debug_level = atoi(optarg);
+                CIRCLE_debug = DCOPY_debug_level;
                 LOG(DCOPY_LOG_DBG, "Verbose mode enabled.");
                 break;
 
@@ -245,6 +248,7 @@ int main(int argc, char** argv)
 
             case 'v':
                 DCOPY_debug_level = DCOPY_LOG_DBG;
+                CIRCLE_debug = DCOPY_debug_level;
                 LOG(DCOPY_LOG_DBG, "Verbose mode enabled.");
                 break;
 
@@ -284,6 +288,9 @@ int main(int argc, char** argv)
     CIRCLE_global_rank = CIRCLE_init(argc, argv, CIRCLE_DEFAULT_FLAGS);
     CIRCLE_cb_create(&DCOPY_add_objects);
     CIRCLE_cb_process(&DCOPY_process_objects);
+
+    /* Set the log level for the processing library. */
+    CIRCLE_enable_logging(CIRCLE_debug);
 
     /* Grab a relative and actual start time for the epilogue. */
     time(&(DCOPY_statistics.time_started));
