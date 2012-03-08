@@ -114,8 +114,6 @@ void DCOPY_epilogue(void)
 {
     double rate = DCOPY_statistics.total_bytes_copied / DCOPY_statistics.wtime_ended;
 
-    time(&(DCOPY_statistics.time_ended));
-
     char starttime_str[256];
     char endtime_str[256];
 
@@ -127,8 +125,12 @@ void DCOPY_epilogue(void)
 
     LOG(DCOPY_LOG_INFO, "Filecopy run started at: %s", starttime_str);
     LOG(DCOPY_LOG_INFO, "Filecopy run completed at: %s", endtime_str);
-    LOG(DCOPY_LOG_INFO, "Filecopy total time (seconds) for this run: %f", difftime(DCOPY_statistics.time_ended, DCOPY_statistics.time_ended));
-    LOG(DCOPY_LOG_INFO, "Transfer rate: %ld bytes in %lf seconds.", DCOPY_statistics.total_bytes_copied, DCOPY_statistics.wtime_ended);
+
+    LOG(DCOPY_LOG_INFO, "Filecopy total time (seconds) for this run: %f", \
+        difftime(DCOPY_statistics.time_started, DCOPY_statistics.time_ended));
+
+    LOG(DCOPY_LOG_INFO, "Transfer rate: %lf bytes per second (%ld bytes in %lf seconds).", \
+        rate, DCOPY_statistics.total_bytes_copied, DCOPY_statistics.wtime_ended);
 }
 
 /**
