@@ -1,7 +1,7 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = src
+SUBDIRS = src doc
  
 MAINTAINERCLEANFILES =                                  \
 	aclocal.m4 config.guess config.xml              \

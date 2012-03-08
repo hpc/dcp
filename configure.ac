@@ -40,7 +40,10 @@ echo "  Unit tests ..................................... ???"
 echo "========================================================"
 echo
 
-AC_CONFIG_FILES([Makefile     \
-                 src/Makefile \
+AC_CONFIG_FILES([Makefile              \
+                 src/Makefile          \
+                 doc/Makefile          \
+                 doc/man/Makefile      \
+                 doc/man/man1/Makefile \
 ])
 AC_OUTPUT
