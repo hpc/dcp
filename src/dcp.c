@@ -4,9 +4,6 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
 
 #include "log.h"
 #include "dcp.h"
@@ -37,7 +34,7 @@ void (*DCOPY_jump_table[4])(DCOPY_operation_t* op, CIRCLE_handle* handle);
 /**
  * Encode an operation code for use on the distributed queue structure.
  */
-char* DCOPY_encode_operation(DCOPY_operation_code_t op, int chunk, char* operand)
+char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, char* operand)
 {
     char* result = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
     sprintf(result, "%d:%d:%s", chunk, op, operand);
@@ -140,28 +137,6 @@ void DCOPY_epilogue(void)
 }
 
 /**
- * Determine if the specified path is a directory.
- */
-int DCOPY_is_directory(char* path)
-{
-    struct stat statbuf;
-    stat(path, &statbuf);
-
-    return S_ISDIR(statbuf.st_mode);
-}
-
-/**
- * Determine if the specified path is a regular file.
- */
-int DCOPY_is_regular_file(char* path)
-{
-    struct stat statbuf;
-    stat(path, &statbuf);
-
-    return S_ISREG(statbuf.st_mode);
-}
-
-/**
  * Print the current version.
  */
 void DCOPY_print_version(char** argv)
@@ -194,7 +169,7 @@ int main(int argc, char** argv)
     DCOPY_debug_stream = stdout;
     DCOPY_debug_level = DCOPY_LOG_INFO;
 
-    int CIRCLE_debug = CIRCLE_LOG_FATAL;
+    CIRCLE_loglevel CIRCLE_debug = CIRCLE_LOG_FATAL;
 
     static struct option long_options[] = {
         {"debug"  , required_argument, 0, 'd'},

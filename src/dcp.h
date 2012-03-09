@@ -14,7 +14,8 @@ typedef enum {
 
 typedef struct {
     DCOPY_operation_code_t code;
-    int chunk;
+    uint32_t chunk;
+    uint16_t base_index;
     char* operand;
 } DCOPY_operation_t;
 
@@ -31,7 +32,7 @@ typedef struct {
     char** src_path;
 } DCOPY_options_t;
 
-char* DCOPY_encode_operation(DCOPY_operation_code_t op, int chunk, char* operand);
+char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, char* operand);
 DCOPY_operation_t* DCOPY_decode_operation(char* op);
 
 void DCOPY_add_objects(CIRCLE_handle* handle);

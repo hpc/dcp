@@ -4,6 +4,9 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "log.h"
 #include "dcp.h"
@@ -16,6 +19,28 @@
 
 /** Where we should store options specified by the user. */
 DCOPY_options_t DCOPY_user_opts;
+
+/**
+ * Determine if the specified path is a directory.
+ */
+bool DCOPY_is_directory(char* path)
+{
+    struct stat statbuf;
+    stat(path, &statbuf);
+
+    return S_ISDIR(statbuf.st_mode);
+}
+
+/**
+ * Determine if the specified path is a regular file.
+ */
+bool DCOPY_is_regular_file(char* path)
+{
+    struct stat statbuf;
+    stat(path, &statbuf);
+
+    return S_ISREG(statbuf.st_mode);
+}
 
 /**
  * Parse the source and destination paths that the user has provided.
