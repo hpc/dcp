@@ -6,7 +6,7 @@ distributed, asyncronous, and autonomous by node algorithm.
 
 Using a filesystem that benefits from heavy parallel reads and writes is
 recommended (Such as Lustre or PanFS). This program is designed for a
-filesystem with hundreds of hard disks.
+filesystem with tens to thousands of hard disks.
 
 Usage
 -----
