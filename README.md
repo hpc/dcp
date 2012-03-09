@@ -2,7 +2,7 @@ dcp
 ===
 The purpose of dcp is to perform file copy operations on extremely large file
 trees and multi-petabyte files. Files are chunked and copied using a
-distributed, asyncronous, and autonomous by node, algorithm.
+distributed, asyncronous, and autonomous by node algorithm.
 
 Using a filesystem that benefits from heavy parallel reads and writes is
 recommended (Such as Lustre or PanFS). This program is designed for a
