@@ -8,6 +8,8 @@ Using a filesystem that benefits from heavy parallel reads and writes is
 recommended (Such as Lustre or PanFS). This program is designed for
 filesystems with more than one hard disk head.
 
+dcp requires an MPI environment (such as OpenMPI's **mpirun**(1)).
+
 Usage
 -----
 
@@ -15,7 +17,7 @@ Usage
 
 dcp copies directories and files from *source* to *destination*.
 
-See the included dcp(1) man page for a complete listing and description of
+See the included **dcp**(1) man page for a complete listing and description of
 options.
 
 RPM Creation
