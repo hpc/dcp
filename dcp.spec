@@ -7,6 +7,7 @@ Group: System Environment/Base
 Source: %{name}-%{version}-%{release}.tgz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}
 URL: http://github.com/hpc/dcp
+Requires: libcircle
 
 %description
 A file copy program that evenly distributes work across a large cluster
