@@ -21,13 +21,13 @@ extern DCOPY_loglevel DCOPY_debug_level;
 /**
  * Check to see if the path is in the user supplied arguments.
  */
-int DCOPY_is_a_starting_file(char* path)
+int DCOPY_is_a_top_obj(char* path)
 {
     int is_top = -1;
-    char* curr = DCOPY_user_opts.src_path;
+    char** curr = DCOPY_user_opts.src_path;
 
     while(*curr != NULL) {
-        if(strcmp(path, curr) == 0) {
+        if(strcmp(path, *curr) == 0) {
             is_top = 1;
             break;
         }
@@ -44,14 +44,14 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     char path[PATH_MAX];
 
-    int is_top_dir = DCOPY_is_a_starting_file(op->operand);
+    int is_top_obj = DCOPY_is_a_top_obj(op->operand);
 
-    if(is_top_dir) {
-        LOG(DCOPY_LOG_DBG, "This is a top directory: \"%s\"", \
+    if(is_top_obj) {
+        LOG(DCOPY_LOG_DBG, "This is a top object: \"%s\"", \
             op->operand);
     }
 
-    if(is_top_dir) {
+    if(is_top_obj) {
         sprintf(path, "%s", DCOPY_user_opts.src_path[0]);
     }
     else {
@@ -68,7 +68,7 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
         char dir[2048];
         LOG(DCOPY_LOG_DBG, "Operand: %s Dir: %s", op->operand, DCOPY_user_opts.dest_path);
 
-        if(is_top_dir) {
+        if(is_top_obj) {
             sprintf(dir, "mkdir -p %s", DCOPY_user_opts.dest_path);
         }
         else {
@@ -107,12 +107,11 @@ void DCOPY_process_dir(char* dir, CIRCLE_handle* handle)
     DIR* current_dir;
     char parent[2048];
     struct dirent* current_ent;
-    char path[4096];
-    int is_top_dir = !strcmp(dir, DCOPY_user_opts.src_path[0]);
+    char path[PATH_MAX];
 
-    
+    int is_top_obj = DCOPY_is_a_top_obj(dir);
 
-    if(is_top_dir) {
+    if(is_top_obj) {
         sprintf(path, "%s", dir);
     }
     else {
@@ -131,7 +130,7 @@ void DCOPY_process_dir(char* dir, CIRCLE_handle* handle)
             if((strncmp(current_ent->d_name, ".", 2)) && (strncmp(current_ent->d_name, "..", 3))) {
                 LOG(DCOPY_LOG_DBG, "Dir entry %s / %s", dir, current_ent->d_name);
 
-                if(is_top_dir) {
+                if(is_top_obj) {
                     strcpy(parent, "");
                 }
                 else {
