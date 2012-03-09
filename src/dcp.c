@@ -155,7 +155,7 @@ void DCOPY_print_usage(char** argv)
     fprintf(stdout, "      -d <level> - Set debug level to output.\n");
     fprintf(stdout, "      -h         - Print this usage message.\n");
     fprintf(stdout, "      -v         - Enable full verbose output.\n");
-    fprintf(stdout, "      -V         - Print the version string.\n\n");
+    fprintf(stdout, "      -V         - Print the version string.\n");
     fprintf(stdout, "      -P         - DANGEROUS, skip the compare stage.\n\n");
     fprintf(stdout, "    Field Descriptions:\n");
     fprintf(stdout, "      source      - A source path to copy from.\n");
