@@ -41,7 +41,7 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
     else if(S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode))) {
         LOG(DCOPY_LOG_DBG, "Operand: %s Dir: %s", op->operand, DCOPY_user_opts.dest_path);
-        DCOPY_process_dir(op->operand, handle);
+        DCOPY_process_dir(op->operand, handle, op->base_index);
     }
     else {
         int num_chunks = st.st_size / DCOPY_CHUNK_SIZE;
@@ -50,13 +50,13 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
         LOG(DCOPY_LOG_DBG, "File size: %ld Chunks:%d Total: %d", st.st_size, num_chunks, num_chunks * DCOPY_CHUNK_SIZE);
 
         for(i = 0; i < num_chunks; i++) {
-            char* newop = DCOPY_encode_operation(COPY, i, op->operand);
+            char* newop = DCOPY_encode_operation(COPY, i, op->operand, op->base_index);
             handle->enqueue(newop);
             free(newop);
         }
 
         if(num_chunks * DCOPY_CHUNK_SIZE < st.st_size) {
-            char* newop = DCOPY_encode_operation(COPY, i, op->operand);
+            char* newop = DCOPY_encode_operation(COPY, i, op->operand, op->base_index);
             handle->enqueue(newop);
             free(newop);
         }
@@ -65,7 +65,7 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
     return;
 }
 
-void DCOPY_process_dir(char* dir, CIRCLE_handle* handle)
+void DCOPY_process_dir(char* dir, CIRCLE_handle* handle, uint16_t base_index)
 {
     DIR* current_dir;
     struct dirent* current_ent;
@@ -85,7 +85,7 @@ void DCOPY_process_dir(char* dir, CIRCLE_handle* handle)
 
                 sprintf(path, "%s/%s", dir, current_ent->d_name);
 
-                char* newop = DCOPY_encode_operation(STAT, 0, path);
+                char* newop = DCOPY_encode_operation(STAT, 0, path, base_index);
                 handle->enqueue(newop);
                 free(newop);
             }

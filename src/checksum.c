@@ -33,7 +33,7 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
     if(!new) {
         LOG(DCOPY_LOG_ERR, "Unable to open new file %s", newfile);
         perror("checksum open");
-        char* newop = DCOPY_encode_operation(CHECKSUM, op->chunk, op->operand);
+        char* newop = DCOPY_encode_operation(CHECKSUM, op->chunk, op->operand, op->base_index);
         handle->enqueue(newop);
         free(newop);
         return;
@@ -47,7 +47,7 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     if(newbytes != oldbytes || memcmp(newbuf, oldbuf, newbytes) != 0) {
         LOG(DCOPY_LOG_ERR, "Incorrect checksum, requeueing file (%s).", op->operand);
-        char* newop = DCOPY_encode_operation(STAT, 0, op->operand);
+        char* newop = DCOPY_encode_operation(STAT, 0, op->operand, op->base_index);
         handle->enqueue(newop);
         free(newop);
     }
