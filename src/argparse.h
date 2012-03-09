@@ -9,7 +9,7 @@
 #include "dcp.h"
 
 #ifndef ARG_MAX
-    #define ARG_MAX _POSIX_ARG_MAX
+#define ARG_MAX _POSIX_ARG_MAX
 #endif
 
 bool DCOPY_is_directory(char* path);

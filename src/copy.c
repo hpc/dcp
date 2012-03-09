@@ -4,6 +4,7 @@
 #include <libgen.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -25,7 +26,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     char newfile[PATH_MAX];
     char buf[DCOPY_CHUNK_SIZE];
     char tmppath[PATH_MAX];
-    char *base_operand;
+    char* base_operand;
 
     FILE* in = fopen(op->operand, "rb");
 
@@ -43,7 +44,8 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
         base_operand = basename(tmppath);
 
         sprintf(newfile, "%s%s/%s", DCOPY_user_opts.dest_path, op->operand + op->base_index, base_operand);
-    } else {
+    }
+    else {
         sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
     }
 

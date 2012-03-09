@@ -20,11 +20,11 @@ typedef enum {
             time_t ltime = time(NULL); \
             struct tm *ttime = localtime(&ltime); \
             strftime(timestamp, sizeof(timestamp), \
-                "%Y-%m-%dT%H:%M:%S", ttime); \
+                     "%Y-%m-%dT%H:%M:%S", ttime); \
             if(level == DCOPY_LOG_DBG) { \
                 fprintf(DCOPY_debug_stream,"[%s] [%d] [%s:%d] ", \
-                    timestamp, CIRCLE_global_rank, \
-                    __FILE__, __LINE__); \
+                        timestamp, CIRCLE_global_rank, \
+                        __FILE__, __LINE__); \
             } else { \
                 fprintf(DCOPY_debug_stream,"[%s] ", timestamp); \
             } \

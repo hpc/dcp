@@ -14,7 +14,7 @@
 #include "argparse.h"
 
 #ifndef ARG_MAX
-    #define ARG_MAX _POSIX_ARG_MAX
+#define ARG_MAX _POSIX_ARG_MAX
 #endif
 
 /** Where we should store options specified by the user. */
@@ -52,7 +52,7 @@ void DCOPY_parse_path_args(char** argv, int optind, int argc)
     int last_arg_index = num_args + optind - 1;
     char** dbg_p;
     char* cwd_path;
-    
+
     if(argv == NULL || num_args < 2) {
         DCOPY_print_usage(argv);
         LOG(DCOPY_LOG_ERR, "You must specify a source and destination path.");
@@ -66,15 +66,15 @@ void DCOPY_parse_path_args(char** argv, int optind, int argc)
 
     /* Figure out if the dest path is absolute. */
     if(*DCOPY_user_opts.dest_path != '/') {
-       cwd_path = (char*) malloc(sizeof(char) * PATH_MAX);
+        cwd_path = (char*) malloc(sizeof(char) * PATH_MAX);
 
-       if(!getcwd(cwd_path, PATH_MAX)) {
-           LOG(DCOPY_LOG_ERR, "Could not determine the current working directory. %s", \
-               strerror(errno));
-       }
+        if(!getcwd(cwd_path, PATH_MAX)) {
+            LOG(DCOPY_LOG_ERR, "Could not determine the current working directory. %s", \
+                strerror(errno));
+        }
 
-       sprintf(DCOPY_user_opts.dest_path, "%s/%s", cwd_path, argv[last_arg_index]);
-       free(cwd_path);
+        sprintf(DCOPY_user_opts.dest_path, "%s/%s", cwd_path, argv[last_arg_index]);
+        free(cwd_path);
     }
 
     /*
@@ -84,7 +84,7 @@ void DCOPY_parse_path_args(char** argv, int optind, int argc)
     int destination_is_file = DCOPY_is_regular_file(DCOPY_user_opts.dest_path);
 
     /* Now lets go back and get everything else for the source paths. */
-    DCOPY_user_opts.src_path = (char**) malloc((ARG_MAX + 1) * sizeof(void *));
+    DCOPY_user_opts.src_path = (char**) malloc((ARG_MAX + 1) * sizeof(void*));
     memset(DCOPY_user_opts.src_path, 0, (ARG_MAX + 1) * sizeof(char));
 
     for(index = optind; index < last_arg_index; index++) {

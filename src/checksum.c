@@ -22,8 +22,8 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
     size_t newbytes;
     size_t oldbytes;
 
-    char *newop;
-    char *base_operand;
+    char* newop;
+    char* base_operand;
 
     char newfile[PATH_MAX];
     char tmppath[PATH_MAX];
@@ -37,7 +37,8 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
         base_operand = basename(tmppath);
 
         sprintf(newfile, "%s%s/%s", DCOPY_user_opts.dest_path, op->operand + op->base_index, base_operand);
-    } else {
+    }
+    else {
         sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
     }
 
@@ -45,12 +46,14 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
         op->chunk, op->operand, newfile);
 
     old = fopen(op->operand, "rb");
+
     if(!old) {
         LOG(DCOPY_LOG_ERR, "Unable to open old file %s", op->operand);
         return;
     }
 
     new = fopen(newfile, "rb");
+
     if(!new) {
         LOG(DCOPY_LOG_ERR, "Unable to open new file %s", newfile);
         perror("checksum open");

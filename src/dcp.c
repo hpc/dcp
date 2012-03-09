@@ -216,6 +216,7 @@ int main(int argc, char** argv)
                 break;
 
             case '?':
+
                 if(optopt == 'd') {
                     DCOPY_print_usage(argv);
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
