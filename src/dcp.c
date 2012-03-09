@@ -186,7 +186,7 @@ int main(int argc, char** argv)
     };
 
     /* Parse options */
-    while((c = getopt_long(argc, argv, "d:hvV", long_options, &option_index)) != -1) {
+    while((c = getopt_long(argc, argv, "d:hvVP", long_options, &option_index)) != -1) {
         switch(c) {
             case 'd':
                 DCOPY_debug_level = atoi(optarg);
