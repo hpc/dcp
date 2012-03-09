@@ -190,7 +190,7 @@ int main(int argc, char** argv)
         switch(c) {
             case 'd':
                 DCOPY_debug_level = atoi(optarg);
-                CIRCLE_debug = DCOPY_debug_level;
+                CIRCLE_debug = (enum CIRCLE_loglevel)DCOPY_debug_level;
                 LOG(DCOPY_LOG_DBG, "Verbose mode enabled.");
                 break;
 
@@ -201,7 +201,7 @@ int main(int argc, char** argv)
 
             case 'v':
                 DCOPY_debug_level = DCOPY_LOG_DBG;
-                CIRCLE_debug = DCOPY_debug_level;
+                CIRCLE_debug = CIRCLE_LOG_DBG;
                 LOG(DCOPY_LOG_DBG, "Verbose mode enabled.");
                 break;
 

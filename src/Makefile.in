@@ -192,7 +192,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CFLAGS = -pedantic -Wall -Wextra -std=gnu99 -g
+AM_CFLAGS = -Wall -Wextra -Wunused
 dcp_SOURCES = argparse.c checksum.c copy.c filestat.c dcp.c
 dcp_LDADD = \
     $(libcircle_LIBS) \
