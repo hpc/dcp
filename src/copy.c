@@ -1,6 +1,7 @@
 /* See the file "COPYING" for the full license governing this code. */
 
 #include <fcntl.h>
+#include <libgen.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <sys/stat.h>
@@ -23,6 +24,8 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     char newfile[PATH_MAX];
     char buf[DCOPY_CHUNK_SIZE];
+    char tmppath[PATH_MAX];
+    char *base_operand;
 
     FILE* in = fopen(op->operand, "rb");
 
@@ -34,7 +37,16 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
         return;
     }
 
-    sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
+    /** If we have a file, grab the basename and append. */
+    if(strlen(op->operand + op->base_index) < 1) {
+        strncpy(tmppath, op->operand, PATH_MAX);
+        base_operand = basename(tmppath);
+
+        sprintf(newfile, "%s%s/%s", DCOPY_user_opts.dest_path, op->operand + op->base_index, base_operand);
+    } else {
+        sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
+    }
+
     int outfd = open(newfile, O_RDWR | O_CREAT, 00644);
 
     LOG(DCOPY_LOG_DBG, "Copying chunk of `%s' to `%s'.", op->operand, newfile);

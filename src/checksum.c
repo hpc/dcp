@@ -1,5 +1,6 @@
 /* See the file "COPYING" for the full license governing this code. */
 
+#include <libgen.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,39 +16,62 @@ extern DCOPY_loglevel  DCOPY_debug_level;
 
 void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
-    FILE* old = fopen(op->operand, "rb");
+    FILE* old;
+    FILE* new;
 
-    LOG(DCOPY_LOG_DBG, "Checksum %s chunk %d", op->operand, op->chunk);
+    size_t newbytes;
+    size_t oldbytes;
 
+    char *newop;
+    char *base_operand;
+
+    char newfile[PATH_MAX];
+    char tmppath[PATH_MAX];
+
+    void* newbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
+    void* oldbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
+
+    /** If we have a file, grab the basename and append. */
+    if(strlen(op->operand + op->base_index) < 1) {
+        strncpy(tmppath, op->operand, PATH_MAX);
+        base_operand = basename(tmppath);
+
+        sprintf(newfile, "%s%s/%s", DCOPY_user_opts.dest_path, op->operand + op->base_index, base_operand);
+    } else {
+        sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
+    }
+
+    LOG(DCOPY_LOG_DBG, "Comparing (chunk %d) original `%s' against `%s'", \
+        op->chunk, op->operand, newfile);
+
+    old = fopen(op->operand, "rb");
     if(!old) {
         LOG(DCOPY_LOG_ERR, "Unable to open old file %s", op->operand);
         return;
     }
 
-    char newfile[PATH_MAX];
-    void* newbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
-    void* oldbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
-    sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
-    FILE* new = fopen(newfile, "rb");
-
+    new = fopen(newfile, "rb");
     if(!new) {
         LOG(DCOPY_LOG_ERR, "Unable to open new file %s", newfile);
         perror("checksum open");
-        char* newop = DCOPY_encode_operation(CHECKSUM, op->chunk, op->operand, op->base_index);
+
+        newop = DCOPY_encode_operation(CHECKSUM, op->chunk, op->operand, op->base_index);
         handle->enqueue(newop);
         free(newop);
+
         return;
     }
 
     fseek(new, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
     fseek(old, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
 
-    size_t newbytes = fread(newbuf, 1, DCOPY_CHUNK_SIZE, new);
-    size_t oldbytes = fread(oldbuf, 1, DCOPY_CHUNK_SIZE, old);
+    newbytes = fread(newbuf, 1, DCOPY_CHUNK_SIZE, new);
+    oldbytes = fread(oldbuf, 1, DCOPY_CHUNK_SIZE, old);
 
     if(newbytes != oldbytes || memcmp(newbuf, oldbuf, newbytes) != 0) {
         LOG(DCOPY_LOG_ERR, "Incorrect checksum, requeueing file (%s).", op->operand);
-        char* newop = DCOPY_encode_operation(STAT, 0, op->operand, op->base_index);
+
+        newop = DCOPY_encode_operation(STAT, 0, op->operand, op->base_index);
         handle->enqueue(newop);
         free(newop);
     }
@@ -57,6 +81,7 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     fclose(new);
     fclose(old);
+
     free(newbuf);
     free(oldbuf);
 

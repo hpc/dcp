@@ -28,19 +28,20 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     status = lstat(op->operand, &st);
 
-    strncpy(path, op->operand + op->base_index, PATH_MAX);
-    sprintf(dir, "mkdir -p %s/%s", DCOPY_user_opts.dest_path, dirname(path));
-    LOG(DCOPY_LOG_DBG, "Creating %s", dir);
-
-    FILE* p = popen(dir, "r");
-    pclose(p);
-
     if(status != EXIT_SUCCESS) {
         LOG(DCOPY_LOG_ERR, "Unable to stat \"%s\"", op->operand);
         perror("stat");
     }
     else if(S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode))) {
         LOG(DCOPY_LOG_DBG, "Operand: %s Dir: %s", op->operand, DCOPY_user_opts.dest_path);
+
+        strncpy(path, op->operand + op->base_index, PATH_MAX);
+        sprintf(dir, "mkdir -p %s/%s", DCOPY_user_opts.dest_path, path);
+        LOG(DCOPY_LOG_DBG, "Creating %s", dir);
+
+        FILE* p = popen(dir, "r");
+        pclose(p);
+
         DCOPY_process_dir(op->operand, handle, op->base_index);
     }
     else {
