@@ -27,7 +27,7 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
     char newfile[PATH_MAX];
     void* newbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
     void* oldbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
-    sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand);
+    sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
     FILE* new = fopen(newfile, "rb");
 
     if(!new) {

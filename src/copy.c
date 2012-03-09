@@ -34,7 +34,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
         return;
     }
 
-    sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand);
+    sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
     int outfd = open(newfile, O_RDWR | O_CREAT, 00644);
 
     LOG(DCOPY_LOG_DBG, "Copying chunk of `%s' to `%s'.", op->operand, newfile);

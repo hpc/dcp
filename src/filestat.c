@@ -28,7 +28,7 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     status = lstat(op->operand, &st);
 
-    strncpy(path, op->operand, PATH_MAX);
+    strncpy(path, op->operand + op->base_index, PATH_MAX);
     sprintf(dir, "mkdir -p %s/%s", DCOPY_user_opts.dest_path, dirname(path));
     LOG(DCOPY_LOG_DBG, "Creating %s", dir);
 
