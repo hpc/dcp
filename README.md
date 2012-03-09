@@ -23,9 +23,11 @@ RPM Creation
 To create a dcp rpm, simply follow these steps. Replace *version* and
 *release* with the appropriate values.
 
-* ```git clone https://github.com/hpc/dcp.git dcp-<version>-<release>```
-* ```tar -zcvf dcp-<version>-<release>.tgz dcp-<version>-<release>```
-* ```rpmbuild -ta dcp-<version>-<release>.tgz```
+```
+git clone https://github.com/hpc/dcp.git dcp-<version>-<release>
+tar -zcvf dcp-<version>-<release>.tgz dcp-<version>-<release>
+rpmbuild -ta dcp-<version>-<release>.tgz
+```
 
 License
 -------
