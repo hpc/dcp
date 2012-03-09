@@ -28,18 +28,6 @@ AC_TYPE_SIZE_T
 AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MALLOC
 
-echo
-echo "========================================================"
-echo "==          dcp: final build configuration            =="
-echo "========================================================"
-echo "External Library Support:"
-echo "  libcircle ...................................... ???"
-echo
-echo "Build Options:"
-echo "  Unit tests ..................................... ???"
-echo "========================================================"
-echo
-
 AC_CONFIG_FILES([Makefile              \
                  src/Makefile          \
                  doc/Makefile          \

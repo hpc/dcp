@@ -11767,18 +11767,6 @@ fi
 
 
 
-echo
-echo "========================================================"
-echo "==          dcp: final build configuration            =="
-echo "========================================================"
-echo "External Library Support:"
-echo "  libcircle ...................................... ???"
-echo
-echo "Build Options:"
-echo "  Unit tests ..................................... ???"
-echo "========================================================"
-echo
-
 ac_config_files="$ac_config_files Makefile src/Makefile doc/Makefile doc/man/Makefile doc/man/man1/Makefile"
 
 cat >confcache <<\_ACEOF
