@@ -69,10 +69,12 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     LOG(DCOPY_LOG_DBG, "Wrote %ld bytes (%ld total).", bytes, DCOPY_statistics.total_bytes_copied);
 
-    char* newop = DCOPY_encode_operation(CHECKSUM, op->chunk, op->operand, op->base_index);
-    handle->enqueue(newop);
+    if(!DCOPY_user_opts.skip_compare) {
+        char* newop = DCOPY_encode_operation(CHECKSUM, op->chunk, op->operand, op->base_index);
+        handle->enqueue(newop);
+        free(newop);
+    }
 
-    free(newop);
     fclose(in);
     close(outfd);
 

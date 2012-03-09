@@ -173,12 +173,16 @@ int main(int argc, char** argv)
 
     CIRCLE_loglevel CIRCLE_debug = CIRCLE_LOG_FATAL;
 
+    /* By default, don't skip the compare option. */
+    DCOPY_user_opts.skip_compare = false;
+
     static struct option long_options[] = {
-        {"debug"  , required_argument, 0, 'd'},
-        {"help"   , no_argument      , 0, 'h'},
-        {"verbose", no_argument      , 0, 'v'},
-        {"version", no_argument      , 0, 'V'},
-        {0        , 0                , 0, 0  }
+        {"debug"       , required_argument, 0, 'd'},
+        {"help"        , no_argument      , 0, 'h'},
+        {"verbose"     , no_argument      , 0, 'v'},
+        {"version"     , no_argument      , 0, 'V'},
+        {"skip-compare", no_argument      , 0, 'P'},
+        {0             , 0                , 0, 0  }
     };
 
     /* Parse options */
@@ -204,6 +208,11 @@ int main(int argc, char** argv)
             case 'V':
                 DCOPY_print_version(argv);
                 exit(EXIT_SUCCESS);
+                break;
+
+            case 'P':
+                DCOPY_user_opts.skip_compare = true;
+                LOG(DCOPY_LOG_INFO, "Skipping the comparison stage, this may result in file corruption.");
                 break;
 
             case '?':

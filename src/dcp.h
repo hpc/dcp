@@ -3,6 +3,7 @@
 #ifndef __DCP_H_
 #define __DCP_H_
 
+#include <stdbool.h>
 #include <time.h>
 #include <libcircle.h>
 
@@ -30,6 +31,7 @@ typedef struct {
 typedef struct {
     char* dest_path;
     char** src_path;
+    bool skip_compare;
 } DCOPY_options_t;
 
 DCOPY_operation_t* DCOPY_decode_operation(char* op);
