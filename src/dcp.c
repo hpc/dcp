@@ -66,13 +66,20 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
 
 /**
  * The initial seeding callback for items to process on the distributed queue
- * structure.
+ * structure. We all all of our source items to the queue here.
  */
 void DCOPY_add_objects(CIRCLE_handle* handle)
 {
-    char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0]);
-    handle->enqueue(op);
-    free(op);
+    char** src_p = DCOPY_user_opts.src_path;
+
+    while(*src_p != NULL) {
+        char* op = DCOPY_encode_operation(STAT, 0, *src_p);
+
+        handle->enqueue(op);
+        free(op);
+
+        src_p++;
+    }
 }
 
 /**
@@ -191,14 +198,6 @@ void DCOPY_parse_path_args(char** argv, int optind, int argc)
        }
 
        sprintf(DCOPY_user_opts.dest_path, "%s/%s", cwd_path, argv[last_arg_index]);
-       DCOPY_user_opts.dest_path = realpath(DCOPY_user_opts.dest_path, NULL);
-
-       if(!DCOPY_user_opts.dest_path) {
-           LOG(DCOPY_LOG_ERR, "Could not determine the destination path. %s", \
-               strerror(errno));
-           exit(EXIT_FAILURE);
-       }
-
        free(cwd_path);
     }
 

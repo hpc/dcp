@@ -1,6 +1,7 @@
 /* See the file "COPYING" for the full license governing this code. */
 
 #include <fcntl.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -20,23 +21,23 @@ extern DCOPY_statistics_t DCOPY_statistics;
 
 void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
+    char newfile[PATH_MAX];
+    char buf[DCOPY_CHUNK_SIZE];
+
+    FILE* in = fopen(op->operand, "rb");
+
     LOG(DCOPY_LOG_DBG, "Copy %s chunk %d", op->operand, op->chunk);
 
-    char path[4096];
-    sprintf(path, "%s/%s", DCOPY_user_opts.src_path[0], op->operand);
-    FILE* in = fopen(path, "rb");
-
     if(!in) {
-        LOG(DCOPY_LOG_ERR, "Unable to open %s", path);
+        LOG(DCOPY_LOG_ERR, "Unable to open %s", op->operand);
         perror("open");
         return;
     }
 
-    char newfile[4096];
-    char buf[DCOPY_CHUNK_SIZE];
-    //    void * buf = (void*) malloc(DCOPY_CHUNK_SIZE);
-    sprintf(newfile, "%s/%s", DCOPY_user_opts.dest_path, op->operand);
+    sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand);
     int outfd = open(newfile, O_RDWR | O_CREAT, 00644);
+
+    LOG(DCOPY_LOG_DBG, "Copying chunk of `%s' to `%s'.", op->operand, newfile);
 
     if(!outfd) {
         LOG(DCOPY_LOG_ERR, "Unable to open %s", newfile);
