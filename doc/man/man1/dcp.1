@@ -4,7 +4,7 @@
 dcp \- copy a file or directory in parallel on a distributed system.
 
 .SH "SYNOPSIS"
-\fBdcp\fR [\fI-hVv\fR] [\fI-d <level>\fR] <source> ... [<special>:]<destination>
+\fBdcp\fR [\fI-hvVP\fR] [\fI-d <level>\fR] <source> ... [<special>:]<destination>
 
 .SH "DESCRIPTION"
 \fBdcp\fR is a file and directory copy tool that evenly distributes work
@@ -25,12 +25,19 @@ Specify the level of debug information to output.
 Print a brief message listing the \fBdcp\fR options and usage.
 
 .TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Enable verbose logging messages.
+
+.TP
 \fB\-V\fR, \fB\-\-version\fR
 Print version information and exit.
 
 .TP
-\fB\-v\fR, \fB\-\-verbose\fR
-Enable verbose logging messages.
+\fB\-P\fR, \fB\-\-skip-compare\fR
+Warning, using this option may result in data corruption! If this option is
+used, the comparison stage of the copy process will be skipped. The comparison
+stage of the copy process ensures that the source and destination files match.
+Using this option will likely increase performance while reducing reliability.
 
 .SH "FIELDS"
 
