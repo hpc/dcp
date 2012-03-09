@@ -5,8 +5,8 @@ trees and multi-petabyte files. Files are chunked and copied using a
 distributed, asyncronous, and autonomous by node algorithm.
 
 Using a filesystem that benefits from heavy parallel reads and writes is
-recommended (Such as Lustre or PanFS). This program is designed for a
-filesystem with tens to thousands of hard disks.
+recommended (Such as Lustre or PanFS). This program is designed for
+filesystems with more than one hard disk head.
 
 Usage
 -----
