@@ -10,9 +10,12 @@ filesystems with more than one hard disk head.
 
 dcp requires an MPI environment (such as OpenMPI's **mpirun**(1)).
 
-Usage
------
+Requirements
+------------
+* [libcircle](https://github.com/hpc/libcircle)
 
+Usage
+----- 
 ```dcp [-hvVP] [-d <level>] <source> ... [<special>:]<destination>```
 
 dcp copies directories and files from *source* to *destination*.
