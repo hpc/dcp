@@ -17,3 +17,16 @@ dcp copies directories and files from *source* to *destination*.
 
 See the included dcp(1) man page for a complete listing and description of
 options.
+
+RPM Creation
+------------
+To create a dcp rpm, simply follow these steps. Replace *version* and
+*release* with the appropriate values.
+
+```git clone https://github.com/hpc/dcp.git dcp-<version>-<release>```
+```tar -zcvf dcp-<version>-<release>.tgz dcp-<version>-<release>```
+```rpmbuild -ta dcp-<version>-<release>.tgz```
+
+License
+-------
+See the included *COPYING* file for license details.
