@@ -3,6 +3,7 @@ Makefile
 .deps
 stamp-h1
 
+/autom4te.cache
 /config.h
 /config.log
 /config.status
