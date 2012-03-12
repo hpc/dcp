@@ -31,15 +31,25 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
     void* newbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
     void* oldbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
 
-    /** If we have a file, grab the basename and append. */
-    if(strlen(op->operand + op->base_index) < 1) {
-        strncpy(tmppath, op->operand, PATH_MAX);
-        base_operand = basename(tmppath);
+    LOG(DCOPY_LOG_DBG, "Stat, operand is `%s', subop is `%s', baseidx is `%d', dest is `%s'.", \
+        op->operand, op->operand + op->base_index, op->base_index, DCOPY_user_opts.dest_path);
 
-        sprintf(newfile, "%s%s/%s", DCOPY_user_opts.dest_path, op->operand + op->base_index, base_operand);
+    strncpy(tmppath, op->operand, PATH_MAX);
+    base_operand = basename(tmppath);
+
+    /**
+     * If we have a file grab the basename and append.
+     */
+    if(strlen(op->operand + op->base_index) < 1) {
+        sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
     }
     else {
-        sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
+        if(DCOPY_user_opts.merge_into_dest) {
+            sprintf(newfile, "%s%s/%s", DCOPY_user_opts.dest_path, op->operand + op->base_index, base_operand);
+        }
+        else {
+            sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
+        }
     }
 
     LOG(DCOPY_LOG_DBG, "Comparing (chunk %d) original `%s' against `%s'", \

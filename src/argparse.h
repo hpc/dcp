@@ -12,8 +12,8 @@
 #define ARG_MAX _POSIX_ARG_MAX
 #endif
 
-bool DCOPY_is_directory(char* path);
-bool DCOPY_is_regular_file(char* path);
+void DCOPY_parse_dest_path(char* path);
+void DCOPY_parse_src_paths(char** argv, int last_arg_index, int optind);
 void DCOPY_parse_path_args(char** argv, int optind, int argc);
 
 #endif /* __DCOPY_ARGPARSE_H */

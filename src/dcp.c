@@ -1,6 +1,7 @@
 /* See the file "COPYING" for the full license governing this code. */
 
 #include <getopt.h>
+#include <libgen.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +39,7 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, char* op
 {
     char* result = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
     sprintf(result, "%d:%d:%d:%s", chunk, op, base_index, operand);
+
     return result;
 }
 
@@ -69,8 +71,8 @@ void DCOPY_add_objects(CIRCLE_handle* handle)
     while(*src_p != NULL) {
         char* op = DCOPY_encode_operation(STAT, 0, *src_p, strlen(*src_p));
         handle->enqueue(op);
-        free(op);
 
+        free(op);
         src_p++;
     }
 }
@@ -98,16 +100,6 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
     free(opt);
 
     return;
-}
-
-/**
- * Initialize the jump table for handling queue item types.
- */
-void DCOPY_init_jump_table(void)
-{
-    DCOPY_jump_table[0] = DCOPY_do_copy;
-    DCOPY_jump_table[1] = DCOPY_do_checksum;
-    DCOPY_jump_table[2] = DCOPY_do_stat;
 }
 
 /**
@@ -150,11 +142,12 @@ void DCOPY_print_version(char** argv)
  */
 void DCOPY_print_usage(char** argv)
 {
-    fprintf(stdout, "\n  Usage: %s [-dhvV] <source> ... [<special>:]<destination>\n\n", argv[0]);
+    fprintf(stdout, "\n  Usage: %s [-dhvmVP] <source> ... [<special>:]<destination>\n\n", argv[0]);
     fprintf(stdout, "    Options:\n");
     fprintf(stdout, "      -d <level> - Set debug level to output.\n");
     fprintf(stdout, "      -h         - Print this usage message.\n");
     fprintf(stdout, "      -v         - Enable full verbose output.\n");
+    fprintf(stdout, "      -m         - Merge source with destination directory.\n");
     fprintf(stdout, "      -V         - Print the version string.\n");
     fprintf(stdout, "      -P         - DANGEROUS, skip the compare stage.\n\n");
     fprintf(stdout, "    Field Descriptions:\n");
@@ -176,17 +169,21 @@ int main(int argc, char** argv)
     /* By default, don't skip the compare option. */
     DCOPY_user_opts.skip_compare = false;
 
+    /* Make sure the destination stat cache is empty. */
+    DCOPY_user_opts.dest_stat_exists = false;
+
     static struct option long_options[] = {
         {"debug"       , required_argument, 0, 'd'},
         {"help"        , no_argument      , 0, 'h'},
         {"verbose"     , no_argument      , 0, 'v'},
+        {"merge"       , no_argument      , 0, 'm'},
         {"version"     , no_argument      , 0, 'V'},
         {"skip-compare", no_argument      , 0, 'P'},
         {0             , 0                , 0, 0  }
     };
 
     /* Parse options */
-    while((c = getopt_long(argc, argv, "d:hvVP", long_options, &option_index)) != -1) {
+    while((c = getopt_long(argc, argv, "d:hvmVP", long_options, &option_index)) != -1) {
         switch(c) {
             case 'd':
                 DCOPY_debug_level = atoi(optarg);
@@ -203,6 +200,11 @@ int main(int argc, char** argv)
                 DCOPY_debug_level = DCOPY_LOG_DBG;
                 CIRCLE_debug = CIRCLE_LOG_DBG;
                 LOG(DCOPY_LOG_DBG, "Verbose mode enabled.");
+                break;
+
+            case 'm':
+                DCOPY_user_opts.merge_into_dest = true;
+                LOG(DCOPY_LOG_INFO, "Merging source(s) into the destination directory.");
                 break;
 
             case 'V':
@@ -241,7 +243,9 @@ int main(int argc, char** argv)
     DCOPY_parse_path_args(argv, optind, argc);
 
     /* Initialize our jump table for core operations. */
-    DCOPY_init_jump_table();
+    DCOPY_jump_table[0] = DCOPY_do_copy;
+    DCOPY_jump_table[1] = DCOPY_do_checksum;
+    DCOPY_jump_table[2] = DCOPY_do_stat;
 
     /* Initialize our processing library and related callbacks. */
     CIRCLE_global_rank = CIRCLE_init(argc, argv, CIRCLE_DEFAULT_FLAGS);

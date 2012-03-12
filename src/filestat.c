@@ -19,12 +19,37 @@ extern DCOPY_options_t DCOPY_user_opts;
 /** The loglevel that this instance of dcopy will output. */
 extern DCOPY_loglevel DCOPY_debug_level;
 
+/**
+ * Determine if the specified path is a directory.
+ */
+bool DCOPY_is_directory(char* path)
+{
+    struct stat statbuf;
+    stat(path, &statbuf);
+
+    return S_ISDIR(statbuf.st_mode);
+}
+
+/**
+ * Determine if the specified path is a regular file.
+ */
+bool DCOPY_is_regular_file(char* path)
+{
+    struct stat statbuf;
+    stat(path, &statbuf);
+
+    return S_ISREG(statbuf.st_mode);
+}
+
 void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     static struct stat st;
     static int status;
     char path[PATH_MAX];
     char dir[2048];
+
+    LOG(DCOPY_LOG_DBG, "STAT - operand is `%s', subop is `%s', baseidx is `%d', dest is `%s'.", \
+        op->operand, op->operand + op->base_index, op->base_index, DCOPY_user_opts.dest_path);
 
     status = lstat(op->operand, &st);
 

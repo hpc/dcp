@@ -11,6 +11,7 @@
 
 #include "copy.h"
 #include "log.h"
+#include "filestat.h"
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
@@ -27,8 +28,12 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     char buf[DCOPY_CHUNK_SIZE];
     char tmppath[PATH_MAX];
     char* base_operand;
+    FILE* in;
 
-    FILE* in = fopen(op->operand, "rb");
+    LOG(DCOPY_LOG_DBG, "COPY - operand is `%s', subop is `%s', baseidx is `%d', dest is `%s'.", \
+        op->operand, op->operand + op->base_index, op->base_index, DCOPY_user_opts.dest_path);
+
+    in = fopen(op->operand, "rb");
 
     LOG(DCOPY_LOG_DBG, "Copy %s chunk %d", op->operand, op->chunk);
 
@@ -38,15 +43,17 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
         return;
     }
 
-    /** If we have a file, grab the basename and append. */
-    if(strlen(op->operand + op->base_index) < 1) {
-        strncpy(tmppath, op->operand, PATH_MAX);
-        base_operand = basename(tmppath);
+    strncpy(tmppath, op->operand, PATH_MAX);
+    base_operand = basename(tmppath);
 
-        sprintf(newfile, "%s%s/%s", DCOPY_user_opts.dest_path, op->operand + op->base_index, base_operand);
+    /**
+     * If we have a file grab the basename and append.
+     */
+    if(DCOPY_user_opts.merge_into_dest) {
+        sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
     }
     else {
-        sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
+        sprintf(newfile, "%s%s/%s", DCOPY_user_opts.dest_path, op->operand + op->base_index, base_operand);
     }
 
     int outfd = open(newfile, O_RDWR | O_CREAT, 00644);

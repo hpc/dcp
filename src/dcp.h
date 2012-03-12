@@ -3,9 +3,12 @@
 #ifndef __DCP_H_
 #define __DCP_H_
 
-#include <stdbool.h>
-#include <time.h>
 #include <libcircle.h>
+#include <stdbool.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
 #define DCOPY_CHUNK_SIZE 4194304
 
@@ -31,7 +34,11 @@ typedef struct {
 typedef struct {
     char* dest_path;
     char** src_path;
+    uint16_t dest_base_index;
     bool skip_compare;
+    bool merge_into_dest;
+    bool dest_stat_exists;
+    struct stat dest_stat;
 } DCOPY_options_t;
 
 DCOPY_operation_t* DCOPY_decode_operation(char* op);
@@ -41,7 +48,6 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, \
 void DCOPY_add_objects(CIRCLE_handle* handle);
 void DCOPY_process_objects(CIRCLE_handle* handle);
 
-void DCOPY_init_jump_table(void);
 void DCOPY_epilogue(void);
 void DCOPY_print_version(char** argv);
 void DCOPY_print_usage(char** argv);

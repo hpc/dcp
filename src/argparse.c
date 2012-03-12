@@ -1,6 +1,7 @@
 /* See the file "COPYING" for the full license governing this code. */
 
 #include <errno.h>
+#include <libgen.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,6 +13,7 @@
 #include "dcp.h"
 
 #include "argparse.h"
+#include "filestat.h"
 
 #ifndef ARG_MAX
 #define ARG_MAX _POSIX_ARG_MAX
@@ -21,69 +23,47 @@
 DCOPY_options_t DCOPY_user_opts;
 
 /**
- * Determine if the specified path is a directory.
+ * Convert the destination to an absolute path and check sanity.
  */
-bool DCOPY_is_directory(char* path)
+void DCOPY_parse_dest_path(char* path)
 {
-    struct stat statbuf;
-    stat(path, &statbuf);
+    char dest_base[PATH_MAX];
 
-    return S_ISDIR(statbuf.st_mode);
-}
+    DCOPY_user_opts.dest_path = realpath(path, NULL);
 
-/**
- * Determine if the specified path is a regular file.
- */
-bool DCOPY_is_regular_file(char* path)
-{
-    struct stat statbuf;
-    stat(path, &statbuf);
-
-    return S_ISREG(statbuf.st_mode);
-}
-
-/**
- * Parse the source and destination paths that the user has provided.
- */
-void DCOPY_parse_path_args(char** argv, int optind, int argc)
-{
-    int index;
-    size_t num_args = argc - optind;
-    int last_arg_index = num_args + optind - 1;
-    char** dbg_p;
-    char* cwd_path;
-
-    if(argv == NULL || num_args < 2) {
-        DCOPY_print_usage(argv);
-        LOG(DCOPY_LOG_ERR, "You must specify a source and destination path.");
-
+    if(!DCOPY_user_opts.dest_path) {
+        LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
+            path, strerror(errno));
         exit(EXIT_FAILURE);
     }
 
-    /* The destination will always be the last item. */
-    DCOPY_user_opts.dest_path = (char*) malloc(sizeof(char) * (PATH_MAX + 1));
-    strncpy(DCOPY_user_opts.dest_path, argv[last_arg_index], PATH_MAX);
+    /*
+     * Since this might be a file, lets grab the index into the path that
+     * lets us quickly determine the basename only and cache it for later.
+     */
+    strncpy(dest_base, DCOPY_user_opts.dest_path, PATH_MAX);
 
-    /* Figure out if the dest path is absolute. */
-    if(*DCOPY_user_opts.dest_path != '/') {
-        cwd_path = (char*) malloc(sizeof(char) * PATH_MAX);
+    DCOPY_user_opts.dest_base_index = strlen(basename(dest_base));
+    DCOPY_user_opts.dest_base_index = strlen(DCOPY_user_opts.dest_path) - DCOPY_user_opts.dest_base_index;
+}
 
-        if(!getcwd(cwd_path, PATH_MAX)) {
-            LOG(DCOPY_LOG_ERR, "Could not determine the current working directory. %s", \
-                strerror(errno));
-        }
-
-        sprintf(DCOPY_user_opts.dest_path, "%s/%s", cwd_path, argv[last_arg_index]);
-        free(cwd_path);
-    }
+/**
+ * Grab the source paths.
+ */
+void DCOPY_parse_src_paths(char** argv, int last_arg_index, int optind)
+{
+    int index = 0;
 
     /*
      * Since we can't overwrite a file with a directory, lets see if the
-     * destination is a file.
+     * destination is a file. When we go through all of the source arguments,
+     * we can then check if we're trying to overwrite a file with a directory.
      */
     int destination_is_file = DCOPY_is_regular_file(DCOPY_user_opts.dest_path);
 
-    /* Now lets go back and get everything else for the source paths. */
+    /*
+     * Loop over each source path and check sanity.
+     */
     DCOPY_user_opts.src_path = (char**) malloc((ARG_MAX + 1) * sizeof(void*));
     memset(DCOPY_user_opts.src_path, 0, (ARG_MAX + 1) * sizeof(char));
 
@@ -104,8 +84,34 @@ void DCOPY_parse_path_args(char** argv, int optind, int argc)
             exit(EXIT_FAILURE);
         }
     }
+}
 
-    /* Now we can print it out for debugging purposes. */
+/**
+ * Parse the source and destination paths that the user has provided.
+ */
+void DCOPY_parse_path_args(char** argv, int optind, int argc)
+{
+    size_t num_args = argc - optind;
+    int last_arg_index = num_args + optind - 1;
+
+    char** dbg_p = NULL;
+
+    if(argv == NULL || num_args < 2) {
+        DCOPY_print_usage(argv);
+        LOG(DCOPY_LOG_ERR, "You must specify a source and destination path.");
+
+        exit(EXIT_FAILURE);
+    }
+
+    /* Grab the destination path. */
+    DCOPY_parse_dest_path(argv[last_arg_index]);
+
+    /* Grab the source paths. */
+    DCOPY_parse_src_paths(argv, last_arg_index, optind);
+
+    /*
+     * Now, lets print everything out for debugging purposes.
+     */
     dbg_p = DCOPY_user_opts.src_path;
 
     while(*dbg_p != NULL) {
