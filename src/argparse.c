@@ -28,23 +28,41 @@ DCOPY_options_t DCOPY_user_opts;
 void DCOPY_parse_dest_path(char* path)
 {
     char dest_base[PATH_MAX];
+    char file_name_buf[PATH_MAX];
+    char norm_path[PATH_MAX];
+    char* file_name;
 
     DCOPY_user_opts.dest_path = realpath(path, NULL);
 
-    if(!DCOPY_user_opts.dest_path) {
-        LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
-            path, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-
     /*
-     * Since this might be a file, lets grab the index into the path that
-     * lets us quickly determine the basename only and cache it for later.
+     * If realpath doesn't work, we might be working with a file.
      */
-    strncpy(dest_base, DCOPY_user_opts.dest_path, PATH_MAX);
+    if(!DCOPY_user_opts.dest_path) {
+        /* Since this might be a file, lets get the absolute base path. */
+        strncpy(dest_base, path, PATH_MAX);
+        DCOPY_user_opts.dest_path = dirname(dest_base);
+        DCOPY_user_opts.dest_path = realpath(DCOPY_user_opts.dest_path, NULL);
 
-    DCOPY_user_opts.dest_base_index = strlen(basename(dest_base));
-    DCOPY_user_opts.dest_base_index = strlen(DCOPY_user_opts.dest_path) - DCOPY_user_opts.dest_base_index;
+        /* Save the length of the base for later use. */
+        DCOPY_user_opts.dest_base_index = strlen(DCOPY_user_opts.dest_path);
+
+        if(!DCOPY_user_opts.dest_path) {
+            LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
+                path, strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+
+        /* Now, lets get the base name. */
+        strncpy(file_name_buf, path, PATH_MAX);
+        file_name = basename(file_name_buf);
+
+        /* Finally, lets put everything together. */
+        sprintf(norm_path, "%s/%s", DCOPY_user_opts.dest_path, file_name);
+        strncpy(DCOPY_user_opts.dest_path, norm_path, PATH_MAX);
+    } else {
+        /* Since this is a directory, the base index is the length. */
+        DCOPY_user_opts.dest_base_index = strlen(DCOPY_user_opts.dest_path);
+    }
 }
 
 /**

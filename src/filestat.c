@@ -29,9 +29,9 @@ bool DCOPY_is_directory(char* path)
     int s = lstat(path, &statbuf);
 
     if(s == -1) {
-        LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a directory. %s", \
+        LOG(DCOPY_LOG_DBG, "Could not determine if `%s' is a directory. %s", \
             path, strerror(errno));
-        exit(EXIT_FAILURE);
+        return false;
     }
 
     return S_ISDIR(statbuf.st_mode);
@@ -46,9 +46,9 @@ bool DCOPY_is_regular_file(char* path)
     int s = lstat(path, &statbuf);
 
     if(s == -1) {
-        LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a regular file. %s", \
+        LOG(DCOPY_LOG_DBG, "Could not determine if `%s' is a regular file. %s", \
             path, strerror(errno));
-        exit(EXIT_FAILURE);
+        return false;
     }
 
     return S_ISREG(statbuf.st_mode);
