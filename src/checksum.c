@@ -1,5 +1,6 @@
 /* See the file "COPYING" for the full license governing this code. */
 
+#include <errno.h>
 #include <libgen.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -14,6 +15,7 @@ extern DCOPY_options_t DCOPY_user_opts;
 /** The loglevel that this instance of dcopy will output. */
 extern DCOPY_loglevel  DCOPY_debug_level;
 
+
 void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     FILE* old;
@@ -23,50 +25,30 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
     size_t oldbytes;
 
     char* newop;
-    char* base_operand;
 
     char newfile[PATH_MAX];
-    char tmppath[PATH_MAX];
 
     void* newbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
     void* oldbuf = (void*) malloc(DCOPY_CHUNK_SIZE);
 
-    LOG(DCOPY_LOG_DBG, "Stat, operand is `%s', subop is `%s', baseidx is `%d', dest is `%s'.", \
+    LOG(DCOPY_LOG_DBG, "Checksum, operand is `%s', subop is `%s', baseidx is `%d', dest is `%s'.", \
         op->operand, op->operand + op->base_index, op->base_index, DCOPY_user_opts.dest_path);
-
-    strncpy(tmppath, op->operand, PATH_MAX);
-    base_operand = basename(tmppath);
-
-    /**
-     * If we have a file grab the basename and append.
-     */
-    if(strlen(op->operand + op->base_index) < 1) {
-        sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
-    }
-    else {
-        if(DCOPY_user_opts.merge_into_dest) {
-            sprintf(newfile, "%s%s/%s", DCOPY_user_opts.dest_path, op->operand + op->base_index, base_operand);
-        }
-        else {
-            sprintf(newfile, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
-        }
-    }
 
     LOG(DCOPY_LOG_DBG, "Comparing (chunk %d) original `%s' against `%s'", \
         op->chunk, op->operand, newfile);
 
     old = fopen(op->operand, "rb");
+    new = fopen(newfile, "rb");
 
     if(!old) {
-        LOG(DCOPY_LOG_ERR, "Unable to open old file %s", op->operand);
+        LOG(DCOPY_LOG_ERR, "Checksum, unable to open old file `%s'. %s", \
+            op->operand, strerror(errno));
         return;
     }
 
-    new = fopen(newfile, "rb");
-
     if(!new) {
-        LOG(DCOPY_LOG_ERR, "Unable to open new file %s", newfile);
-        perror("checksum open");
+        LOG(DCOPY_LOG_ERR, "Checksum, unable to open new file `%s'. %s", \
+            newfile, strerror(errno));
 
         newop = DCOPY_encode_operation(CHECKSUM, op->chunk, op->operand, op->base_index);
         handle->enqueue(newop);
@@ -89,7 +71,7 @@ void DCOPY_do_checksum(DCOPY_operation_t* op, CIRCLE_handle* handle)
         free(newop);
     }
     else {
-        LOG(DCOPY_LOG_DBG, "File (%s) chunk %d OK.", newfile, op->chunk);
+        LOG(DCOPY_LOG_DBG, "File `%s' chunk `%d' OK.", newfile, op->chunk);
     }
 
     fclose(new);
