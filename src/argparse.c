@@ -32,6 +32,23 @@ void DCOPY_parse_dest_path(char* path)
     char norm_path[PATH_MAX];
     char* file_name;
 
+    /*
+     * FIXME: This doesn't completely work.
+     *
+     * When checking the destination path for sanity, we need to determine if
+     * the destination path is already an existing directory. If it is, we
+     * need to recursively enter the folder and check if the subfolder contains
+     * a directory with the same name, and so on, until we reach a valid
+     * directory.
+     *
+     * If the user has specified the merge flag and the directory names match,
+     * we can just go ahead and use the destination path without further
+     * effort.
+     *
+     * If the destination path is a file but a source is a directory, the
+     * source argument parsing code will detect it.
+     */
+
     DCOPY_user_opts.dest_path = realpath(path, NULL);
 
     /*
