@@ -67,9 +67,19 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
 void DCOPY_add_objects(CIRCLE_handle* handle)
 {
     char** src_p = DCOPY_user_opts.src_path;
+    int base_index = 0;
+    char *tmp_base;
 
     while(*src_p != NULL) {
-        char* op = DCOPY_encode_operation(STAT, 0, *src_p, strlen(*src_p));
+        if(DCOPY_is_regular_file(*src_p)) {
+            tmp_base = realpath(*src_p, NULL);
+            base_index = strlen(dirname(tmp_base));
+            free(tmp_base);
+        } else {
+            base_index = strlen(*src_p);
+        }
+
+        char* op = DCOPY_encode_operation(STAT, 0, *src_p, base_index);
         handle->enqueue(op);
 
         free(op);
@@ -147,7 +157,6 @@ void DCOPY_print_usage(char** argv)
     fprintf(stdout, "      -d <level> - Set debug level to output.\n");
     fprintf(stdout, "      -h         - Print this usage message.\n");
     fprintf(stdout, "      -v         - Enable full verbose output.\n");
-    fprintf(stdout, "      -m         - Merge source with destination directory.\n");
     fprintf(stdout, "      -V         - Print the version string.\n");
     fprintf(stdout, "      -P         - DANGEROUS, skip the compare stage.\n\n");
     fprintf(stdout, "    Field Descriptions:\n");
@@ -176,14 +185,13 @@ int main(int argc, char** argv)
         {"debug"       , required_argument, 0, 'd'},
         {"help"        , no_argument      , 0, 'h'},
         {"verbose"     , no_argument      , 0, 'v'},
-        {"merge"       , no_argument      , 0, 'm'},
         {"version"     , no_argument      , 0, 'V'},
         {"skip-compare", no_argument      , 0, 'P'},
         {0             , 0                , 0, 0  }
     };
 
     /* Parse options */
-    while((c = getopt_long(argc, argv, "d:hvmVP", long_options, &option_index)) != -1) {
+    while((c = getopt_long(argc, argv, "d:hvVP", long_options, &option_index)) != -1) {
         switch(c) {
             case 'd':
                 DCOPY_debug_level = atoi(optarg);
@@ -200,11 +208,6 @@ int main(int argc, char** argv)
                 DCOPY_debug_level = DCOPY_LOG_DBG;
                 CIRCLE_debug = CIRCLE_LOG_DBG;
                 LOG(DCOPY_LOG_DBG, "Verbose mode enabled.");
-                break;
-
-            case 'm':
-                DCOPY_user_opts.merge_into_dest = true;
-                LOG(DCOPY_LOG_INFO, "Merging source(s) into the destination directory.");
                 break;
 
             case 'V':

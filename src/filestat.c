@@ -123,7 +123,9 @@ void DCOPY_stat_process_dir(char* path, CIRCLE_handle* handle, uint16_t base_ind
     char cmd_buf[PATH_MAX];
     char newop_path[PATH_MAX];
     
-    sprintf(cmd_buf, "mkdir -p %s/%s", DCOPY_user_opts.dest_path, path);
+    sprintf(cmd_buf, "mkdir -p %s/%s", \
+        DCOPY_user_opts.dest_path, \
+        path + base_index);
     LOG(DCOPY_LOG_DBG, "Creating directory with cmd `%s'.", cmd_buf);
 
     FILE* p = popen(cmd_buf, "r");

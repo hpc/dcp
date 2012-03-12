@@ -36,7 +36,6 @@ typedef struct {
     char** src_path;
     uint16_t dest_base_index;
     bool skip_compare;
-    bool merge_into_dest;
     bool dest_stat_exists;
     struct stat dest_stat;
 } DCOPY_options_t;

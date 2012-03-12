@@ -38,18 +38,20 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
         op->operand, op->operand + op->base_index, op->base_index, DCOPY_user_opts.dest_path);
     LOG(DCOPY_LOG_DBG, "Copy, `%s' chunk `%d'.", op->operand, op->chunk);
 
-    sprintf(new_file_path, "%s%s", DCOPY_user_opts.dest_path, op->operand + op->base_index);
+    sprintf(new_file_path, "%s%s", \
+        DCOPY_user_opts.dest_path, \
+        op->operand + op->base_index);
+    LOG(DCOPY_LOG_DBG, "Copy, dest `%s' (`%s').", new_file_path, op->operand + op->base_index);
 
     in = fopen(op->operand, "rb");
-    outfd = open(new_file_path, O_RDWR | O_CREAT, 00644);
-
     if(!in) {
         LOG(DCOPY_LOG_ERR, "Unable to open `%s'. %s", \
             op->operand, strerror(errno));
         return;
     }
 
-    if(!outfd) {
+    outfd = open(new_file_path, O_RDWR | O_CREAT, 00644);
+    if(outfd < 0) {
         LOG(DCOPY_LOG_ERR, "Unable to open `%s'. %s", \
             new_file_path, strerror(errno));
         return;
