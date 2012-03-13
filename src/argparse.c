@@ -46,6 +46,7 @@ void DCOPY_parse_dest_path(char* path)
         /* Save the length of the base for later use. */
         DCOPY_user_opts.dest_base_index = strlen(DCOPY_user_opts.dest_path);
 
+        /* If realpath didn't work this time, we're really in trouble. */
         if(!DCOPY_user_opts.dest_path) {
             LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
                 path, strerror(errno));

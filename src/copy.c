@@ -27,6 +27,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     char new_file_path[PATH_MAX];
     char buf[DCOPY_CHUNK_SIZE];
+    char file_file_buf[PATH_MAX];
 
     size_t bytes_read = 0;
     size_t bytes_written = 0;
@@ -45,16 +46,33 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     in = fopen(op->operand, "rb");
     if(!in) {
-        LOG(DCOPY_LOG_ERR, "Unable to open `%s'. %s", \
+        LOG(DCOPY_LOG_ERR, "Unable to open original `%s'. %s", \
             op->operand, strerror(errno));
         return;
     }
 
     outfd = open(new_file_path, O_RDWR | O_CREAT, 00644);
     if(outfd < 0) {
-        LOG(DCOPY_LOG_ERR, "Unable to open `%s'. %s", \
-            new_file_path, strerror(errno));
-        return;
+        /*
+         * Since we might be trying a file to file copy, lets try to open
+         * the base instead. If it really is a directory, we'll go ahead and
+         * fail.
+         */
+        strncpy(file_file_buf, op->operand, PATH_MAX);
+        file_file_buf[op->base_index] = '\0';
+
+        sprintf(file_file_buf, "%s%s", file_file_buf, \
+            DCOPY_user_opts.dest_path + DCOPY_user_opts.dest_base_index);
+
+        LOG(DCOPY_LOG_DBG, "Attempting to open parent of new file `%s'.", file_file_buf);
+
+        outfd = open(file_file_buf, O_RDWR | O_CREAT, 00644);
+
+        if(outfd < 0) {
+            LOG(DCOPY_LOG_ERR, "Unable to open new `%s'. %s", \
+                new_file_path, strerror(errno));
+            return;
+        }
     }
 
     if(fseek(in, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
