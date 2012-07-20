@@ -1,78 +1,56 @@
-.TH DCP "1" "March 2012" "dcp 0.1" "Distributed File Copy Tool"
+.TH DCP "1" "July 2012" "dcp 0.1" "Distributed File Copy Tool"
 
 .SH "NAME"
-dcp \- copy a file or directory in parallel on a distributed system.
+dcp \- copy file(s) in parallel on a distributed system.
 
 .SH "SYNOPSIS"
-\fBdcp\fR [\fI-hvVP\fR] [\fI-d <level>\fR] <source> ... [<special>:]<destination>
+
+\fBdcp\fR [\fICdfhipRrv\fR] [\fI--\fR] source_file target_file
+.br
+\fBdcp\fR [\fICdfhipRrv\fR] [\fI--\fR] source_file ... target_directory
 
 .SH "DESCRIPTION"
-\fBdcp\fR is a file and directory copy tool that evenly distributes work
-across a large cluster without centralized state. It is designed for copying
-files which are located on a parallel file system (such as Lustre or PanFS).
-The core algorithm used in the file copy process is a self-stabilization
-process which enables per-node autonomous processing and a token passing scheme
-to detect termination.
+\fBdcp\fR is a file copy tool in the spirit of \fBcp\fR(1) that evenly distributes work across a large cluster without any centralized state. It is designed for copying files which are located on a distributed parallel file system. The method used in the file copy process is a self-stabilization algorithm which enables per-node autonomous processing and a token passing scheme to detect termination.
 
 dcp requires an MPI environment (such as OpenMPI's \fBmpirun\fR(1)).
 
 .SH "OPTIONS"
 
 .TP
+\fB-C\fR, \fB\-\-skip-compare\fR
+Skip the compare operation to confirm file integrity. When using this option, a file integrity check, such as md5sum, should be performed after the file(s) have been copied.
+
+.TP
 \fB\-d <level>\fR, \fB\-\-debug=<level>\fR
-Specify the level of debug information to output.
+Specify the level of debug information to output. Level may be one of: 'fatal', 'err', 'warn', 'info', or 'dbg'. Increasingly verbose debug levels include the output of less verbose debug levels.
+
+.TP
+\fB\-f\fR, \fB\-\-force\fR
+Remove existing destination files if creation or truncation fails.
 
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Print a brief message listing the \fBdcp\fR options and usage.
 
 .TP
-\fB\-v\fR, \fB\-\-verbose\fR
-Enable verbose logging messages.
+\fB\-i\fR, \fB\-\-prompt-overwrite\fR
+Prompt whether to overwrite existing regular destination files.
 
 .TP
-\fB\-V\fR, \fB\-\-version\fR
+\fB\-p\fR, \fB\-\-preserve\fR
+Preserve the original files' owner, group, permissions (including the setuid and setgid bits), time of last modification and time of last access. In case duplication of owner or group fails, the setuid and setgid bits are cleared.
+
+.TP
+\fB\-R\fR, \fB\-\-recursive\fR
+Copy directories recursively, and do the right thing when objects other than ordinary files or directories are encountered.
+
+.TP
+\fB\-r\fR, \fB\-\-recursive-unspecified\fR
+Copy directories recursively, and do something unspecified with objects other than ordinary files or directories. This is required for POSIX compliance. \fBdcp\fR(1) will perform exactly the same actions for \fB\-R\fR and \fB\-r\fR.
+
+.TP
+\fB\-v\fR, \fB\-\-version\fR
 Print version information and exit.
-
-.TP
-\fB\-P\fR, \fB\-\-skip-compare\fR
-Warning, using this option may result in data corruption! If this option is
-used, the comparison stage of the copy process will be skipped. The comparison
-stage of the copy process ensures that the source and destination files match.
-Using this option will likely increase performance while reducing reliability.
-
-.SH "FIELDS"
-
-.TP
-\fBsource\fR
-The path of the source to be used in the copy operation. The source may be
-a directory or file object.
-
-.TP
-\fBdestination\fR
-The path of the destination to be used in the copy operation. If the
-destination is a file, it will be overwritten by the source file. If the
-destination is a directory, the source file(s) will be copied into the
-specified directory
-
-.TP
-\fBspecial\fR
-For future use. Currently unimplemented.
-
-.SH "EXAMPLES"
-.eo
-Copy a single file from a source to a destination file:
-.nf
-> dcp from.txt to.txt
-.fi
-.ec
-
-.eo
-Copy two files destination directory:
-.nf
-> dcp from1.txt from2.txt my_dir
-.fi
-.ec
 
 .SH "COPYING"
 Copyright (C) 2011-2012 Los Alamos National Security.
