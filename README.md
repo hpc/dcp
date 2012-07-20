@@ -13,10 +13,8 @@ dcp [CdfhipRrv] [--] source_file ... target_directory
 ### DESCRIPTION
 dcp is a file copy tool in the spirit of *cp(1)* that evenly distributes work across a large cluster without any centralized state. It is designed for copying files which are located on a distributed parallel file system. The method used in the file copy process is a self-stabilization algorithm which enables per-node autonomous processing and a token passing scheme to detect termination.
 
-dcp requires an MPI environment (such as OpenMPI's *mpirun(1)*).
-
 ### PREREQUISITES
-* [libcircle](https://github.com/hpc/libcircle)
+An MPI environment is required (such as OpenMPI's *mpirun(1)*) as well as the self-stabilization library known as [libcircle](https://github.com/hpc/libcircle).
 
 ### OPTIONS
 **-C**, **--skip-compare**
