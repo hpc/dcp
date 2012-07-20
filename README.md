@@ -1,9 +1,14 @@
 # dcp
 ##### A tool to copy file(s) in parallel on a distributed system.
 
+### IN-DEVELOPMENT NOTICE
+Please note that dcp is ALPHA QUALITY software. It is in a state of development where things are constantly changing and unstable.
+
 ### SYNOPSIS
-```dcp [CdfhipRrv] [--] source_file target_file```
-```dcp [CdfhipRrv] [--] source_file ... target_directory```
+```
+dcp [CdfhipRrv] [--] source_file target_file
+dcp [CdfhipRrv] [--] source_file ... target_directory
+```
 
 ### DESCRIPTION
 dcp is a file copy tool in the spirit of *cp(1)* that evenly distributes work across a large cluster without any centralized state. It is designed for copying files which are located on a distributed parallel file system. The method used in the file copy process is a self-stabilization algorithm which enables per-node autonomous processing and a token passing scheme to detect termination.
