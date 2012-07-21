@@ -43,7 +43,7 @@ Copy directories recursively, and do the right thing when objects other than ord
 
 **-r**, **--recursive-unspecified**
 
-Copy directories recursively, and do something unspecified with objects other than ordinary files or directories. This is required for POSIX compliance. *dcp(1)* will perform exactly the same actions for **-R** and **-r**.
+Copy directories recursively, and ignore objects other than ordinary files or directories.
 
 **-v**, **--version**
 
