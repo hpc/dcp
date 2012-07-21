@@ -6,8 +6,8 @@ Please note that dcp is ALPHA QUALITY software. It is in a state of development 
 
 ### SYNOPSIS
 ```
-dcp [CdfhipRrv] [--] source_file target_file
-dcp [CdfhipRrv] [--] source_file ... target_directory
+dcp [CdfhpRrv] [--] source_file target_file
+dcp [CdfhpRrv] [--] source_file ... target_directory
 ```
 
 ### DESCRIPTION
@@ -32,10 +32,6 @@ Remove existing destination files if creation or truncation fails.
 **-h**, **--help**
 
 Print a brief message listing the *dcp(1)* options and usage.
-
-**-i**, **--prompt-overwrite**
-
-Prompt whether to overwrite existing regular destination files.
 
 **-p**, **--preserve**
 

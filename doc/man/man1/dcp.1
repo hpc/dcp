@@ -5,9 +5,9 @@ dcp \- copy file(s) in parallel on a distributed system.
 
 .SH "SYNOPSIS"
 
-\fBdcp\fR [\fICdfhipRrv\fR] [\fI--\fR] source_file target_file
+\fBdcp\fR [\fICdfhpRrv\fR] [\fI--\fR] source_file target_file
 .br
-\fBdcp\fR [\fICdfhipRrv\fR] [\fI--\fR] source_file ... target_directory
+\fBdcp\fR [\fICdfhpRrv\fR] [\fI--\fR] source_file ... target_directory
 
 .SH "DESCRIPTION"
 \fBdcp\fR is a file copy tool in the spirit of \fBcp\fR(1) that evenly distributes work across a large cluster without any centralized state. It is designed for copying files which are located on a distributed parallel file system. The method used in the file copy process is a self-stabilization algorithm which enables per-node autonomous processing and a token passing scheme to detect termination.
@@ -31,10 +31,6 @@ Remove existing destination files if creation or truncation fails.
 .TP
 \fB\-h\fR, \fB\-\-help\fR
 Print a brief message listing the \fBdcp\fR options and usage.
-
-.TP
-\fB\-i\fR, \fB\-\-prompt-overwrite\fR
-Prompt whether to overwrite existing regular destination files.
 
 .TP
 \fB\-p\fR, \fB\-\-preserve\fR
