@@ -244,6 +244,21 @@ int main(int argc, char** argv)
                 exit(EXIT_SUCCESS);
                 break;
 
+            case 'p':
+                DCOPY_user_opts.preserve = true;
+                LOG(DCOPY_LOG_INFO, "Preserving file attributes.");
+                break;
+
+            case 'R':
+                DCOPY_user_opts.recursive = true;
+                LOG(DCOPY_LOG_INFO, "Performing correct recursion.");
+                break;
+
+            case 'r':
+                DCOPY_user_opts.recursive_unspecified = true;
+                LOG(DCOPY_LOG_INFO, "Performing recursion while ignoring special files.");
+                break;
+
             case 'v':
                 DCOPY_print_version(argv);
                 exit(EXIT_SUCCESS);

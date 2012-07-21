@@ -36,7 +36,10 @@ typedef struct {
     char** src_path;
     uint16_t dest_base_index;
     bool skip_compare;
-    bool dest_stat_exists;
+    bool force;
+    bool preserve;
+    bool recursive;
+    bool recursive_unspecified;
     struct stat dest_stat;
 } DCOPY_options_t;
 
