@@ -152,17 +152,9 @@ void DCOPY_print_version(char** argv)
  */
 void DCOPY_print_usage(char** argv)
 {
-    fprintf(stdout, "\n  Usage: %s [-dhvmVP] <source> ... [<special>:]<destination>\n\n", argv[0]);
-    fprintf(stdout, "    Options:\n");
-    fprintf(stdout, "      -d <level> - Set debug level to output.\n");
-    fprintf(stdout, "      -h         - Print this usage message.\n");
-    fprintf(stdout, "      -v         - Enable full verbose output.\n");
-    fprintf(stdout, "      -V         - Print the version string.\n");
-    fprintf(stdout, "      -P         - DANGEROUS, skip the compare stage.\n\n");
-    fprintf(stdout, "    Field Descriptions:\n");
-    fprintf(stdout, "      source      - A source path to copy from.\n");
-    fprintf(stdout, "      destination - A destination path to copy to.\n");
-    fprintf(stdout, "      special     - Not implemented, for future use.\n\n");
+    fprintf(stdout, "\n");
+    fprintf(stdout, "usage: %s [CdfhpRrv] [--] source_file target_file\n", argv[0]);
+    fprintf(stdout, "       %s [CdfhpRrv] [--] source_file ... target_directory\n", argv[0]);
 }
 
 int main(int argc, char** argv)
@@ -171,32 +163,80 @@ int main(int argc, char** argv)
     int option_index = 0;
 
     DCOPY_debug_stream = stdout;
-    DCOPY_debug_level = DCOPY_LOG_INFO;
-
-    CIRCLE_loglevel CIRCLE_debug = CIRCLE_LOG_FATAL;
 
     /* By default, don't skip the compare option. */
     DCOPY_user_opts.skip_compare = false;
 
-    /* Make sure the destination stat cache is empty. */
-    DCOPY_user_opts.dest_stat_exists = false;
+    /* By default, show info log messages. */
+    CIRCLE_loglevel CIRCLE_debug = CIRCLE_LOG_INFO;
+    DCOPY_debug_level = DCOPY_LOG_INFO;
+
+    /* By default, don't unlink destination files if an open() fails. */
+    DCOPY_user_opts.force = false;
+
+    /* By default, don't bother to preserve all attributes. */
+    DCOPY_user_opts.preserve = false;
+
+    /* By default, don't attempt any type of recursion. */
+    DCOPY_user_opts.recursive = false;
+    DCOPY_user_opts.recursive_unspecified = false;
 
     static struct option long_options[] = {
-        {"debug"       , required_argument, 0, 'd'},
-        {"help"        , no_argument      , 0, 'h'},
-        {"verbose"     , no_argument      , 0, 'v'},
-        {"version"     , no_argument      , 0, 'V'},
-        {"skip-compare", no_argument      , 0, 'P'},
-        {0             , 0                , 0, 0  }
+        {"skip-compare"         , no_argument      , 0, 'C'},
+        {"debug"                , required_argument, 0, 'd'},
+        {"force"                , no_argument      , 0, 'f'},
+        {"help"                 , no_argument      , 0, 'h'},
+        {"preserve"             , no_argument      , 0, 'p'},
+        {"recursive"            , no_argument      , 0, 'R'},
+        {"recursive-unspecified", no_argument      , 0, 'r'},
+        {"version"              , no_argument      , 0, 'v'},
+        {0                      , 0                , 0, 0  }
     };
 
     /* Parse options */
-    while((c = getopt_long(argc, argv, "d:hvVP", long_options, &option_index)) != -1) {
+    while((c = getopt_long(argc, argv, "Cd:fhpRrv", long_options, &option_index)) != -1) {
         switch(c) {
+
+            case 'C':
+                DCOPY_user_opts.skip_compare = true;
+                LOG(DCOPY_LOG_INFO, "Skipping the comparison stage, this may result in file corruption.");
+                break;
+
             case 'd':
-                DCOPY_debug_level = atoi(optarg);
-                CIRCLE_debug = (enum CIRCLE_loglevel)DCOPY_debug_level;
-                LOG(DCOPY_LOG_DBG, "Verbose mode enabled.");
+
+                if(strncmp(optarg, "fatal", 5)) {
+                    CIRCLE_debug = CIRCLE_LOG_FATAL;
+                    DCOPY_debug_level = DCOPY_LOG_FATAL;
+                    LOG(DCOPY_LOG_INFO, "Debug level set to: fatal");
+
+                } else if(strncmp(optarg, "err", 3)) {
+                    CIRCLE_debug = CIRCLE_LOG_ERR;
+                    DCOPY_debug_level = DCOPY_LOG_ERR;
+                    LOG(DCOPY_LOG_INFO, "Debug level set to: errors");
+
+                } else if(strncmp(optarg, "warn", 4)) {
+                    CIRCLE_debug = CIRCLE_LOG_WARN;
+                    DCOPY_debug_level = DCOPY_LOG_WARN;
+                    LOG(DCOPY_LOG_INFO, "Debug level set to: warnings");
+
+                } else if(strncmp(optarg, "info", 4)) {
+                    CIRCLE_debug = CIRCLE_LOG_INFO;
+                    DCOPY_debug_level = DCOPY_LOG_INFO;
+                    LOG(DCOPY_LOG_INFO, "Debug level set to: info");
+
+                } else if(strncmp(optarg, "dbg", 4)) {
+                    CIRCLE_debug = CIRCLE_LOG_DBG;
+                    DCOPY_debug_level = DCOPY_LOG_DBG;
+                    LOG(DCOPY_LOG_INFO, "Debug level set to: debug");
+
+                } else {
+                    LOG(DCOPY_LOG_INFO, "Debug level `%s' not recognized. Defaulting to `info'.");
+                }
+                break;
+
+            case 'f':
+                DCOPY_user_opts.force = true;
+                LOG(DCOPY_LOG_INFO, "Unlinking destionation file if create or truncate fails.");
                 break;
 
             case 'h':
@@ -205,19 +245,8 @@ int main(int argc, char** argv)
                 break;
 
             case 'v':
-                DCOPY_debug_level = DCOPY_LOG_DBG;
-                CIRCLE_debug = CIRCLE_LOG_DBG;
-                LOG(DCOPY_LOG_DBG, "Verbose mode enabled.");
-                break;
-
-            case 'V':
                 DCOPY_print_version(argv);
                 exit(EXIT_SUCCESS);
-                break;
-
-            case 'P':
-                DCOPY_user_opts.skip_compare = true;
-                LOG(DCOPY_LOG_INFO, "Skipping the comparison stage, this may result in file corruption.");
                 break;
 
             case '?':
