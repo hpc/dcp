@@ -1,1 +1,1 @@
-AM_CFLAGS = -Wall -Wextra -Wunused
+AM_CFLAGS = -Wall -Wextra -Wunused -Wshadow
