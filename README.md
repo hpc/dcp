@@ -1,8 +1,8 @@
 # dcp
 ##### A tool to copy file(s) in parallel on a distributed system.
 
-### IN-DEVELOPMENT NOTICE
-Please note that dcp is ALPHA QUALITY software. It is in a state of development where things are constantly changing and unstable.
+### IN-DEVELOPMENT WARNING
+Note that dcp is in an early stage of development. To determine the current state of dcp, please view the test results at the bottom of the latest build output on <https://travis-ci.org/hpc/dcp>.
 
 ### SYNOPSIS
 ```
@@ -58,6 +58,9 @@ git clone https://github.com/hpc/dcp.git dcp-<version>-<release>
 tar -zcvf dcp-<version>-<release>.tgz dcp-<version>-<release>
 rpmbuild -ta dcp-<version>-<release>.tgz
 ```
+
+### Contributions
+Please view the *HACKING.md* file for more information on how to contribute to dcp.
 
 ### COPYING
 See the included *COPYING* file for additional information. 
