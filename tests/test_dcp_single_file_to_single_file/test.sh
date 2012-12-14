@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# A test to check if dcp will copy a single file to another single file.
+# Description:
+#
+#   A test to check if dcp will copy a single file to another single file.
 #
 # Expected behavior:
 #
@@ -9,8 +11,10 @@
 #   of the first file should be copied in. If the first file does not exist on
 #   disk, an error should be reported.
 #
-# Reminder: Lines that echo to the terminal will only be available if DEBUG is
-#           enabled in the test runner.
+# Reminder:
+#
+#   Lines that echo to the terminal will only be available if DEBUG is enabled
+#   in the test runner (test_all.sh).
 
 # Print out the basic paths we'll be using.
 echo "Using dcp binary at: $DCP_TEST_BIN"
@@ -26,15 +30,30 @@ PATH_C_EMPTY="$DCP_TEST_TMP/single_file_to_single_file.$RANDOM.tmp"
 PATH_D_RANDOM="$DCP_TEST_TMP/single_file_to_single_file.$RANDOM.tmp"
 PATH_E_RANDOM="$DCP_TEST_TMP/single_file_to_single_file.$RANDOM.tmp"
 
-# Print out the paths to make debugging easier.
+# Print out the generated paths to make debugging easier.
 echo "A_NOEXIST path at: $PATH_A_NOEXIST"
 echo "B_EMPTY   path at: $PATH_B_EMPTY"
 echo "C_EMPTY   path at: $PATH_C_EMPTY"
 echo "D_RANDOM  path at: $PATH_D_RANDOM"
 echo "E_RANDOM  path at: $PATH_E_RANDOM"
 
-#### TODO
-#####dd if=/dev/urandom of=a.log bs=1M count=2
+# Create the two empty files.
+touch $PATH_B_EMPTY
+touch $PATH_C_EMPTY
+
+# Create the two random files.
+dd if=/dev/urandom of=$PATH_D_RANDOM bs=1M count=4
+dd if=/dev/urandom of=$PATH_E_RANDOM bs=1M count=3
+
+# Create checksums for files that exist on disk.
+MD5_B_EMPTY=$(md5sum "$PATH_B_EMPTY" | /usr/bin/cut -f 2 -d "=")
+MD5_C_EMPTY=$(md5sum "$PATH_C_EMPTY" | /usr/bin/cut -f 2 -d "=")
+MD5_D_RANDOM=$(md5sum "$PATH_D_RANDOM" | /usr/bin/cut -f 2 -d "=")
+MD5_E_RANDOM=$(md5sum "$PATH_E_RANDOM" | /usr/bin/cut -f 2 -d "=")
+
+# Test copying an empty file to an empty file. The result should be two files
+# which remain empty with no error output.
+#TODO
 
 # TODO: remove this once the test is completely written.
 exit 1
