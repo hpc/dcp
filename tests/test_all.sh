@@ -1,14 +1,30 @@
 #!/bin/bash
 
+###############################################################################
 #
-# A simple integration test runner for dcp.
+#                     A simple test runner for dcp.
 #
+###############################################################################
 
-# If we don't find any tests, just don't run anything.
-shopt -s nullglob
+# Turn this on if you want output from each test printed out.
+DEBUG=0
+
+# A temporary directory that all tests can use for scratch files.
+TEST_TMP_DIR=/tmp
+
+# The dcp binary path to use. This must be relative to the test_all.sh script.
+TEST_DCP_BIN=../src/dcp
+
+# Basic counters for summary output
+TESTS_RUN=0
+TESTS_FAILED=0
+TESTS_PASSED=0
 
 # Determine where the test directory is
 TESTS_DIR=$(dirname ${BASH_SOURCE[0]})
+
+# If we don't find any tests, just don't run anything.
+shopt -s nullglob
 
 # Make sure we're in the same directory as the tests.
 pushd $TESTS_DIR > /dev/null
@@ -19,21 +35,25 @@ echo "# ========================================================================
 echo "# Tests started at: $(date)"
 echo "# =============================================================================="
 
-TESTS_RUN=0
-TESTS_FAILED=0
-TESTS_PASSED=0
+# Fix up the tmp and bin paths for subshells.
+export DCP_TEST_BIN=$(readlink -f $TEST_DCP_BIN)
+export DCP_TEST_TMP=$(readlink -f $TEST_TMP_DIR)
 
 # Find and run all of the tests.
 for TEST in ./*
 do
     if [[ -d "$TEST" ]]; then
-        $($TEST"/test.sh"); RETVAL=$?;
+        TEST_OUT=$($TEST"/test.sh"); RETVAL=$?;
+
+        if [[ $DEBUG -eq 1 ]]; then
+            echo "$TEST_OUT"
+        fi
 
         if [[ $RETVAL -eq 0 ]]; then
             echo "SUCCESS $(echo "$TEST" | sed 's/[^a-zA-Z0-9_]//g')";
             TESTS_PASSED=`expr $TESTS_PASSED + 1`;
         fi
-${1%/}
+
         if [[ $RETVAL -ne 0 ]]; then
             echo "FAILED $(echo "$TEST" | sed 's/[^a-zA-Z0-9_]//g')";
             TESTS_FAILED=`expr $TESTS_FAILED + 1`;
