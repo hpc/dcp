@@ -11,7 +11,7 @@ shopt -s nullglob
 TESTS_DIR=$(dirname ${BASH_SOURCE[0]})
 
 # Make sure we're in the same directory as the tests.
-pushd $TESTS_DIR
+pushd $TESTS_DIR > /dev/null
 
 echo "# =============================================================================="
 echo "# Running ALL tests for DCP."
