@@ -9,6 +9,9 @@ MAINTAINERCLEANFILES =                                  \
 	ltconfig ltmain.sh missing mkinstalldirs        \
 	stamp-h.in
 
+test: all
+	./tests/test_all.sh
+
 distclean-local:
 	-(cd $(top_srcdir) && rm -rf autom4te*.cache autoscan.*)
 	-(cd $(top_srcdir) && rm -rf $(PACKAGE)-*)

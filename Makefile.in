@@ -758,6 +758,9 @@ uninstall-am:
 	uninstall uninstall-am
 
 
+test: all
+	./tests/test_all.sh
+
 distclean-local:
 	-(cd $(top_srcdir) && rm -rf autom4te*.cache autoscan.*)
 	-(cd $(top_srcdir) && rm -rf $(PACKAGE)-*)

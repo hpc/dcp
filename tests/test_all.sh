@@ -8,15 +8,15 @@
 shopt -s nullglob
 
 # Determine where the test directory is
-TESTS_DIR="$(dirname "$0")"
+TESTS_DIR=$(dirname ${BASH_SOURCE[0]})
 
 # Make sure we're in the same directory as the tests.
-pushd $TESTS_DIR > /dev/null
+pushd $TESTS_DIR
 
 echo "# =============================================================================="
 echo "# Running ALL tests for DCP."
 echo "# =============================================================================="
-echo "# Started at: $(date)"
+echo "# Tests started at: $(date)"
 echo "# =============================================================================="
 
 TESTS_RUN=0
@@ -24,7 +24,7 @@ TESTS_FAILED=0
 TESTS_PASSED=0
 
 # Find and run all of the tests.
-for TEST in "$TESTS_DIR"/*
+for TEST in ./*
 do
     if [[ -d "$TEST" ]]; then
         $($TEST"/test.sh"); RETVAL=$?;
@@ -45,13 +45,13 @@ done
 
 echo "# =============================================================================="
 echo "# DCP Test Summary:"
-echo "#     Tests Run:      $TESTS_RUN"
-echo "#     Tests Passed:   $TESTS_PASSED"
-echo "#     Tests Failed:   $TESTS_FAILED"
+echo "#     Passed:         $TESTS_PASSED"
+echo "#     Failed:         $TESTS_FAILED"
 echo "# =============================================================================="
+echo "#     Tests Run:      $TESTS_RUN"
 echo "#     Percent Passed: $(echo "scale=2; ($TESTS_PASSED*100) / $TESTS_RUN" | bc)%"
 echo "# =============================================================================="
-echo "# Ended at: $(date)"
+echo "# Tests ended at: $(date)"
 echo "# =============================================================================="
 
 # Return to the original directory where this script was run.
