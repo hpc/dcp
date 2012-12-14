@@ -25,6 +25,7 @@ without centralized state.
 %build
 %configure --program-prefix=%{?_program_prefix:%{_program_prefix}}
 make %{?_smp_mflags}
+make test
 
 %install
 rm -rf "$RPM_BUILD_ROOT"
