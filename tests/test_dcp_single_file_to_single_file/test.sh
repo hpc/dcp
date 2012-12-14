@@ -42,8 +42,8 @@ touch $PATH_B_EMPTY
 touch $PATH_C_EMPTY
 
 # Create the two random files.
-$(dd if=/dev/urandom of=$PATH_D_RANDOM bs=1M count=4)
-$(dd if=/dev/urandom of=$PATH_E_RANDOM bs=1M count=3)
+dd if=/dev/urandom of=$PATH_D_RANDOM bs=1M count=4 > /dev/null
+dd if=/dev/urandom of=$PATH_E_RANDOM bs=1M count=3 > /dev/null
 
 # Create checksums for files that exist on disk.
 MD5_B_EMPTY=$(md5sum "$PATH_B_EMPTY" | /usr/bin/cut -f 2 -d "=")
