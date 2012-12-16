@@ -12,17 +12,21 @@ if(is_file(last_argument) {
     last_argument_is_dir = true
     last_argument_is_file = false
 } else {
+    /*
+     * If recursion is turned on, we can have a file or a directory as the
+     * destination.
+     */
     if(allow_recursion) {
         /*
-         * If recursion is turned on, we can have a file or a directory as the
-         * destination. We can determine what it is by looking at the source
-         * arguments. If the source arguments contain a single file, then the
-         * destination must be a single file. We prune out the impossible
-         * combinations later on.
+         * We can determine what the destination should be by looking at the
+         * source arguments. If the source arguments contain a single file,
+         * then the destination must be a single file. We prune out the
+         * impossible combinations later on.
          */
+         last_argument_is_file = true
          for(src in srcs) {
-             if (is_file(src)) {
-                 last_argument_is_file = true
+             if (is_dir(src)) {
+                 last_argument_is_file = false
              }
          }
          last_argument_is_dir = !last_argument_is_file
