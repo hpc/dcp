@@ -7,13 +7,16 @@
 ###############################################################################
 
 # Turn this on if you want output from each test printed out.
-DEBUG=0
+DEBUG=1
 
 # A temporary directory that all tests can use for scratch files.
 TEST_TMP_DIR=/tmp
 
 # The dcp binary path to use. This must be relative to the test_all.sh script.
 TEST_DCP_BIN=../src/dcp
+
+# The mpirun binary to use.
+TEST_MPIRUN_BIN=`which mpirun`
 
 # Basic counters for summary output
 TESTS_RUN=0
@@ -38,6 +41,7 @@ echo "# ========================================================================
 # Fix up the tmp and bin paths for subshells.
 export DCP_TEST_BIN=$(readlink -f $TEST_DCP_BIN)
 export DCP_TEST_TMP=$(readlink -f $TEST_TMP_DIR)
+export TEST_MPIRUN_BIN=$(readlink -f $TEST_MPIRUN_BIN)
 
 # Find and run all of the tests.
 for TEST in ./*
