@@ -198,9 +198,9 @@ void DCOPY_parse_dest_path(char* path)
 /**
  * Grab the source paths.
  */
-void DCOPY_parse_src_paths(char** argv, int last_arg_index, int optind)
+void DCOPY_parse_src_paths(char** argv, int last_arg_index, int optind_local)
 {
-    int index = 0;
+    int opt_index = 0;
 
     /*
      * Since we can't overwrite a file with a directory, lets see if the
@@ -215,19 +215,19 @@ void DCOPY_parse_src_paths(char** argv, int last_arg_index, int optind)
     DCOPY_user_opts.src_path = (char**) malloc((ARG_MAX + 1) * sizeof(void*));
     memset(DCOPY_user_opts.src_path, 0, (ARG_MAX + 1) * sizeof(char));
 
-    for(index = optind; index < last_arg_index; index++) {
-        DCOPY_user_opts.src_path[index - optind] = realpath(argv[index], NULL);
+    for(opt_index = optind_local; opt_index < last_arg_index; opt_index++) {
+        DCOPY_user_opts.src_path[opt_index - optind_local] = realpath(argv[opt_index], NULL);
 
         if(!DCOPY_user_opts.dest_path) {
             LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
-                argv[index], strerror(errno));
+                argv[opt_index], strerror(errno));
 
             exit(EXIT_FAILURE);
         }
 
-        if(destination_is_file && DCOPY_is_directory(DCOPY_user_opts.src_path[index - optind])) {
+        if(destination_is_file && DCOPY_is_directory(DCOPY_user_opts.src_path[opt_index - optind_local])) {
             LOG(DCOPY_LOG_ERR, "Cannot overwrite non-directory `%s' with directory `%s'",
-                DCOPY_user_opts.dest_path, DCOPY_user_opts.src_path[index - optind]);
+                DCOPY_user_opts.dest_path, DCOPY_user_opts.src_path[opt_index - optind_local]);
 
             exit(EXIT_FAILURE);
         }
@@ -237,10 +237,10 @@ void DCOPY_parse_src_paths(char** argv, int last_arg_index, int optind)
 /**
  * Parse the source and destination paths that the user has provided.
  */
-void DCOPY_parse_path_args(char** argv, int optind, int argc)
+void DCOPY_parse_path_args(char** argv, int optind_local, int argc)
 {
-    size_t num_args = argc - optind;
-    int last_arg_index = num_args + optind - 1;
+    size_t num_args = argc - optind_local;
+    int last_arg_index = num_args + optind_local - 1;
 
     char** dbg_p = NULL;
 
@@ -255,7 +255,7 @@ void DCOPY_parse_path_args(char** argv, int optind, int argc)
     DCOPY_parse_dest_path(argv[last_arg_index]);
 
     /* Grab the source paths. */
-    DCOPY_parse_src_paths(argv, last_arg_index, optind);
+    DCOPY_parse_src_paths(argv, last_arg_index, optind_local);
 
     /*
      * Now, lets print everything out for debugging purposes.
