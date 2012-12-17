@@ -18,6 +18,6 @@ uint32_t DCOPY_source_file_count();
 void DCOPY_parse_dest_path(char* path);
 void DCOPY_parse_src_paths(char** argv, int last_arg_index, int optind);
 void DCOPY_parse_path_args(char** argv, int optind, int argc);
-void DCOPY_enqueue_work_objects(CIRCLE_handle* handle);
+void DCOPY_enqueue_work_objects(/* TODO: CIRCLE_handle* handle */);
 
 #endif /* __DCOPY_HANDLE_ARGS_H */

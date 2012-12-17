@@ -44,7 +44,7 @@ DCOPY_options_t DCOPY_user_opts;
  *   - Many directory to single directory
  *   - Many file and many directory to single directory
  */
-void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
+void DCOPY_enqueue_work_objects(/* TODO: CIRCLE_handle* handle */)
 {
     bool dest_is_dir = DCOPY_dest_is_dir();
     bool dest_is_file  = !dest_is_dir;
@@ -75,7 +75,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
          */
         DCOPY_user_opts.dest_base_index = strlen(DCOPY_user_opts.dest_path);
 
-        char* src_path = DCOPY_user_opts.src_path;
+        char* src_path = *(DCOPY_user_opts.src_path);
         while(src_path++ != NULL) {
             LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", src_path);
             /*TODO: handle->enqueue(absolute src_path) */
@@ -122,7 +122,7 @@ bool DCOPY_dest_is_dir()
              */
              dest_path_is_dir = true;
 
-             char* src_path = DCOPY_user_opts.src_path;
+             char* src_path = *(DCOPY_user_opts.src_path);
              while(src_path++ != NULL) {
                  if(DCOPY_is_regular_file(src_path)) {
                      dest_path_is_dir = false;
@@ -144,7 +144,7 @@ bool DCOPY_dest_is_dir()
 uint32_t DCOPY_source_file_count()
 {
     uint32_t source_file_count = 0;
-    char* src_path = DCOPY_user_opts.src_path;
+    char* src_path = *(DCOPY_user_opts.src_path);
 
     while(src_path++ != NULL) {
         source_file_count++;

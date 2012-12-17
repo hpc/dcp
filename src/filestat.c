@@ -109,7 +109,7 @@ void DCOPY_stat_process_file(char* path, size_t file_size, CIRCLE_handle* handle
 
     /* Encode and enqueue the last partial chunk. */
     if(num_chunks * DCOPY_CHUNK_SIZE < file_size) {
-        char* newop = DCOPY_encode_operation(COPY, index, path, base_index);
+        char* newop = DCOPY_encode_operation(COPY, chunk_index, path, base_index);
         handle->enqueue(newop);
         free(newop);
     }
