@@ -66,6 +66,7 @@ void DCOPY_enqueue_work_objects(/* TODO: CIRCLE_handle* handle */)
              * This is the catch-all for impossible conditions.
              */
             LOG(DCOPY_LOG_ERR, "Error: Impossible condition catch-all.");
+            exit(EXIT_FAILURE);
         }
 
     } else if(dest_is_dir) {
@@ -87,6 +88,7 @@ void DCOPY_enqueue_work_objects(/* TODO: CIRCLE_handle* handle */)
          * implemented yet.
          */
         LOG(DCOPY_LOG_ERR, "We've encountered an unsupported filetype.");
+        exit(EXIT_FAILURE);
     }
 
     /* TODO: print mode we're using to DBG. */
