@@ -9,7 +9,7 @@
 #include "log.h"
 #include "dcp.h"
 
-#include "argparse.h"
+#include "handle_args.h"
 #include "checksum.h"
 #include "copy.h"
 #include "filestat.h"
@@ -66,25 +66,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
  */
 void DCOPY_add_objects(CIRCLE_handle* handle)
 {
-    char** src_p = DCOPY_user_opts.src_path;
-    int base_index = 0;
-    char *tmp_base;
-
-    while(*src_p != NULL) {
-        if(DCOPY_is_regular_file(*src_p)) {
-            tmp_base = realpath(*src_p, NULL);
-            base_index = strlen(dirname(tmp_base));
-            free(tmp_base);
-        } else {
-            base_index = strlen(*src_p);
-        }
-
-        char* op = DCOPY_encode_operation(STAT, 0, *src_p, base_index);
-        handle->enqueue(op);
-
-        free(op);
-        src_p++;
-    }
+    DCOPY_enqueue_work_objects(handle);
 }
 
 /**
