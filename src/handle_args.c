@@ -94,7 +94,6 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 
 bool DCOPY_dest_is_dir()
 {
-    int src_index;
     bool dest_path_is_dir = false;
 
     /*

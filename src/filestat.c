@@ -94,14 +94,15 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
 void DCOPY_stat_process_file(char* path, size_t file_size, CIRCLE_handle* handle, uint16_t base_index)
 {
-    size_t index;
+    size_t chunk_index;
     size_t num_chunks = file_size / DCOPY_CHUNK_SIZE;
 
     LOG(DCOPY_LOG_DBG, "File size is `%ld' with chunks `%zu' (total `%zu').", \
         file_size, num_chunks, num_chunks * DCOPY_CHUNK_SIZE); 
+
     /* Encode and nqueue each chunk of the file for processing later. */
-    for(index = 0; index < num_chunks; index++) {
-        char* newop = DCOPY_encode_operation(COPY, index, path, base_index);
+    for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
+        char* newop = DCOPY_encode_operation(COPY, chunk_index, path, base_index);
         handle->enqueue(newop);
         free(newop);
     }

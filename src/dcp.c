@@ -211,7 +211,7 @@ int main(int argc, char** argv)
                     LOG(DCOPY_LOG_INFO, "Debug level set to: debug");
 
                 } else {
-                    LOG(DCOPY_LOG_INFO, "Debug level `%s' not recognized. Defaulting to `info'.");
+                    LOG(DCOPY_LOG_INFO, "Debug level `%s' not recognized. Defaulting to `info'.", optarg);
                 }
                 break;
 
