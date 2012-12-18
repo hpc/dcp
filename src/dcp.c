@@ -149,7 +149,7 @@ int main(int argc, char** argv)
     DCOPY_user_opts.skip_compare = false;
 
     /* By default, show info log messages. */
-    CIRCLE_loglevel CIRCLE_debug = CIRCLE_LOG_DBG;
+    CIRCLE_loglevel CIRCLE_debug = CIRCLE_LOG_INFO;
     DCOPY_debug_level = DCOPY_LOG_DBG;
 
     /* By default, don't unlink destination files if an open() fails. */
