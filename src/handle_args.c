@@ -69,10 +69,24 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
             handle->enqueue(op);
         } else {
             /*
-             * This is the catch-all for impossible conditions.
+             * This is a catch-all for several impossible conditions.
              */
-            /* TODO: print an INFO message with a description of the condition. */
-            LOG(DCOPY_LOG_ERR, "Error: Impossible condition catch-all.");
+
+            /* Determine if we're trying to copy a directory into a file. */
+            char** bad_src_path = DCOPY_user_opts.src_path;
+            while(*bad_src_path != NULL) {
+                if(DCOPY_is_directory(*(bad_src_path))) {
+                    LOG(DCOPY_LOG_ERR, "Copying a directory into a file is not supported.");
+                    exit(EXIT_FAILURE);
+                }
+                bad_src_path++;
+            }
+
+            /*
+             * The only remaining possible condition is that the user wants to
+             * copy multiple files into a single file (hopefully).
+             */
+            LOG(DCOPY_LOG_ERR, "Copying several files into a single file is not supported.");
             exit(EXIT_FAILURE);
         }
 
@@ -86,11 +100,13 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
         DCOPY_user_opts.dest_base_index = strlen(DCOPY_user_opts.dest_path);
 
         char** src_path = DCOPY_user_opts.src_path;
-        while(*(src_path++) != NULL) {
+        while(*src_path != NULL) {
             LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", *(src_path));
 
             char* op = DCOPY_encode_operation(STAT, 0, *(src_path), 0);
             handle->enqueue(op);
+
+            src_path++;
         }
 
     } else {
@@ -136,10 +152,11 @@ bool DCOPY_dest_is_dir()
              dest_path_is_dir = true;
 
              char** src_path = DCOPY_user_opts.src_path;
-             while(*(src_path++) != NULL) {
+             while(*src_path != NULL) {
                  if(DCOPY_is_regular_file(*(src_path))) {
                      dest_path_is_dir = false;
                  }
+                 src_path++;
              }
 
         } else {
@@ -159,8 +176,9 @@ uint32_t DCOPY_source_file_count()
     uint32_t source_file_count = 0;
     char** src_path = DCOPY_user_opts.src_path;
 
-    while(*(src_path++) != NULL) {
+    while(*src_path != NULL) {
         source_file_count++;
+        src_path++;
     }
 
     return source_file_count;
@@ -201,9 +219,6 @@ void DCOPY_parse_dest_path(char* path)
         /* Finally, lets put everything together. */
         sprintf(norm_path, "%s/%s", DCOPY_user_opts.dest_path, file_name);
         strncpy(DCOPY_user_opts.dest_path, norm_path, PATH_MAX);
-    } else {
-        /* Since this is a directory, the base index is the length. */
-        DCOPY_user_opts.dest_base_index = strlen(DCOPY_user_opts.dest_path);
     }
 }
 
@@ -240,8 +255,6 @@ void DCOPY_parse_path_args(char** argv, int optind_local, int argc)
     size_t num_args = argc - optind_local;
     int last_arg_index = num_args + optind_local - 1;
 
-    char** dbg_p = NULL;
-
     if(argv == NULL || num_args < 2) {
         DCOPY_print_usage(argv);
         LOG(DCOPY_LOG_ERR, "You must specify a source and destination path.");
@@ -258,10 +271,11 @@ void DCOPY_parse_path_args(char** argv, int optind_local, int argc)
     /*
      * Now, lets print everything out for debugging purposes.
      */
-    dbg_p = DCOPY_user_opts.src_path;
+    char** dbg_p = DCOPY_user_opts.src_path;
 
-    while(*(dbg_p++) != NULL) {
-        LOG(DCOPY_LOG_DBG, "Found a source path with name: `%s'", *dbg_p);
+    while(*dbg_p != NULL) {
+        LOG(DCOPY_LOG_DBG, "Found a source path with name: `%s'", *(dbg_p));
+        dbg_p++;
     }
 
     LOG(DCOPY_LOG_DBG, "Found a destination path with name: `%s'", DCOPY_user_opts.dest_path);
