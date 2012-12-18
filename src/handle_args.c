@@ -44,14 +44,18 @@ DCOPY_options_t DCOPY_user_opts;
  *   - Many directory to single directory
  *   - Many file and many directory to single directory
  */
-void DCOPY_enqueue_work_objects(/* TODO: CIRCLE_handle* handle */)
+void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 {
     bool dest_is_dir = DCOPY_dest_is_dir();
     bool dest_is_file  = !dest_is_dir;
 
     uint32_t number_of_source_files = DCOPY_source_file_count();
 
+    LOG(DCOPY_LOG_DBG, "Found %d source files.", number_of_source_files);
+
     if(dest_is_file) {
+        LOG(DCOPY_LOG_DBG, "Infered that the destination is a file.");
+
         /*
          * If the destination is a file, there must be only one source object, and it
          * must be a file.
@@ -60,26 +64,33 @@ void DCOPY_enqueue_work_objects(/* TODO: CIRCLE_handle* handle */)
             DCOPY_user_opts.dest_base_index = strlen(basename(DCOPY_user_opts.dest_path));
 
             LOG(DCOPY_LOG_DBG, "Enqueueing only source path `%s'.", DCOPY_user_opts.src_path[0]);
-            /* TODO: handle->enqueue(absolute src path); */
+
+            char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0], 0);
+            handle->enqueue(op);
         } else {
             /*
              * This is the catch-all for impossible conditions.
              */
+            /* TODO: print an INFO message with a description of the condition. */
             LOG(DCOPY_LOG_ERR, "Error: Impossible condition catch-all.");
             exit(EXIT_FAILURE);
         }
 
     } else if(dest_is_dir) {
+        LOG(DCOPY_LOG_DBG, "Infered that the destination is a directory.");
+
         /*
          * Since the destination is a directory, we use that as a base so we can
          * copy all of the source objects into it.
          */
         DCOPY_user_opts.dest_base_index = strlen(DCOPY_user_opts.dest_path);
 
-        char* src_path = *(DCOPY_user_opts.src_path);
-        while(src_path++ != NULL) {
-            LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", src_path);
-            /*TODO: handle->enqueue(absolute src_path) */
+        char** src_path = DCOPY_user_opts.src_path;
+        while(*(src_path++) != NULL) {
+            LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", *(src_path));
+
+            char* op = DCOPY_encode_operation(STAT, 0, *(src_path), 0);
+            handle->enqueue(op);
         }
 
     } else {
@@ -105,10 +116,10 @@ bool DCOPY_dest_is_dir()
      * last argument should be.
      */
     if(DCOPY_is_directory(DCOPY_user_opts.dest_path)) {
-        dest_path_is_dir = false;
+        dest_path_is_dir = true;
 
     } else if(DCOPY_is_regular_file(DCOPY_user_opts.dest_path)) {
-        dest_path_is_dir = true;
+        dest_path_is_dir = false;
 
     } else {
         /*
@@ -124,9 +135,9 @@ bool DCOPY_dest_is_dir()
              */
              dest_path_is_dir = true;
 
-             char* src_path = *(DCOPY_user_opts.src_path);
-             while(src_path++ != NULL) {
-                 if(DCOPY_is_regular_file(src_path)) {
+             char** src_path = DCOPY_user_opts.src_path;
+             while(*(src_path++) != NULL) {
+                 if(DCOPY_is_regular_file(*(src_path))) {
                      dest_path_is_dir = false;
                  }
              }
@@ -146,9 +157,9 @@ bool DCOPY_dest_is_dir()
 uint32_t DCOPY_source_file_count()
 {
     uint32_t source_file_count = 0;
-    char* src_path = *(DCOPY_user_opts.src_path);
+    char** src_path = DCOPY_user_opts.src_path;
 
-    while(src_path++ != NULL) {
+    while(*(src_path++) != NULL) {
         source_file_count++;
     }
 
@@ -204,13 +215,6 @@ void DCOPY_parse_src_paths(char** argv, int last_arg_index, int optind_local)
     int opt_index = 0;
 
     /*
-     * Since we can't overwrite a file with a directory, lets see if the
-     * destination is a file. When we go through all of the source arguments,
-     * we can then check if we're trying to overwrite a file with a directory.
-     */
-    int destination_is_file = DCOPY_is_regular_file(DCOPY_user_opts.dest_path);
-
-    /*
      * Loop over each source path and check sanity.
      */
     DCOPY_user_opts.src_path = (char**) malloc((ARG_MAX + 1) * sizeof(void*));
@@ -222,13 +226,6 @@ void DCOPY_parse_src_paths(char** argv, int last_arg_index, int optind_local)
         if(!DCOPY_user_opts.dest_path) {
             LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
                 argv[opt_index], strerror(errno));
-
-            exit(EXIT_FAILURE);
-        }
-
-        if(destination_is_file && DCOPY_is_directory(DCOPY_user_opts.src_path[opt_index - optind_local])) {
-            LOG(DCOPY_LOG_ERR, "Cannot overwrite non-directory `%s' with directory `%s'",
-                DCOPY_user_opts.dest_path, DCOPY_user_opts.src_path[opt_index - optind_local]);
 
             exit(EXIT_FAILURE);
         }
@@ -263,9 +260,8 @@ void DCOPY_parse_path_args(char** argv, int optind_local, int argc)
      */
     dbg_p = DCOPY_user_opts.src_path;
 
-    while(*dbg_p != NULL) {
+    while(*(dbg_p++) != NULL) {
         LOG(DCOPY_LOG_DBG, "Found a source path with name: `%s'", *dbg_p);
-        dbg_p++;
     }
 
     LOG(DCOPY_LOG_DBG, "Found a destination path with name: `%s'", DCOPY_user_opts.dest_path);
