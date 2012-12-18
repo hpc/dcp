@@ -13,7 +13,7 @@
 #include "dcp.h"
 
 #include "handle_args.h"
-#include "filestat.h"
+#include "stat_file.h"
 
 #ifndef ARG_MAX
 #define ARG_MAX _POSIX_ARG_MAX

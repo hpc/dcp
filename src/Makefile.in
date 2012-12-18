@@ -52,7 +52,7 @@ CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_dcp_OBJECTS = dcp-handle_args.$(OBJEXT) dcp-compare.$(OBJEXT) \
-	dcp-copy.$(OBJEXT) dcp-filestat.$(OBJEXT) dcp-dcp.$(OBJEXT)
+	dcp-copy.$(OBJEXT) dcp-stat_file.$(OBJEXT) dcp-dcp.$(OBJEXT)
 dcp_OBJECTS = $(am_dcp_OBJECTS)
 am__DEPENDENCIES_1 =
 dcp_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -210,7 +210,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = -Wall -Wextra -Wunused -Wshadow
-dcp_SOURCES = handle_args.c compare.c copy.c filestat.c dcp.c
+dcp_SOURCES = handle_args.c compare.c copy.c stat_file.c dcp.c
 dcp_LDADD = \
     $(libcircle_LIBS) \
     $(MPI_CLDFLAGS)
@@ -310,8 +310,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dcp-compare.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dcp-copy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dcp-dcp.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dcp-filestat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dcp-handle_args.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dcp-stat_file.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -376,19 +376,19 @@ dcp-copy.obj: copy.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dcp-copy.obj `if test -f 'copy.c'; then $(CYGPATH_W) 'copy.c'; else $(CYGPATH_W) '$(srcdir)/copy.c'; fi`
 
-dcp-filestat.o: filestat.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dcp-filestat.o -MD -MP -MF $(DEPDIR)/dcp-filestat.Tpo -c -o dcp-filestat.o `test -f 'filestat.c' || echo '$(srcdir)/'`filestat.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dcp-filestat.Tpo $(DEPDIR)/dcp-filestat.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='filestat.c' object='dcp-filestat.o' libtool=no @AMDEPBACKSLASH@
+dcp-stat_file.o: stat_file.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dcp-stat_file.o -MD -MP -MF $(DEPDIR)/dcp-stat_file.Tpo -c -o dcp-stat_file.o `test -f 'stat_file.c' || echo '$(srcdir)/'`stat_file.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dcp-stat_file.Tpo $(DEPDIR)/dcp-stat_file.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='stat_file.c' object='dcp-stat_file.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dcp-filestat.o `test -f 'filestat.c' || echo '$(srcdir)/'`filestat.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dcp-stat_file.o `test -f 'stat_file.c' || echo '$(srcdir)/'`stat_file.c
 
-dcp-filestat.obj: filestat.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dcp-filestat.obj -MD -MP -MF $(DEPDIR)/dcp-filestat.Tpo -c -o dcp-filestat.obj `if test -f 'filestat.c'; then $(CYGPATH_W) 'filestat.c'; else $(CYGPATH_W) '$(srcdir)/filestat.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dcp-filestat.Tpo $(DEPDIR)/dcp-filestat.Po
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='filestat.c' object='dcp-filestat.obj' libtool=no @AMDEPBACKSLASH@
+dcp-stat_file.obj: stat_file.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dcp-stat_file.obj -MD -MP -MF $(DEPDIR)/dcp-stat_file.Tpo -c -o dcp-stat_file.obj `if test -f 'stat_file.c'; then $(CYGPATH_W) 'stat_file.c'; else $(CYGPATH_W) '$(srcdir)/stat_file.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dcp-stat_file.Tpo $(DEPDIR)/dcp-stat_file.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='stat_file.c' object='dcp-stat_file.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dcp-filestat.obj `if test -f 'filestat.c'; then $(CYGPATH_W) 'filestat.c'; else $(CYGPATH_W) '$(srcdir)/filestat.c'; fi`
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dcp-stat_file.obj `if test -f 'stat_file.c'; then $(CYGPATH_W) 'stat_file.c'; else $(CYGPATH_W) '$(srcdir)/stat_file.c'; fi`
 
 dcp-dcp.o: dcp.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dcp-dcp.o -MD -MP -MF $(DEPDIR)/dcp-dcp.Tpo -c -o dcp-dcp.o `test -f 'dcp.c' || echo '$(srcdir)/'`dcp.c

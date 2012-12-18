@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 #include "dcp.h"
-#include "filestat.h"
+#include "stat_file.h"
 #include "log.h"
 
 /** Options specified by the user. */

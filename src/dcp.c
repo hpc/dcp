@@ -12,7 +12,7 @@
 #include "handle_args.h"
 #include "compare.h"
 #include "copy.h"
-#include "filestat.h"
+#include "stat_file.h"
 
 /** The loglevel that this instance of dcopy will output. */
 DCOPY_loglevel DCOPY_debug_level;
