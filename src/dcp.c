@@ -10,7 +10,7 @@
 #include "dcp.h"
 
 #include "handle_args.h"
-#include "checksum.h"
+#include "compare.h"
 #include "copy.h"
 #include "filestat.h"
 
@@ -278,7 +278,7 @@ int main(int argc, char** argv)
 
     /* Initialize our jump table for core operations. */
     DCOPY_jump_table[0] = DCOPY_do_copy;
-    DCOPY_jump_table[1] = DCOPY_do_checksum;
+    DCOPY_jump_table[1] = DCOPY_do_compare;
     DCOPY_jump_table[2] = DCOPY_do_stat;
 
     /* Initialize our processing library and related callbacks. */

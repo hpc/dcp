@@ -13,7 +13,7 @@
 #define DCOPY_CHUNK_SIZE 4194304
 
 typedef enum {
-    COPY, CHECKSUM, STAT
+    COPY, COMPARE, STAT
 } DCOPY_operation_code_t;
 
 typedef struct {
