@@ -94,7 +94,7 @@ void DCOPY_stat_process_file(char* path, size_t file_size, CIRCLE_handle* handle
     size_t num_chunks = file_size / DCOPY_CHUNK_SIZE;
 
     LOG(DCOPY_LOG_DBG, "File size is `%ld' with chunks `%zu' (total `%zu').", \
-        file_size, num_chunks, num_chunks * DCOPY_CHUNK_SIZE); 
+        file_size, num_chunks, num_chunks * DCOPY_CHUNK_SIZE);
 
     /* Encode and nqueue each chunk of the file for processing later. */
     for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
@@ -119,10 +119,10 @@ void DCOPY_stat_process_dir(char* path, CIRCLE_handle* handle, uint16_t base_ind
     struct dirent* curr_ent;
     char cmd_buf[PATH_MAX];
     char newop_path[PATH_MAX];
-    
+
     sprintf(cmd_buf, "mkdir -p %s/%s", \
-        DCOPY_user_opts.dest_path, \
-        path + base_index);
+            DCOPY_user_opts.dest_path, \
+            path + base_index);
     LOG(DCOPY_LOG_DBG, "Creating directory with cmd `%s'.", cmd_buf);
 
     FILE* p = popen(cmd_buf, "r");

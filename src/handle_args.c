@@ -55,28 +55,32 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 
     if(dest_is_file) {
         LOG(DCOPY_LOG_DBG, "Infered that the destination is a file.");
+
         /*
          * If the destination is a file, there must be only one source object, and it
          * must be a file.
          */
-        if( number_of_source_files == 1 && DCOPY_is_regular_file(DCOPY_user_opts.src_path[0]) ) {
+        if(number_of_source_files == 1 && DCOPY_is_regular_file(DCOPY_user_opts.src_path[0])) {
             /* Use the parent directory of the destination file as the base to write into. */
             DCOPY_user_opts.dest_base_index = strlen(basename(DCOPY_user_opts.dest_path));
 
             LOG(DCOPY_LOG_DBG, "Enqueueing only source path `%s'.", DCOPY_user_opts.src_path[0]);
             char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0], 0);
             handle->enqueue(op);
-        } else {
+        }
+        else {
             /*
              * Determine if we're trying to copy one or more directories into
              * a file.
              */
             char** bad_src_path = DCOPY_user_opts.src_path;
+
             while(*bad_src_path != NULL) {
                 if(DCOPY_is_directory(*(bad_src_path))) {
                     LOG(DCOPY_LOG_ERR, "Copying a directory into a file is not supported.");
                     exit(EXIT_FAILURE);
                 }
+
                 bad_src_path++;
             }
 
@@ -88,7 +92,8 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
             exit(EXIT_FAILURE);
         }
 
-    } else if(dest_is_dir) {
+    }
+    else if(dest_is_dir) {
         LOG(DCOPY_LOG_DBG, "Infered that the destination is a directory.");
 
         /*
@@ -98,6 +103,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
         DCOPY_user_opts.dest_base_index = strlen(DCOPY_user_opts.dest_path);
 
         char** src_path = DCOPY_user_opts.src_path;
+
         while(*src_path != NULL) {
             LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", *(src_path));
 
@@ -107,7 +113,8 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
             src_path++;
         }
 
-    } else {
+    }
+    else {
         /*
          * This is the catch-all for all of the object types we haven't
          * implemented yet.
@@ -132,10 +139,12 @@ bool DCOPY_dest_is_dir()
     if(DCOPY_is_directory(DCOPY_user_opts.dest_path)) {
         dest_path_is_dir = true;
 
-    } else if(DCOPY_is_regular_file(DCOPY_user_opts.dest_path)) {
+    }
+    else if(DCOPY_is_regular_file(DCOPY_user_opts.dest_path)) {
         dest_path_is_dir = false;
 
-    } else {
+    }
+    else {
         /*
          * If recursion is turned on, we can have a file or a directory as the
          * destination.
@@ -147,17 +156,20 @@ bool DCOPY_dest_is_dir()
              * then the destination must be a single file. We prune out the
              * impossible combinations later on.
              */
-             dest_path_is_dir = true;
+            dest_path_is_dir = true;
 
-             char** src_path = DCOPY_user_opts.src_path;
-             while(*src_path != NULL) {
-                 if(DCOPY_is_regular_file(*(src_path))) {
-                     dest_path_is_dir = false;
-                 }
-                 src_path++;
-             }
+            char** src_path = DCOPY_user_opts.src_path;
 
-        } else {
+            while(*src_path != NULL) {
+                if(DCOPY_is_regular_file(*(src_path))) {
+                    dest_path_is_dir = false;
+                }
+
+                src_path++;
+            }
+
+        }
+        else {
             /*
              * Since recursion is turned off, there's only potential to create a
              * file at the destination.

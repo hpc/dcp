@@ -40,11 +40,12 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     LOG(DCOPY_LOG_DBG, "Copy, `%s' chunk `%d'.", op->operand, op->chunk);
 
     sprintf(new_file_path, "%s%s", \
-        DCOPY_user_opts.dest_path, \
-        op->operand + op->base_index);
+            DCOPY_user_opts.dest_path, \
+            op->operand + op->base_index);
     LOG(DCOPY_LOG_DBG, "Copy, dest `%s' (`%s').", new_file_path, op->operand + op->base_index);
 
     in = fopen(op->operand, "rb");
+
     if(!in) {
         LOG(DCOPY_LOG_ERR, "Unable to open original `%s'. %s", \
             op->operand, strerror(errno));
@@ -52,6 +53,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
 
     outfd = open(new_file_path, O_RDWR | O_CREAT, 00644);
+
     if(outfd < 0) {
         /*
          * Since we might be trying a file to file copy, lets try to open
@@ -62,7 +64,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
         file_file_buf[op->base_index] = '\0';
 
         sprintf(file_file_buf, "%s%s", file_file_buf, \
-            DCOPY_user_opts.dest_path + DCOPY_user_opts.dest_base_index);
+                DCOPY_user_opts.dest_path + DCOPY_user_opts.dest_base_index);
 
         LOG(DCOPY_LOG_DBG, "Attempting to open parent of new file `%s'.", file_file_buf);
 
