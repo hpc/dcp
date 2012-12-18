@@ -51,28 +51,26 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 
     uint32_t number_of_source_files = DCOPY_source_file_count();
 
-    LOG(DCOPY_LOG_DBG, "Found %d source files.", number_of_source_files);
+    LOG(DCOPY_LOG_DBG, "Found `%d' source files.", number_of_source_files);
 
     if(dest_is_file) {
         LOG(DCOPY_LOG_DBG, "Infered that the destination is a file.");
-
         /*
          * If the destination is a file, there must be only one source object, and it
          * must be a file.
          */
         if( number_of_source_files == 1 && DCOPY_is_regular_file(DCOPY_user_opts.src_path[0]) ) {
+            /* Use the parent directory of the destination file as the base to write into. */
             DCOPY_user_opts.dest_base_index = strlen(basename(DCOPY_user_opts.dest_path));
 
             LOG(DCOPY_LOG_DBG, "Enqueueing only source path `%s'.", DCOPY_user_opts.src_path[0]);
-
             char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0], 0);
             handle->enqueue(op);
         } else {
             /*
-             * This is a catch-all for several impossible conditions.
+             * Determine if we're trying to copy one or more directories into
+             * a file.
              */
-
-            /* Determine if we're trying to copy a directory into a file. */
             char** bad_src_path = DCOPY_user_opts.src_path;
             while(*bad_src_path != NULL) {
                 if(DCOPY_is_directory(*(bad_src_path))) {
