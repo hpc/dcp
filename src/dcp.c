@@ -80,13 +80,13 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
     };
 
     /* Pop an item off the queue */
-    LOG(DCOPY_LOG_DBG, "Popping, queue has %d elements", handle->local_queue_size());
+    LOG(DCOPY_LOG_DBG, "Popping, queue has `%d' elements", handle->local_queue_size());
     handle->dequeue(op);
 
     DCOPY_operation_t* opt = DCOPY_decode_operation(op);
 
-    LOG(DCOPY_LOG_DBG, "Popped [%s]", opt->operand);
-    LOG(DCOPY_LOG_DBG, "Operation: %d %s", opt->code, DCOPY_op_string_table[opt->code]);
+    LOG(DCOPY_LOG_DBG, "Popped `%s'", opt->operand);
+    LOG(DCOPY_LOG_DBG, "Operation `%d' `%s'", opt->code, DCOPY_op_string_table[opt->code]);
 
     DCOPY_jump_table[opt->code](opt, handle);
     free(opt);
@@ -111,13 +111,13 @@ void DCOPY_epilogue(void)
     strftime(starttime_str, 256, "%b-%d-%Y,%H:%M:%S", localstart);
     strftime(endtime_str, 256, "%b-%d-%Y,%H:%M:%S", localend);
 
-    LOG(DCOPY_LOG_INFO, "Filecopy run started at: %s", starttime_str);
-    LOG(DCOPY_LOG_INFO, "Filecopy run completed at: %s", endtime_str);
+    LOG(DCOPY_LOG_INFO, "Filecopy run started at `%s'.", starttime_str);
+    LOG(DCOPY_LOG_INFO, "Filecopy run completed at `%s'.", endtime_str);
 
-    LOG(DCOPY_LOG_INFO, "Filecopy total time (seconds) for this run: %f", \
+    LOG(DCOPY_LOG_INFO, "Filecopy total time (seconds) for this run is `%f'.", \
         difftime(DCOPY_statistics.time_started, DCOPY_statistics.time_ended));
 
-    LOG(DCOPY_LOG_INFO, "Transfer rate: %lf bytes per second (%ld bytes in %lf seconds).", \
+    LOG(DCOPY_LOG_INFO, "Transfer rate is `%lf' bytes per second (`%ld' bytes in `%lf' seconds).", \
         rate, DCOPY_statistics.total_bytes_copied, rel_time);
 }
 

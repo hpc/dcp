@@ -62,7 +62,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
          */
         if(number_of_source_files == 1 && DCOPY_is_regular_file(DCOPY_user_opts.src_path[0])) {
             /* Use the parent directory of the destination file as the base to write into. */
-            DCOPY_user_opts.dest_base_index = strlen(basename(DCOPY_user_opts.dest_path));
+            DCOPY_user_opts.dest_base_index = strlen(dirname(DCOPY_user_opts.dest_path));
 
             LOG(DCOPY_LOG_DBG, "Enqueueing only source path `%s'.", DCOPY_user_opts.src_path[0]);
             char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0], 0);
