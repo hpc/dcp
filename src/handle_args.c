@@ -76,9 +76,6 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
             sprintf(src_path_dirname, "%s", DCOPY_user_opts.src_path[0]);
             src_path_dirname = dirname(src_path_dirname);
 
-            /* Use the parent directory of the destination file as the base to write into. */
-            DCOPY_user_opts.dest_base_index = strlen(opts_dest_path_dirname);
-
             LOG(DCOPY_LOG_DBG, "Enqueueing only a single source path `%s'.", DCOPY_user_opts.src_path[0]);
             char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0], \
                                               strlen(src_path_dirname), NULL);
@@ -114,19 +111,10 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
     else if(dest_is_dir) {
         LOG(DCOPY_LOG_DBG, "Infered that the destination is a directory.");
         bool dest_already_exists = DCOPY_is_directory(DCOPY_user_opts.dest_path);
-
-        /*
-         * Since the destination is a directory, we use that as a base so we can
-         * copy all of the source objects into it. If the destination already
-         * exists, we need to copy inside it.
-         */
-        DCOPY_user_opts.dest_base_index = strlen(DCOPY_user_opts.dest_path);
         char** src_path = DCOPY_user_opts.src_path;
 
         while(*src_path != NULL) {
             LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", *(src_path));
-
-            char* opt_dest_append_path = NULL;
             char* src_path_basename = NULL;
 
             /*

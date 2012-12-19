@@ -39,7 +39,6 @@ typedef struct {
 typedef struct {
     char* dest_path;
     char** src_path;
-    uint16_t dest_base_index;
     bool conditional;
     bool skip_compare;
     bool force;
