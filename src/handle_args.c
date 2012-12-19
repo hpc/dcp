@@ -51,6 +51,9 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
     bool dest_is_dir = DCOPY_dest_is_dir();
     bool dest_is_file  = !dest_is_dir;
 
+    char* opts_dest_path_dirname;
+    char* src_path_dirname;
+
     uint32_t number_of_source_files = DCOPY_source_file_count();
 
     LOG(DCOPY_LOG_DBG, "Found `%d' source files.", number_of_source_files);
@@ -63,12 +66,22 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
          * must be a file.
          */
         if(number_of_source_files == 1 && DCOPY_is_regular_file(DCOPY_user_opts.src_path[0])) {
+            /* Make a copy of the dest path so we can run dirname on it. */
+            opts_dest_path_dirname = (char*) malloc(sizeof(char) * PATH_MAX);
+            sprintf(opts_dest_path_dirname, "%s", DCOPY_user_opts.dest_path);
+            opts_dest_path_dirname = dirname(opts_dest_path_dirname);
+
+            /* Make a copy of the src path so we can run dirname on it. */
+            src_path_dirname = (char*) malloc(sizeof(char) * PATH_MAX);
+            sprintf(src_path_dirname, "%s", DCOPY_user_opts.src_path[0]);
+            src_path_dirname = dirname(src_path_dirname);
+
             /* Use the parent directory of the destination file as the base to write into. */
-            DCOPY_user_opts.dest_base_index = strlen(dirname(DCOPY_user_opts.dest_path));
+            DCOPY_user_opts.dest_base_index = strlen(opts_dest_path_dirname);
 
             LOG(DCOPY_LOG_DBG, "Enqueueing only a single source path `%s'.", DCOPY_user_opts.src_path[0]);
             char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0], \
-                                              strlen(dirname(DCOPY_user_opts.src_path[0])));
+                                              strlen(src_path_dirname));
             handle->enqueue(op);
         }
         else {
@@ -224,8 +237,6 @@ void DCOPY_parse_dest_path(char* path)
     char norm_path[PATH_MAX];
     char* file_name;
 
-    DCOPY_user_opts.dest_path = path;
-    return;
     DCOPY_user_opts.dest_path = realpath(path, NULL);
 
     /*

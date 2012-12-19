@@ -57,6 +57,7 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     if(s < 0) {
         LOG(DCOPY_LOG_DBG, "Could not stat file at `%s'.", op->operand);
+        CIRCLE_abort();
         exit(EXIT_FAILURE);
     }
 

@@ -81,17 +81,17 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
     };
 
     /* Pop an item off the queue */
-    LOG(DCOPY_LOG_DBG, "Popping, queue has `%d' elements", handle->local_queue_size());
     handle->dequeue(op);
-
     DCOPY_operation_t* opt = DCOPY_decode_operation(op);
 
-    LOG(DCOPY_LOG_DBG, "Popped `%s'", opt->operand);
-    LOG(DCOPY_LOG_DBG, "Performing an operation of type `%s'", DCOPY_op_string_table[opt->code]);
+    LOG(DCOPY_LOG_DBG, "Popped `%s' (`%d remaining on local queue)", \
+        opt->operand, handle->local_queue_size());
+    LOG(DCOPY_LOG_DBG, "Performing an operation of type `%s' on operand `%s'.", \
+        DCOPY_op_string_table[opt->code], opt->operand);
 
     DCOPY_jump_table[opt->code](opt, handle);
-    free(opt);
 
+    free(opt);
     return;
 }
 

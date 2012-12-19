@@ -26,10 +26,8 @@ extern DCOPY_statistics_t DCOPY_statistics;
 void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     char dest_path[PATH_MAX];
-    char* source_path = op->operand;
-
     char buf[DCOPY_CHUNK_SIZE];
-    char file_file_buf[PATH_MAX];
+    char* source_path = op->operand;
 
     size_t bytes_read = 0;
     size_t bytes_written = 0;
@@ -39,7 +37,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     sprintf(dest_path, "%s/%s", \
             DCOPY_user_opts.dest_path, \
-            op->operand + op->source_base_offset);
+            op->operand + op->source_base_offset + 1);
 
     LOG(DCOPY_LOG_DBG, "Copying to destination path `%s' from source path `%s'.", dest_path, source_path);
     LOG(DCOPY_LOG_DBG, "Copying chunk number `%d' from source path `%s'.", op->chunk, source_path);
@@ -53,10 +51,21 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
 
     outfd = open(dest_path, O_RDWR | O_CREAT, 00644);
+
     if(outfd < 0) {
-        LOG(DCOPY_LOG_ERR, "Unable to open destination path `%s'. %s", \
-                dest_path, strerror(errno));
-        exit(EXIT_FAILURE);
+        /*
+         * Since we might be trying a file to file copy, lets try to open
+         * the base instead. If it really is a directory, we'll go ahead and
+         * fail.
+         */
+        LOG(DCOPY_LOG_DBG, "Attempting to see if this is a file to file copy.");
+        outfd = open(DCOPY_user_opts.dest_path, O_RDWR | O_CREAT, 00644);
+
+        if(outfd < 0) {
+            LOG(DCOPY_LOG_ERR, "Unable to open destination path `%s'. %s", \
+                    dest_path, strerror(errno));
+            exit(EXIT_FAILURE);
+        }
     }
 
     if(fseek(in, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
