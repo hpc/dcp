@@ -10,7 +10,7 @@ dcp \- copy file(s) in parallel on a distributed system.
 \fBdcp\fR [\fICdfhpRrv\fR] [\fI--\fR] source_file ... target_directory
 
 .SH "DESCRIPTION"
-\fBdcp\fR is a file copy tool in the spirit of \fBcp\fR(1) that evenly distributes work across a large cluster without any centralized state. It is designed for copying files which are located on a distributed parallel file system. The method used in the file copy process is a self-stabilization algorithm which enables per-node autonomous processing and a token passing scheme to detect termination (see \fIhttp://doi.acm.org/10.1145/2388996.2389114\fR for more information).
+\fBdcp\fR is a file copy tool in the spirit of \fBcp\fR(1) that evenly distributes work across a large cluster without centralized state. It is designed for copying files which are located on a distributed parallel file system. The method used in the file copy process is a self-stabilization algorithm which enables per-node autonomous processing and a token passing scheme to detect termination (see \fIhttp://doi.acm.org/10.1145/2388996.2389114\fR for more information).
 
 dcp requires an MPI environment (such as OpenMPI's \fBmpirun\fR(1)).
 
