@@ -12,6 +12,10 @@
 
 #define DCOPY_CHUNK_SIZE 4194304
 
+#ifndef PATH_MAX
+  #define PATH_MAX (4096)
+#endif
+
 typedef enum {
     COPY, COMPARE, STAT
 } DCOPY_operation_code_t;
