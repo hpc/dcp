@@ -35,9 +35,17 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     FILE* in;
     int outfd;
 
-    sprintf(dest_path, "%s/%s", \
-            DCOPY_user_opts.dest_path, \
-            op->operand + op->source_base_offset + 1);
+    if(op->dest_base_appendix == NULL) {
+        sprintf(dest_path, "%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->operand + op->source_base_offset + 1);
+    }
+    else {
+        sprintf(dest_path, "%s/%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->dest_base_appendix, \
+                op->operand + op->source_base_offset + 1);
+    }
 
     LOG(DCOPY_LOG_DBG, "Copying to destination path `%s' from source path `%s'.", dest_path, source_path);
     LOG(DCOPY_LOG_DBG, "Copying chunk number `%d' from source path `%s'.", op->chunk, source_path);

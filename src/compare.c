@@ -31,7 +31,12 @@ void DCOPY_do_compare(DCOPY_operation_t* op, CIRCLE_handle* handle)
     void* src_buf = (void*) malloc(DCOPY_CHUNK_SIZE);
     void* dest_buf = (void*) malloc(DCOPY_CHUNK_SIZE);
 
-    sprintf(dest_path, "%s/%s", DCOPY_user_opts.dest_path, src_path + op->source_base_offset);
+    if(op->dest_base_appendix == NULL) {
+        sprintf(dest_path, "%s/%s", DCOPY_user_opts.dest_path, src_path + op->source_base_offset);
+    }
+    else {
+        sprintf(dest_path, "%s/%s/%s", DCOPY_user_opts.dest_path, op->dest_base_appendix, src_path + op->source_base_offset);
+    }
 
     LOG(DCOPY_LOG_DBG, "Comparing source object `%s' (chunk number `%d') against destination `%s'.", \
         src_path, op->chunk, dest_path);
