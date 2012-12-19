@@ -55,9 +55,6 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
     struct stat statbuf;
     int s = lstat(op->operand, &statbuf);
 
-    LOG(DCOPY_LOG_DBG, "Performing a stat Operation.");
-    LOG(DCOPY_LOG_DBG, "Source object is `%s'.", op->operand);
-
     if(s < 0) {
         LOG(DCOPY_LOG_DBG, "Could not stat file at `%s'.", op->operand);
         exit(EXIT_FAILURE);
@@ -65,11 +62,11 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     if(S_ISDIR(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
         LOG(DCOPY_LOG_DBG, "Stat operation found a directory at `%s'.", op->operand);
-        DCOPY_stat_process_dir(op->operand, handle);
+        DCOPY_stat_process_dir(op, handle);
     }
     else if(S_ISREG(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
         LOG(DCOPY_LOG_DBG, "Stat operation found a file at `%s'.", op->operand);
-        DCOPY_stat_process_file(op->operand, statbuf.st_size, handle);
+        DCOPY_stat_process_file(op, statbuf.st_size, handle);
     }
     else {
         LOG(DCOPY_LOG_DBG, "Encounted an unsupported file type at `%s'.", op->operand);
@@ -77,30 +74,32 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
 }
 
-void DCOPY_stat_process_file(char* path, size_t file_size, CIRCLE_handle* handle)
+void DCOPY_stat_process_file(DCOPY_operation_t* op, size_t file_size, CIRCLE_handle* handle)
 {
     size_t chunk_index;
-    size_t num_chunks = file_size / DCOPY_CHUNK_SIZE;
 
-    LOG(DCOPY_LOG_DBG, "File size is `%ld' with chunks `%zu' (total `%zu').", \
-        file_size, num_chunks, num_chunks * DCOPY_CHUNK_SIZE);
+    /* Round up. FIXME: this generates some really ugly opcodes. */
+    size_t num_chunks = (size_t)(((double)file_size) / ((double)DCOPY_CHUNK_SIZE + 0.5f));
+
+    LOG(DCOPY_LOG_DBG, "File `%s' size is `%ld' with chunks `%zu' (total `%zu').", \
+        op->operand, file_size, num_chunks, num_chunks * DCOPY_CHUNK_SIZE);
 
     /* Encode and nqueue each chunk of the file for processing later. */
     for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
-        char* newop = DCOPY_encode_operation(COPY, chunk_index, path);
+        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, op->source_base_offset);
         handle->enqueue(newop);
         free(newop);
     }
 
     /* Encode and enqueue the last partial chunk. */
     if(num_chunks * DCOPY_CHUNK_SIZE < file_size) {
-        char* newop = DCOPY_encode_operation(COPY, chunk_index, path);
+        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, op->source_base_offset);
         handle->enqueue(newop);
         free(newop);
     }
 }
 
-void DCOPY_stat_process_dir(char* path, CIRCLE_handle* handle)
+void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     DIR* curr_dir;
     char* curr_dir_name;
@@ -111,17 +110,17 @@ void DCOPY_stat_process_dir(char* path, CIRCLE_handle* handle)
 
     sprintf(cmd_buf, "mkdir -p %s/%s", \
             DCOPY_user_opts.dest_path, \
-            path);
-    LOG(DCOPY_LOG_DBG, "Creating directory with cmd `%s'.", cmd_buf);
+            op->operand + op->source_base_offset);
+    LOG(DCOPY_LOG_DBG, "Creating directory with command `%s'.", cmd_buf);
 
     FILE* p = popen(cmd_buf, "r");
     pclose(p);
 
-    curr_dir = opendir(path);
+    curr_dir = opendir(op->operand);
 
     if(curr_dir == NULL) {
         LOG(DCOPY_LOG_ERR, "Unable to open dir `%s'. %s", \
-            path, strerror(errno));
+            op->operand, strerror(errno));
         exit(EXIT_FAILURE);
     }
     else {
@@ -131,12 +130,12 @@ void DCOPY_stat_process_dir(char* path, CIRCLE_handle* handle)
             /* We don't care about . or .. */
             if((strncmp(curr_dir_name, ".", 2)) && (strncmp(curr_dir_name, "..", 3))) {
 
-                LOG(DCOPY_LOG_DBG, "Stat enqueue dir `%s' with base `%s'.", \
-                    curr_dir_name, path);
+                LOG(DCOPY_LOG_DBG, "Stat operation is enqueueing directory `%s' with base `%s'.", \
+                    op->operand, op->operand + op->source_base_offset);
 
-                sprintf(newop_path, "%s/%s", path, curr_dir_name);
+                sprintf(newop_path, "%s/%s", op->operand, curr_dir_name);
 
-                char* newop = DCOPY_encode_operation(STAT, 0, newop_path);
+                char* newop = DCOPY_encode_operation(STAT, 0, newop_path, op->source_base_offset);
                 handle->enqueue(newop);
 
                 free(newop);

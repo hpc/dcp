@@ -25,7 +25,9 @@ extern DCOPY_statistics_t DCOPY_statistics;
 
 void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
-    char new_file_path[PATH_MAX];
+    char dest_path[PATH_MAX];
+    char* source_path = op->operand;
+
     char buf[DCOPY_CHUNK_SIZE];
     char file_file_buf[PATH_MAX];
 
@@ -35,60 +37,41 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     FILE* in;
     int outfd;
 
-    LOG(DCOPY_LOG_DBG, "Copying from source object `%s' to destination object `%s'.", \
-        op->operand, DCOPY_user_opts.dest_path);
-    LOG(DCOPY_LOG_DBG, "Copying source object `%s' chunk number `%d'.", op->operand, op->chunk);
-
-    sprintf(new_file_path, "%s%s", \
+    sprintf(dest_path, "%s/%s", \
             DCOPY_user_opts.dest_path, \
-            op->operand);
-    LOG(DCOPY_LOG_DBG, "Copying to destination path `%s'.", new_file_path);
+            op->operand + op->source_base_offset);
 
-    in = fopen(op->operand, "rb");
+    LOG(DCOPY_LOG_DBG, "Copying to destination path `%s' from source path `%s'.", dest_path, source_path);
+    LOG(DCOPY_LOG_DBG, "Copying chunk number `%d' from source path `%s'.", op->chunk, source_path);
+
+    in = fopen(source_path, "rb");
 
     if(!in) {
-        LOG(DCOPY_LOG_ERR, "Unable to open original `%s'. %s", \
-            op->operand, strerror(errno));
+        LOG(DCOPY_LOG_ERR, "Unable to open source path `%s'. %s", \
+            source_path, strerror(errno));
         return;
     }
 
-    outfd = open(new_file_path, O_RDWR | O_CREAT, 00644);
-
+    outfd = open(dest_path, O_RDWR | O_CREAT, 00644);
     if(outfd < 0) {
-        /*
-         * Since we might be trying a file to file copy, lets try to open
-         * the base instead. If it really is a directory, we'll go ahead and
-         * fail.
-         */
-        strncpy(file_file_buf, op->operand, PATH_MAX);
-        file_file_buf[0] = '\0';
-
-        sprintf(file_file_buf, "%s%s", file_file_buf, \
-                DCOPY_user_opts.dest_path + DCOPY_user_opts.dest_base_index);
-
-        LOG(DCOPY_LOG_DBG, "Attempting to open parent of new file `%s'.", file_file_buf);
-
-        outfd = open(file_file_buf, O_RDWR | O_CREAT, 00644);
-
-        if(outfd < 0) {
-            LOG(DCOPY_LOG_ERR, "Unable to open new `%s'. %s", \
-                new_file_path, strerror(errno));
-            return;
-        }
+        LOG(DCOPY_LOG_ERR, "Unable to open destination path `%s'. %s", \
+                dest_path, strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     if(fseek(in, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't seek `%s'. %s", \
-            op->operand, strerror(errno));
+        LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
+            source_path, strerror(errno));
+        exit(EXIT_FAILURE);
         return;
     }
 
     bytes_read = fread((void*)buf, 1, DCOPY_CHUNK_SIZE, in);
 
     if(bytes_read <= 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't read `%s'. %s", \
-            op->operand, strerror(errno));
-        return;
+        LOG(DCOPY_LOG_ERR, "Couldn't read from source path `%s'. %s", \
+            source_path, strerror(errno));
+        exit(EXIT_FAILURE);
     }
 
     LOG(DCOPY_LOG_DBG, "Copy operation, we read `%zu' bytes.", bytes_read);
@@ -107,7 +90,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
      * comparison stage.
      */
     if(!DCOPY_user_opts.skip_compare) {
-        char* newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand);
+        char* newop = DCOPY_encode_operation(COMPARE, op->chunk, source_path, op->source_base_offset);
         handle->enqueue(newop);
         free(newop);
     }

@@ -66,8 +66,9 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
             /* Use the parent directory of the destination file as the base to write into. */
             DCOPY_user_opts.dest_base_index = strlen(dirname(DCOPY_user_opts.dest_path));
 
-            LOG(DCOPY_LOG_DBG, "Enqueueing only source path `%s'.", DCOPY_user_opts.src_path[0]);
-            char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0]);
+            LOG(DCOPY_LOG_DBG, "Enqueueing only a single source path `%s'.", DCOPY_user_opts.src_path[0]);
+            char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0], \
+                                              strlen(dirname(DCOPY_user_opts.src_path[0])));
             handle->enqueue(op);
         }
         else {
@@ -111,7 +112,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
         while(*src_path != NULL) {
             LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", *(src_path));
 
-            char* op = DCOPY_encode_operation(STAT, 0, *(src_path));
+            char* op = DCOPY_encode_operation(STAT, 0, *(src_path), strlen(*(src_path)));
             handle->enqueue(op);
 
             src_path++;
@@ -223,6 +224,8 @@ void DCOPY_parse_dest_path(char* path)
     char norm_path[PATH_MAX];
     char* file_name;
 
+    DCOPY_user_opts.dest_path = path;
+    return;
     DCOPY_user_opts.dest_path = realpath(path, NULL);
 
     /*

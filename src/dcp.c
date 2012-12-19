@@ -36,10 +36,10 @@ void (*DCOPY_jump_table[4])(DCOPY_operation_t* op, CIRCLE_handle* handle);
 /**
  * Encode an operation code for use on the distributed queue structure.
  */
-char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, char* operand)
+char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, char* operand, uint16_t source_base_offset)
 {
     char* result = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
-    sprintf(result, "%d:%d:%s", chunk, op, operand);
+    sprintf(result, "%d:%d:%d:%s", chunk, op, source_base_offset, operand);
 
     return result;
 }
@@ -55,6 +55,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
 
     ret->chunk = atoi(strtok(op, ":"));
     ret->code = atoi(strtok(NULL, ":"));
+    ret->source_base_offset = atoi(strtok(NULL, ":"));
     ret->operand = strtok(NULL, ":");
 
     return ret;
