@@ -43,6 +43,8 @@ DCOPY_options_t DCOPY_user_opts;
  *   - Many file to single directory
  *   - Many directory to single directory
  *   - Many file and many directory to single directory
+ *
+ * @param handle the libcircle primary queue handle.
  */
 void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 {
@@ -126,6 +128,16 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
     /* TODO: print mode we're using to DBG. */
 }
 
+/**
+ * Determine if the destination path is a file or directory.
+ *
+ * It does this by first checking to see if an object is actually at the
+ * destination path. If an object isn't already at the destination path, we
+ * examine the source path(s) to determine the type of what the destination
+ * path will be.
+ *
+ * @return true if the destination should be a directory, false otherwise.
+ */
 bool DCOPY_dest_is_dir()
 {
     bool dest_path_is_dir = false;
@@ -181,6 +193,11 @@ bool DCOPY_dest_is_dir()
     return dest_path_is_dir;
 }
 
+/**
+ * Determine the count of source paths specified by the user.
+ *
+ * @return the number of source paths specified by the user.
+ */
 uint32_t DCOPY_source_file_count()
 {
     uint32_t source_file_count = 0;
