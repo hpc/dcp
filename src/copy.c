@@ -99,7 +99,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
      * comparison stage.
      */
     if(!DCOPY_user_opts.skip_compare) {
-        char* newop = DCOPY_encode_operation(COMPARE, op->chunk, source_path, op->source_base_offset);
+        char* newop = DCOPY_encode_operation(COMPARE, op->chunk, source_path, op->source_base_offset, op->dest_base_appendix);
         handle->enqueue(newop);
         free(newop);
     }

@@ -50,7 +50,7 @@ void DCOPY_do_compare(DCOPY_operation_t* op, CIRCLE_handle* handle)
             dest_path, strerror(errno));
 
         /* FIXME: add a flag to turn off retry. */
-        newop = DCOPY_encode_operation(COMPARE, op->chunk, src_path, op->source_base_offset);
+        newop = DCOPY_encode_operation(COMPARE, op->chunk, src_path, op->source_base_offset, op->dest_base_appendix);
         handle->enqueue(newop);
 
         free(newop);
@@ -67,7 +67,7 @@ void DCOPY_do_compare(DCOPY_operation_t* op, CIRCLE_handle* handle)
         LOG(DCOPY_LOG_ERR, "Compare mismatch! Requeueing file `%s'.", src_path);
 
         /* FIXME: add a flag to turn off retry. */
-        newop = DCOPY_encode_operation(STAT, 0, src_path, op->source_base_offset);
+        newop = DCOPY_encode_operation(STAT, 0, src_path, op->source_base_offset, op->dest_base_appendix);
         handle->enqueue(newop);
 
         free(newop);

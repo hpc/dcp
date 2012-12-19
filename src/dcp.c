@@ -36,10 +36,13 @@ void (*DCOPY_jump_table[4])(DCOPY_operation_t* op, CIRCLE_handle* handle);
 /**
  * Encode an operation code for use on the distributed queue structure.
  */
-char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, char* operand, uint16_t source_base_offset)
+char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, \
+                             char* operand, uint16_t source_base_offset, \
+                             char* dest_base_appendix)
 {
     char* result = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
-    sprintf(result, "%d:%d:%d:%s", chunk, op, source_base_offset, operand);
+    sprintf(result, "%d:%d:%d:%s:%s", chunk, op, source_base_offset, \
+            operand, dest_base_appendix);
 
     return result;
 }
@@ -57,6 +60,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
     ret->code = atoi(strtok(NULL, ":"));
     ret->source_base_offset = atoi(strtok(NULL, ":"));
     ret->operand = strtok(NULL, ":");
+    ret->dest_base_appendix = strtok(NULL, ":");
 
     return ret;
 }
@@ -84,7 +88,7 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
     handle->dequeue(op);
     DCOPY_operation_t* opt = DCOPY_decode_operation(op);
 
-    LOG(DCOPY_LOG_DBG, "Popped `%s' (`%d remaining on local queue)", \
+    LOG(DCOPY_LOG_DBG, "Popped `%s' (`%d' remaining on local queue)", \
         opt->operand, handle->local_queue_size());
     LOG(DCOPY_LOG_DBG, "Performing an operation of type `%s' on operand `%s'.", \
         DCOPY_op_string_table[opt->code], opt->operand);
@@ -135,8 +139,8 @@ void DCOPY_print_version(char** argv)
  */
 void DCOPY_print_usage(char** argv)
 {
-    fprintf(stdout, "usage: %s [CdfhpRrv] [--] source_file target_file\n", argv[0]);
-    fprintf(stdout, "       %s [CdfhpRrv] [--] source_file ... target_directory\n", argv[0]);
+    fprintf(stdout, "usage: %s [cCdfhpRrv] [--] source_file target_file\n", argv[0]);
+    fprintf(stdout, "       %s [cCdfhpRrv] [--] source_file ... target_directory\n", argv[0]);
 }
 
 int main(int argc, char** argv)
@@ -145,6 +149,9 @@ int main(int argc, char** argv)
     int option_index = 0;
 
     DCOPY_debug_stream = stdout;
+
+    /* By default, don't perform a conditional copy. */
+    DCOPY_user_opts.conditional = false;
 
     /* By default, don't skip the compare option. */
     DCOPY_user_opts.skip_compare = false;
@@ -164,6 +171,7 @@ int main(int argc, char** argv)
     DCOPY_user_opts.recursive_unspecified = false;
 
     static struct option long_options[] = {
+        {"conditional"          , no_argument      , 0, 'c'},
         {"skip-compare"         , no_argument      , 0, 'C'},
         {"debug"                , required_argument, 0, 'd'},
         {"force"                , no_argument      , 0, 'f'},
@@ -176,8 +184,13 @@ int main(int argc, char** argv)
     };
 
     /* Parse options */
-    while((c = getopt_long(argc, argv, "Cd:fhpRrv", long_options, &option_index)) != -1) {
+    while((c = getopt_long(argc, argv, "cCd:fhpRrv", long_options, &option_index)) != -1) {
         switch(c) {
+
+            case 'c':
+                DCOPY_user_opts.conditional = true;
+                LOG(DCOPY_LOG_INFO, "Performing a conditional copy over the destination path.");
+                break;
 
             case 'C':
                 DCOPY_user_opts.skip_compare = true;

@@ -81,7 +81,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 
             LOG(DCOPY_LOG_DBG, "Enqueueing only a single source path `%s'.", DCOPY_user_opts.src_path[0]);
             char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0], \
-                                              strlen(src_path_dirname));
+                                              strlen(src_path_dirname), NULL);
             handle->enqueue(op);
         }
         else {
@@ -113,19 +113,36 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
     }
     else if(dest_is_dir) {
         LOG(DCOPY_LOG_DBG, "Infered that the destination is a directory.");
+        bool dest_already_exists = DCOPY_is_directory(DCOPY_user_opts.dest_path);
 
         /*
          * Since the destination is a directory, we use that as a base so we can
-         * copy all of the source objects into it.
+         * copy all of the source objects into it. If the destination already
+         * exists, we need to copy inside it.
          */
         DCOPY_user_opts.dest_base_index = strlen(DCOPY_user_opts.dest_path);
-
         char** src_path = DCOPY_user_opts.src_path;
 
         while(*src_path != NULL) {
             LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", *(src_path));
 
-            char* op = DCOPY_encode_operation(STAT, 0, *(src_path), strlen(*(src_path)));
+            char* opt_dest_append_path = NULL;
+            char* src_path_basename = NULL;
+
+            /*
+             * If the destination directory already exists, we want to place
+             * new files inside it. To do this, we send a path fragment along
+             * with the source path message and append it to the options dest
+             * path whenever the options dest path is used.
+             */
+            if(dest_already_exists && !DCOPY_user_opts.conditional) {
+                /* Make a copy of the src path so we can run basename on it. */
+                src_path_basename = (char*) malloc(sizeof(char) * PATH_MAX);
+                sprintf(src_path_basename, "%s", DCOPY_user_opts.src_path[0]);
+                src_path_basename = dirname(src_path_basename);
+            }               
+
+            char* op = DCOPY_encode_operation(STAT, 0, *(src_path), strlen(*(src_path)), src_path_basename);
             handle->enqueue(op);
 
             src_path++;
@@ -263,6 +280,8 @@ void DCOPY_parse_dest_path(char* path)
         sprintf(norm_path, "%s/%s", DCOPY_user_opts.dest_path, file_name);
         strncpy(DCOPY_user_opts.dest_path, norm_path, PATH_MAX);
     }
+
+    LOG(DCOPY_LOG_DBG, "Using destination path `%s'.", DCOPY_user_opts.dest_path);
 }
 
 /**

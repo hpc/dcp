@@ -25,6 +25,7 @@ typedef struct {
     uint32_t chunk;
     uint16_t source_base_offset;
     char* operand;
+    char* dest_base_appendix;
 } DCOPY_operation_t;
 
 typedef struct {
@@ -39,6 +40,7 @@ typedef struct {
     char* dest_path;
     char** src_path;
     uint16_t dest_base_index;
+    bool conditional;
     bool skip_compare;
     bool force;
     bool preserve;
@@ -48,7 +50,9 @@ typedef struct {
 } DCOPY_options_t;
 
 DCOPY_operation_t* DCOPY_decode_operation(char* op);
-char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, char *operand, uint16_t source_base_offset);
+char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, \
+                             char *operand, uint16_t source_base_offset, \
+                             char *dest_base_appendix);
 
 void DCOPY_add_objects(CIRCLE_handle* handle);
 void DCOPY_process_objects(CIRCLE_handle* handle);

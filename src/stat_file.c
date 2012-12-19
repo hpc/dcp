@@ -86,14 +86,14 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, size_t file_size, CIRCLE_han
 
     /* Encode and nqueue each chunk of the file for processing later. */
     for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
-        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, op->source_base_offset);
+        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, op->source_base_offset, op->dest_base_appendix);
         handle->enqueue(newop);
         free(newop);
     }
 
     /* Encode and enqueue the last partial chunk. */
     if(num_chunks * DCOPY_CHUNK_SIZE < file_size) {
-        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, op->source_base_offset);
+        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, op->source_base_offset, op->dest_base_appendix);
         handle->enqueue(newop);
         free(newop);
     }
@@ -130,12 +130,12 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
             /* We don't care about . or .. */
             if((strncmp(curr_dir_name, ".", 2)) && (strncmp(curr_dir_name, "..", 3))) {
 
-                LOG(DCOPY_LOG_DBG, "Stat operation is enqueueing directory `%s' with base `%s'.", \
+                LOG(DCOPY_LOG_DBG, "Stat operation is enqueueing directory `%s' using base `%s'.", \
                     op->operand, op->operand + op->source_base_offset);
 
                 sprintf(newop_path, "%s/%s", op->operand, curr_dir_name);
 
-                char* newop = DCOPY_encode_operation(STAT, 0, newop_path, op->source_base_offset);
+                char* newop = DCOPY_encode_operation(STAT, 0, newop_path, op->source_base_offset, op->dest_base_appendix);
                 handle->enqueue(newop);
 
                 free(newop);

@@ -5,9 +5,9 @@ dcp \- copy file(s) in parallel on a distributed system.
 
 .SH "SYNOPSIS"
 
-\fBdcp\fR [\fICdfhpRrv\fR] [\fI--\fR] source_file target_file
+\fBdcp\fR [\fIcCdfhpRrv\fR] [\fI--\fR] source_file target_file
 .br
-\fBdcp\fR [\fICdfhpRrv\fR] [\fI--\fR] source_file ... target_directory
+\fBdcp\fR [\fIcCdfhpRrv\fR] [\fI--\fR] source_file ... target_directory
 
 .SH "DESCRIPTION"
 \fBdcp\fR is a file copy tool in the spirit of \fBcp\fR(1) that evenly distributes work across a large cluster without centralized state. It is designed for copying files which are located on a distributed parallel file system. The method used in the file copy process is a self-stabilization algorithm which enables per-node autonomous processing and a token passing scheme to detect termination (see \fIhttp://doi.acm.org/10.1145/2388996.2389114\fR for more information).
@@ -15,6 +15,10 @@ dcp \- copy file(s) in parallel on a distributed system.
 dcp requires an MPI environment (such as OpenMPI's \fBmpirun\fR(1)).
 
 .SH "OPTIONS"
+
+.TP
+\fB-c\fR, \fB\-\-conditional\fR
+When copying a source directory to a destination directory, copy the source directory over the destination directory. The default behavior is to copy the source directory inside the destination directory.
 
 .TP
 \fB-C\fR, \fB\-\-skip-compare\fR

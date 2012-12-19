@@ -17,6 +17,10 @@ dcp is a file copy tool in the spirit of *cp(1)* that evenly distributes work ac
 An MPI environment is required (such as [Open MPI](http://www.open-mpi.org/)'s *mpirun(1)*) as well as the self-stabilization library known as [LibCircle](https://github.com/hpc/libcircle).
 
 ### OPTIONS
+**-c**, **--conditional**
+
+When copying a source directory to a destination directory, copy the source directory over the destination directory. The default behavior is to copy the source directory inside the destination directory.
+
 **-C**, **--skip-compare**
 
 Skip the compare operation to confirm file integrity. When using this option, a file integrity check, such as md5sum, should be performed after the file(s) have been copied.
