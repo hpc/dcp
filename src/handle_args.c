@@ -128,7 +128,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
                 src_path_basename = (char*) malloc(sizeof(char) * PATH_MAX);
                 sprintf(src_path_basename, "%s", DCOPY_user_opts.src_path[0]);
                 src_path_basename = basename(src_path_basename);
-            }               
+            }
 
             char* op = DCOPY_encode_operation(STAT, 0, *(src_path), strlen(*(src_path)), src_path_basename);
             handle->enqueue(op);

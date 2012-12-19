@@ -71,7 +71,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
         if(outfd < 0) {
             LOG(DCOPY_LOG_ERR, "Unable to open destination path `%s'. %s", \
-                    dest_path, strerror(errno));
+                dest_path, strerror(errno));
             exit(EXIT_FAILURE);
         }
     }
