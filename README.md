@@ -6,8 +6,8 @@ Note that dcp is in an early stage of development. To determine the current stat
 
 ### SYNOPSIS
 ```
-dcp [CdfhpRrv] [--] source_file target_file
-dcp [CdfhpRrv] [--] source_file ... target_directory
+dcp [cCdfhpRrv] [--] source_file target_file
+dcp [cCdfhpRrv] [--] source_file ... target_directory
 ```
 
 ### DESCRIPTION
