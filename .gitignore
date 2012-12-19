@@ -10,3 +10,5 @@ stamp-h1
 /libtool
 /src/dcp
 /doc/Doxyfile
+/doc/html
+/doc/latex
