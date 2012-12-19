@@ -35,14 +35,14 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     FILE* in;
     int outfd;
 
-    LOG(DCOPY_LOG_DBG, "Copy, operand is `%s', subop is `%s', baseidx is `%d', dest is `%s'.", \
-        op->operand, op->operand + op->base_index, op->base_index, DCOPY_user_opts.dest_path);
-    LOG(DCOPY_LOG_DBG, "Copy, `%s' chunk `%d'.", op->operand, op->chunk);
+    LOG(DCOPY_LOG_DBG, "Copying from source object `%s' to destination object `%s'.", \
+        op->operand, DCOPY_user_opts.dest_path);
+    LOG(DCOPY_LOG_DBG, "Copying source object `%s' chunk number `%d'.", op->operand, op->chunk);
 
     sprintf(new_file_path, "%s%s", \
             DCOPY_user_opts.dest_path, \
-            op->operand + op->base_index);
-    LOG(DCOPY_LOG_DBG, "Copy, dest `%s' (`%s').", new_file_path, op->operand + op->base_index);
+            op->operand);
+    LOG(DCOPY_LOG_DBG, "Copying to destination path `%s'.", new_file_path);
 
     in = fopen(op->operand, "rb");
 
@@ -61,7 +61,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
          * fail.
          */
         strncpy(file_file_buf, op->operand, PATH_MAX);
-        file_file_buf[op->base_index] = '\0';
+        file_file_buf[0] = '\0';
 
         sprintf(file_file_buf, "%s%s", file_file_buf, \
                 DCOPY_user_opts.dest_path + DCOPY_user_opts.dest_base_index);
@@ -107,7 +107,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
      * comparison stage.
      */
     if(!DCOPY_user_opts.skip_compare) {
-        char* newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->base_index);
+        char* newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand);
         handle->enqueue(newop);
         free(newop);
     }

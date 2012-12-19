@@ -36,10 +36,10 @@ void (*DCOPY_jump_table[4])(DCOPY_operation_t* op, CIRCLE_handle* handle);
 /**
  * Encode an operation code for use on the distributed queue structure.
  */
-char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, char* operand, uint16_t base_index)
+char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, char* operand)
 {
     char* result = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
-    sprintf(result, "%d:%d:%d:%s", chunk, op, base_index, operand);
+    sprintf(result, "%d:%d:%s", chunk, op, operand);
 
     return result;
 }
@@ -55,7 +55,6 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
 
     ret->chunk = atoi(strtok(op, ":"));
     ret->code = atoi(strtok(NULL, ":"));
-    ret->base_index = atoi(strtok(NULL, ":"));
     ret->operand = strtok(NULL, ":");
 
     return ret;
@@ -87,7 +86,7 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
     DCOPY_operation_t* opt = DCOPY_decode_operation(op);
 
     LOG(DCOPY_LOG_DBG, "Popped `%s'", opt->operand);
-    LOG(DCOPY_LOG_DBG, "Operation `%d' `%s'", opt->code, DCOPY_op_string_table[opt->code]);
+    LOG(DCOPY_LOG_DBG, "Performing an operation of type `%s'", DCOPY_op_string_table[opt->code]);
 
     DCOPY_jump_table[opt->code](opt, handle);
     free(opt);
@@ -278,9 +277,9 @@ int main(int argc, char** argv)
     DCOPY_parse_path_args(argv, optind, argc);
 
     /* Initialize our jump table for core operations. */
-    DCOPY_jump_table[0] = DCOPY_do_copy;
-    DCOPY_jump_table[1] = DCOPY_do_compare;
     DCOPY_jump_table[2] = DCOPY_do_stat;
+    DCOPY_jump_table[1] = DCOPY_do_compare;
+    DCOPY_jump_table[0] = DCOPY_do_copy;
 
     /* Initialize our processing library and related callbacks. */
     CIRCLE_global_rank = CIRCLE_init(argc, argv, CIRCLE_DEFAULT_FLAGS);

@@ -32,7 +32,7 @@ bool DCOPY_is_directory(char* path)
         return false;
     }
 
-    return S_ISDIR(statbuf.st_mode);
+    return (S_ISDIR(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode)));
 }
 
 /**
@@ -47,48 +47,37 @@ bool DCOPY_is_regular_file(char* path)
         return false;
     }
 
-    return S_ISREG(statbuf.st_mode);
+    return (S_ISREG(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode)));
 }
 
 void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
-    static struct stat st;
-    static int stat_status;
+    struct stat statbuf;
+    int s = lstat(op->operand, &statbuf);
 
-    LOG(DCOPY_LOG_DBG, "Performing stat Operation.");
+    LOG(DCOPY_LOG_DBG, "Performing a stat Operation.");
+    LOG(DCOPY_LOG_DBG, "Source object is `%s'.", op->operand);
 
-    LOG(DCOPY_LOG_DBG, "Src is `%s', subop is `%s', baseidx is `%d'.", \
-        op->operand, (op->operand + op->base_index), op->base_index);
-
-    LOG(DCOPY_LOG_DBG, "Dest is `%s', subdest is `%s', destbase is `%d'.", \
-        DCOPY_user_opts.dest_path, \
-        (DCOPY_user_opts.dest_path + DCOPY_user_opts.dest_base_index), \
-        DCOPY_user_opts.dest_base_index);
-
-    /* Lets start by gathering some info on the destination. */
-    stat_status = lstat(op->operand, &st);
-
-    if(stat_status == -1) {
-        LOG(DCOPY_LOG_ERR, "Unable to stat `%s'. %s", \
-            op->operand, strerror(errno));
-
+    if(s < 0) {
+        LOG(DCOPY_LOG_DBG, "Could not stat file at `%s'.", op->operand);
         exit(EXIT_FAILURE);
     }
-    else if(S_ISDIR(st.st_mode) && !(S_ISLNK(st.st_mode))) {
-        LOG(DCOPY_LOG_DBG, "Stat found a directory. Src is `%s', dest is `%s'.", \
-            op->operand, DCOPY_user_opts.dest_path);
-        DCOPY_stat_process_dir(op->operand, handle, op->base_index);
+
+    if(S_ISDIR(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
+        LOG(DCOPY_LOG_DBG, "Stat operation found a directory at `%s'.", op->operand);
+        DCOPY_stat_process_dir(op->operand, handle);
+    }
+    else if(S_ISREG(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
+        LOG(DCOPY_LOG_DBG, "Stat operation found a file at `%s'.", op->operand);
+        DCOPY_stat_process_file(op->operand, statbuf.st_size, handle);
     }
     else {
-        LOG(DCOPY_LOG_DBG, "Stat found a file. Src is `%s', dest is `%s'.", \
-            op->operand, DCOPY_user_opts.dest_path);
-        DCOPY_stat_process_file(op->operand, st.st_size, handle, op->base_index);
+        LOG(DCOPY_LOG_DBG, "Encounted an unsupported file type at `%s'.", op->operand);
+        exit(EXIT_FAILURE);
     }
-
-    return;
 }
 
-void DCOPY_stat_process_file(char* path, size_t file_size, CIRCLE_handle* handle, uint16_t base_index)
+void DCOPY_stat_process_file(char* path, size_t file_size, CIRCLE_handle* handle)
 {
     size_t chunk_index;
     size_t num_chunks = file_size / DCOPY_CHUNK_SIZE;
@@ -98,20 +87,20 @@ void DCOPY_stat_process_file(char* path, size_t file_size, CIRCLE_handle* handle
 
     /* Encode and nqueue each chunk of the file for processing later. */
     for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
-        char* newop = DCOPY_encode_operation(COPY, chunk_index, path, base_index);
+        char* newop = DCOPY_encode_operation(COPY, chunk_index, path);
         handle->enqueue(newop);
         free(newop);
     }
 
     /* Encode and enqueue the last partial chunk. */
     if(num_chunks * DCOPY_CHUNK_SIZE < file_size) {
-        char* newop = DCOPY_encode_operation(COPY, chunk_index, path, base_index);
+        char* newop = DCOPY_encode_operation(COPY, chunk_index, path);
         handle->enqueue(newop);
         free(newop);
     }
 }
 
-void DCOPY_stat_process_dir(char* path, CIRCLE_handle* handle, uint16_t base_index)
+void DCOPY_stat_process_dir(char* path, CIRCLE_handle* handle)
 {
     DIR* curr_dir;
     char* curr_dir_name;
@@ -122,7 +111,7 @@ void DCOPY_stat_process_dir(char* path, CIRCLE_handle* handle, uint16_t base_ind
 
     sprintf(cmd_buf, "mkdir -p %s/%s", \
             DCOPY_user_opts.dest_path, \
-            path + base_index);
+            path);
     LOG(DCOPY_LOG_DBG, "Creating directory with cmd `%s'.", cmd_buf);
 
     FILE* p = popen(cmd_buf, "r");
@@ -147,7 +136,7 @@ void DCOPY_stat_process_dir(char* path, CIRCLE_handle* handle, uint16_t base_ind
 
                 sprintf(newop_path, "%s/%s", path, curr_dir_name);
 
-                char* newop = DCOPY_encode_operation(STAT, 0, newop_path, base_index);
+                char* newop = DCOPY_encode_operation(STAT, 0, newop_path);
                 handle->enqueue(newop);
 
                 free(newop);

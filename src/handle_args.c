@@ -67,7 +67,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
             DCOPY_user_opts.dest_base_index = strlen(dirname(DCOPY_user_opts.dest_path));
 
             LOG(DCOPY_LOG_DBG, "Enqueueing only source path `%s'.", DCOPY_user_opts.src_path[0]);
-            char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0], 0);
+            char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0]);
             handle->enqueue(op);
         }
         else {
@@ -111,7 +111,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
         while(*src_path != NULL) {
             LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", *(src_path));
 
-            char* op = DCOPY_encode_operation(STAT, 0, *(src_path), 0);
+            char* op = DCOPY_encode_operation(STAT, 0, *(src_path));
             handle->enqueue(op);
 
             src_path++;
