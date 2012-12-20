@@ -15,8 +15,10 @@
 #include "handle_args.h"
 #include "stat_file.h"
 
-#ifndef ARG_MAX
-#define ARG_MAX _POSIX_ARG_MAX
+#ifndef _POSIX_ARG_MAX
+  #define MAX_ARGS 4096
+#else
+  #define MAX_ARGS _POSIX_ARG_MAX
 #endif
 
 /** Where we should store options specified by the user. */
@@ -282,8 +284,8 @@ void DCOPY_parse_src_paths(char** argv, int last_arg_index, int optind_local)
     /*
      * Loop over each source path and check sanity.
      */
-    DCOPY_user_opts.src_path = (char**) malloc((ARG_MAX + 1) * sizeof(void*));
-    memset(DCOPY_user_opts.src_path, 0, (ARG_MAX + 1) * sizeof(char));
+    DCOPY_user_opts.src_path = (char**) malloc((MAX_ARGS + 1) * sizeof(void*));
+    memset(DCOPY_user_opts.src_path, 0, (MAX_ARGS + 1) * sizeof(char));
 
     for(opt_index = optind_local; opt_index < last_arg_index; opt_index++) {
         DCOPY_user_opts.src_path[opt_index - optind_local] = realpath(argv[opt_index], NULL);

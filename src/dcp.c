@@ -80,8 +80,10 @@ void DCOPY_add_objects(CIRCLE_handle* handle)
 void DCOPY_process_objects(CIRCLE_handle* handle)
 {
     char op[2048];
-    char* DCOPY_op_string_table[] = {
-        "COPY", "CHECKSUM", "STAT"
+    const char* DCOPY_op_string_table[] = {
+        "COPY",
+        "CHECKSUM",
+        "STAT"
     };
 
     /* Pop an item off the queue */
