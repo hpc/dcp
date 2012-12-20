@@ -1,1 +1,1 @@
-AM_CFLAGS = -W -ansi -pedantic -Werror -Wall -Wextra -Wunused -Wshadow -Wwrite-strings -std=gnu99
+AM_CFLAGS = -ggdb -W -ansi -pedantic -Werror -Wall -Wextra -Wunused -Wshadow -Wwrite-strings -std=gnu99

@@ -121,8 +121,6 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
     char cmd_buf[PATH_MAX];
     char newop_path[PATH_MAX];
 
-    LOG(DCOPY_LOG_DBG, "Using dest base appendix of `%d'.", *(op->dest_base_appendix));
-
     if(op->dest_base_appendix != NULL) {
         sprintf(cmd_buf, "mkdir -p %s/%s/%s", \
                 DCOPY_user_opts.dest_path, \
