@@ -50,6 +50,10 @@ bool DCOPY_is_regular_file(char* path)
     return (S_ISREG(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode)));
 }
 
+/**
+ * This is the entry point for the "file stat stage". This function is called
+ * from the jump table required for the main libcircle callbacks.
+ */
 void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     struct stat statbuf;
