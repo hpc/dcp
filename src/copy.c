@@ -90,6 +90,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
             LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
             exit(EXIT_FAILURE);
         }
+
         return;
     }
 

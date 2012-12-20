@@ -16,9 +16,9 @@
 #include "stat_file.h"
 
 #ifndef _POSIX_ARG_MAX
-  #define MAX_ARGS 4096
+#define MAX_ARGS 4096
 #else
-  #define MAX_ARGS _POSIX_ARG_MAX
+#define MAX_ARGS _POSIX_ARG_MAX
 #endif
 
 /** Where we should store options specified by the user. */

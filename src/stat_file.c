@@ -70,7 +70,7 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
             newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->source_base_offset, op->dest_base_appendix);
             handle->enqueue(newop);
             free(newop);
-            
+
             return;
         }
     }
@@ -168,6 +168,7 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
     if(curr_dir == NULL) {
         LOG(DCOPY_LOG_ERR, "Unable to open dir `%s'. %s", \
             op->operand, strerror(errno));
+
         if(DCOPY_user_opts.reliable_filesystem) {
             exit(EXIT_FAILURE);
         }
