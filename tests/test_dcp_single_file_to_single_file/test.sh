@@ -95,6 +95,23 @@ if [[ "$MD5_D_RANDOM" != $(md5sum "$PATH_B_EMPTY" | /usr/bin/cut -f 2 -d "=") ]]
     exit 1
 fi
 
+
+##############################################################################
+# Test copying a random file to another random  file. The result should be two
+# files which both contain the contents of the first random file.
+
+$DCP_MPIRUN_BIN -np 3 $DCP_TEST_BIN $PATH_E_RANDOM $PATH_D_RANDOM > /dev/null 2>&1
+
+if [[ $? -ne 0 ]]; then
+    echo "Error returned when copying random file to random file."
+    exit 1;
+fi
+
+if [[ "$MD5_E_RANDOM" != $(md5sum "$PATH_D_RANDOM" | /usr/bin/cut -f 2 -d "=") ]]; then
+    echo "MD5 mismatch when copying random file to empty file (B)."
+    exit 1
+fi
+
 ##############################################################################
 # Since we didn't find any problems, exit with success.
 
