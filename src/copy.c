@@ -85,11 +85,11 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
 
     if(is_file_to_file_copy) {
-        LOG(DCOPY_LOG_DBG, "Copying to destination path `%s' from source path `%s' (chunk number %d).", \
+        LOG(DCOPY_LOG_INFO, "Copying to destination path `%s' from source path `%s' (chunk number %d).", \
             DCOPY_user_opts.dest_path, source_path, op->chunk);
     }
     else {
-        LOG(DCOPY_LOG_DBG, "Copying to destination path `%s' from source path `%s' (chunk number %d).", \
+        LOG(DCOPY_LOG_INFO, "Copying to destination path `%s' from source path `%s' (chunk number %d).", \
             dest_path, source_path, op->chunk);
     }
 
