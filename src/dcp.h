@@ -59,7 +59,7 @@ void DCOPY_add_objects(CIRCLE_handle* handle);
 void DCOPY_process_objects(CIRCLE_handle* handle);
 
 void DCOPY_epilogue(void);
-void DCOPY_print_version(char** argv);
+void DCOPY_print_version(void);
 void DCOPY_print_usage(char** argv);
 
 #endif /* __DCP_H_ */

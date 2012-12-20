@@ -15,6 +15,8 @@
 #include "copy.h"
 #include "stat_file.h"
 
+#include "../config.h"
+
 /** The loglevel that this instance of dcopy will output. */
 DCOPY_loglevel DCOPY_debug_level;
 
@@ -135,9 +137,9 @@ void DCOPY_epilogue(void)
 /**
  * Print the current version.
  */
-void DCOPY_print_version(char** argv)
+void DCOPY_print_version()
 {
-    fprintf(stdout, "%s 0.0.0-pre0\n", argv[0]);
+    fprintf(stdout, "%s-%s <%s>\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_URL);
 }
 
 /**
@@ -296,7 +298,7 @@ int main(int argc, char** argv)
                 break;
 
             case 'v':
-                DCOPY_print_version(argv);
+                DCOPY_print_version();
                 exit(EXIT_SUCCESS);
                 break;
 
