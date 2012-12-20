@@ -7,7 +7,7 @@
 ###############################################################################
 
 # Turn this on if you want output from each test printed out.
-#DEBUG=1
+DEBUG=1
 
 # A temporary directory that all tests can use for scratch files.
 TEST_TMP_DIR=/tmp
@@ -42,6 +42,9 @@ echo "# ========================================================================
 export DCP_TEST_BIN=$(readlink -f $TEST_DCP_BIN)
 export DCP_TEST_TMP=$(readlink -f $TEST_TMP_DIR)
 export DCP_MPIRUN_BIN=$(readlink -f $TEST_MPIRUN_BIN)
+
+# Tell the tests what mode we're in
+export DEBUG
 
 # Find and run all of the tests.
 for TEST in ./*

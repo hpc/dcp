@@ -19,7 +19,7 @@
 ##############################################################################
 
 # Turn on verbose output
-#set -x
+set -x
 
 # Print out the basic paths we'll be using.
 echo "Using dcp binary at: $DCP_TEST_BIN"
@@ -83,7 +83,7 @@ fi
 # Test copying a random file to an empty file. The result should be two files
 # which both contain the contents of the first random file.
 
-$DCP_MPIRUN_BIN -np 3 $DCP_TEST_BIN $PATH_D_RANDOM $PATH_B_EMPTY > /dev/null 2>&1
+$DCP_MPIRUN_BIN -np 3 $DCP_TEST_BIN $PATH_D_RANDOM $PATH_B_EMPTY #> /dev/null 2>&1
 
 if [[ $? -ne 0 ]]; then
     echo "Error returned when copying random file to empty file."
