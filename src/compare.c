@@ -20,6 +20,8 @@ void DCOPY_do_compare(DCOPY_operation_t* op, CIRCLE_handle* handle)
     FILE* src_stream;
     FILE* dest_stream;
 
+    bool is_file_to_file_compare = false;
+
     size_t src_bytes;
     size_t dest_bytes;
 
@@ -37,9 +39,6 @@ void DCOPY_do_compare(DCOPY_operation_t* op, CIRCLE_handle* handle)
     else {
         sprintf(dest_path, "%s/%s/%s", DCOPY_user_opts.dest_path, op->dest_base_appendix, src_path + op->source_base_offset);
     }
-
-    LOG(DCOPY_LOG_DBG, "Comparing source object `%s' (chunk number `%d') against destination `%s'.", \
-        src_path, op->chunk, dest_path);
 
     src_stream = fopen(src_path, "rb");
     dest_stream = fopen(dest_path, "rb");
@@ -68,26 +67,49 @@ void DCOPY_do_compare(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
 
     if(!dest_stream) {
-        LOG(DCOPY_LOG_ERR, "Compare stage is unable to open destination file `%s'. %s", \
-            dest_path, strerror(errno));
+        /*
+         * Since we might be trying a file to file compare, lets try to open
+         * the base instead. If it really is a directory, we'll go ahead and
+         * fail.
+         */
+        LOG(DCOPY_LOG_DBG, "Attempting to see if this is a file to file compare.");
+        dest_stream = fopen(DCOPY_user_opts.dest_path, "rb");
 
-        if(DCOPY_user_opts.reliable_filesystem) {
-            exit(EXIT_FAILURE);
+        if(!dest_stream) {
+            LOG(DCOPY_LOG_ERR, "Unable to open destination path `%s'. %s", \
+                dest_path, strerror(errno));
+
+            if(DCOPY_user_opts.reliable_filesystem) {
+                LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+                exit(EXIT_FAILURE);
+            }
+            else {
+                /* Retry the entire compare operation. */
+                newop = DCOPY_encode_operation(COMPARE, op->chunk, src_path, op->source_base_offset, op->dest_base_appendix);
+                handle->enqueue(newop);
+                free(newop);
+
+                fclose(src_stream);
+                fclose(dest_stream);
+
+                free(src_buf);
+                free(dest_buf);
+
+                return;
+            }
         }
         else {
-            /* Retry the entire compare operation. */
-            newop = DCOPY_encode_operation(COMPARE, op->chunk, src_path, op->source_base_offset, op->dest_base_appendix);
-            handle->enqueue(newop);
-            free(newop);
-
-            fclose(src_stream);
-            fclose(dest_stream);
-
-            free(src_buf);
-            free(dest_buf);
-
-            return;
+            is_file_to_file_compare = true;
         }
+    }
+
+    if(is_file_to_file_compare) {
+        LOG(DCOPY_LOG_DBG, "Comparing source object `%s' (chunk number `%d') against destination `%s'.", \
+            src_path, op->chunk, DCOPY_user_opts.dest_path);
+    }
+    else {
+        LOG(DCOPY_LOG_DBG, "Comparing source object `%s' (chunk number `%d') against destination `%s'.", \
+            src_path, op->chunk, dest_path);
     }
 
     fseek(src_stream, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
