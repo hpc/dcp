@@ -74,6 +74,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
                 dest_path, strerror(errno));
 
             if(DCOPY_user_opts.reliable_filesystem) {
+                LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
                 exit(EXIT_FAILURE);
             }
 
@@ -86,6 +87,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
             source_path, strerror(errno));
 
         if(DCOPY_user_opts.reliable_filesystem) {
+            LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
             exit(EXIT_FAILURE);
         }
         return;
@@ -98,6 +100,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
             source_path, strerror(errno));
 
         if(DCOPY_user_opts.reliable_filesystem) {
+            LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
             exit(EXIT_FAILURE);
         }
 
