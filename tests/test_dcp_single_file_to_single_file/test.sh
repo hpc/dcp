@@ -53,10 +53,10 @@ dd if=/dev/urandom of=$PATH_D_RANDOM bs=1M count=4 > /dev/null 2>&1
 dd if=/dev/urandom of=$PATH_E_RANDOM bs=1M count=3 > /dev/null 2>&1
 
 # Create checksums for files that exist on disk.
-MD5_B_EMPTY=$(md5sum "$PATH_B_EMPTY" | /usr/bin/cut -f 2 -d "=")
-MD5_C_EMPTY=$(md5sum "$PATH_C_EMPTY" | /usr/bin/cut -f 2 -d "=")
-MD5_D_RANDOM=$(md5sum "$PATH_D_RANDOM" | /usr/bin/cut -f 2 -d "=")
-MD5_E_RANDOM=$(md5sum "$PATH_E_RANDOM" | /usr/bin/cut -f 2 -d "=")
+MD5_B_EMPTY=$(md5sum -q "$PATH_B_EMPTY")
+MD5_C_EMPTY=$(md5sum -q "$PATH_C_EMPTY")
+MD5_D_RANDOM=$(md5sum -q "$PATH_D_RANDOM")
+MD5_E_RANDOM=$(md5sum -q "$PATH_E_RANDOM")
 
 ##############################################################################
 # Test copying an empty file to an empty file. The result should be two files
@@ -69,12 +69,12 @@ if [[ $? -ne 0 ]]; then
     exit 1;
 fi
 
-if [[ "$MD5_B_EMPTY" != $(md5sum "$PATH_B_EMPTY" | /usr/bin/cut -f 2 -d "=") ]]; then
+if [[ "$MD5_B_EMPTY" != $(md5sum -q "$PATH_B_EMPTY") ]]; then
     echo "MD5 mismatch when copying empty file to empty file (B)."
     exit 1
 fi
 
-if [[ "$MD5_C_EMPTY" != $(md5sum "$PATH_C_EMPTY" | /usr/bin/cut -f 2 -d "=") ]]; then
+if [[ "$MD5_C_EMPTY" != $(md5sum -q "$PATH_C_EMPTY") ]]; then
     echo "MD5 mismatch when copying empty file to empty file (C)."
     exit 1
 fi
@@ -90,7 +90,7 @@ if [[ $? -ne 0 ]]; then
     exit 1;
 fi
 
-if [[ "$MD5_D_RANDOM" != $(md5sum "$PATH_B_EMPTY" | /usr/bin/cut -f 2 -d "=") ]]; then
+if [[ "$MD5_D_RANDOM" != $(md5sum -q "$PATH_B_EMPTY") ]]; then
     echo "MD5 mismatch when copying random file to empty file (B)."
     exit 1
 fi
@@ -107,7 +107,7 @@ if [[ $? -ne 0 ]]; then
     exit 1;
 fi
 
-if [[ "$MD5_E_RANDOM" != $(md5sum "$PATH_D_RANDOM" | /usr/bin/cut -f 2 -d "=") ]]; then
+if [[ "$MD5_E_RANDOM" != $(md5sum -q "$PATH_D_RANDOM") ]]; then
     echo "MD5 mismatch when copying random file to empty file (B)."
     exit 1
 fi
