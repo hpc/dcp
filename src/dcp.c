@@ -99,10 +99,8 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
     handle->dequeue(op);
     DCOPY_operation_t* opt = DCOPY_decode_operation(op);
 
-    LOG(DCOPY_LOG_DBG, "Popped `%s' (`%d' remaining on local queue)", \
-        opt->operand, handle->local_queue_size());
-    LOG(DCOPY_LOG_DBG, "Performing an operation of type `%s' on operand `%s'.", \
-        DCOPY_op_string_table[opt->code], opt->operand);
+    LOG(DCOPY_LOG_DBG, "Performing operation `%s' on operand `%s' (`%d' remain on local queue).", \
+        DCOPY_op_string_table[opt->code], opt->operand, handle->local_queue_size());
 
     DCOPY_jump_table[opt->code](opt, handle);
 
