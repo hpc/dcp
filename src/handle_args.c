@@ -93,7 +93,6 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
             while(*bad_src_path != NULL) {
                 if(DCOPY_is_directory(*(bad_src_path))) {
                     LOG(DCOPY_LOG_ERR, "Copying a directory into a file is not supported.");
-                    LOG(DCOPY_LOG_ERR, "If the destination should be a directory, recursion must be specified.");
 
                     exit(EXIT_FAILURE);
                 }
