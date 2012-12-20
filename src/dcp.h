@@ -46,6 +46,7 @@ typedef struct {
     bool preserve;
     bool recursive;
     bool recursive_unspecified;
+    bool reliable_filesystem;
     struct stat dest_stat;
 } DCOPY_options_t;
 

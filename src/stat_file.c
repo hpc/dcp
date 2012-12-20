@@ -58,10 +58,21 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     struct stat statbuf;
     int s = lstat(op->operand, &statbuf);
+    char* newop;
 
     if(s < 0) {
-        LOG(DCOPY_LOG_DBG, "Could not stat file at `%s'.", op->operand);
-        exit(EXIT_FAILURE);
+        if(DCOPY_user_opts.reliable_filesystem) {
+            LOG(DCOPY_LOG_DBG, "Could not stat file at `%s'.", op->operand);
+            exit(EXIT_FAILURE);
+        }
+        else {
+            /* Retry the entire stat operation. */
+            newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->source_base_offset, op->dest_base_appendix);
+            handle->enqueue(newop);
+            free(newop);
+            
+            return;
+        }
     }
 
     if(S_ISDIR(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
@@ -73,8 +84,21 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
         DCOPY_stat_process_file(op, statbuf.st_size, handle);
     }
     else {
-        LOG(DCOPY_LOG_DBG, "Encounted an unsupported file type at `%s'.", op->operand);
-        exit(EXIT_FAILURE);
+        LOG(DCOPY_LOG_DBG, "Encountered an unsupported file type at `%s'.", op->operand);
+
+        if(DCOPY_user_opts.reliable_filesystem) {
+            exit(EXIT_FAILURE);
+        }
+        else {
+            LOG(DCOPY_LOG_DBG, "Since unreliable filesystem was specified, we're attempting to look at the file again.");
+
+            /* Retry the entire stat operation. */
+            newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->source_base_offset, op->dest_base_appendix);
+            handle->enqueue(newop);
+            free(newop);
+
+            return;
+        }
     }
 }
 
@@ -116,6 +140,7 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     DIR* curr_dir;
     char* curr_dir_name;
+    char* newop;
 
     struct dirent* curr_ent;
     char cmd_buf[PATH_MAX];
@@ -143,7 +168,19 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
     if(curr_dir == NULL) {
         LOG(DCOPY_LOG_ERR, "Unable to open dir `%s'. %s", \
             op->operand, strerror(errno));
-        exit(EXIT_FAILURE);
+        if(DCOPY_user_opts.reliable_filesystem) {
+            exit(EXIT_FAILURE);
+        }
+        else {
+            LOG(DCOPY_LOG_DBG, "Since unreliable filesystem was specified, we're attempting to look at the directory again.");
+
+            /* Retry the entire stat operation. */
+            newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->source_base_offset, op->dest_base_appendix);
+            handle->enqueue(newop);
+            free(newop);
+
+            return;
+        }
     }
     else {
         while((curr_ent = readdir(curr_dir)) != NULL) {
@@ -157,7 +194,7 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
                 sprintf(newop_path, "%s/%s", op->operand, curr_dir_name);
 
-                char* newop = DCOPY_encode_operation(STAT, 0, newop_path, op->source_base_offset, op->dest_base_appendix);
+                newop = DCOPY_encode_operation(STAT, 0, newop_path, op->source_base_offset, op->dest_base_appendix);
                 handle->enqueue(newop);
 
                 free(newop);

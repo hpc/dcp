@@ -176,6 +176,9 @@ int main(int argc, char** argv)
     DCOPY_user_opts.recursive = false;
     DCOPY_user_opts.recursive_unspecified = false;
 
+    /* By default, assume the filesystem is reliable (exit on errors). */
+    DCOPY_user_opts.reliable_filesystem = true;
+
     static struct option long_options[] = {
         {"conditional"          , no_argument      , 0, 'c'},
         {"skip-compare"         , no_argument      , 0, 'C'},
@@ -185,12 +188,13 @@ int main(int argc, char** argv)
         {"preserve"             , no_argument      , 0, 'p'},
         {"recursive"            , no_argument      , 0, 'R'},
         {"recursive-unspecified", no_argument      , 0, 'r'},
+        {"unreliable-filesystem", no_argument      , 0, 'U'},
         {"version"              , no_argument      , 0, 'v'},
         {0                      , 0                , 0, 0  }
     };
 
     /* Parse options */
-    while((c = getopt_long(argc, argv, "cCd:fhpRrv", long_options, &option_index)) != -1) {
+    while((c = getopt_long(argc, argv, "cCd:fhpRrUv", long_options, &option_index)) != -1) {
         switch(c) {
 
             case 'c':
@@ -283,6 +287,12 @@ int main(int argc, char** argv)
 
                 DCOPY_user_opts.recursive_unspecified = true;
                 LOG(DCOPY_LOG_INFO, "Performing recursion while ignoring special files.");
+                break;
+
+            case 'U':
+
+                DCOPY_user_opts.reliable_filesystem = false;
+                LOG(DCOPY_LOG_INFO, "Unreliable filesystem specified. Retry mode enabled.");
                 break;
 
             case 'v':
