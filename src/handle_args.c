@@ -58,7 +58,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 
     uint32_t number_of_source_files = DCOPY_source_file_count();
 
-    LOG(DCOPY_LOG_DBG, "Found `%d' source files.", number_of_source_files);
+    /* LOG(DCOPY_LOG_DBG, "Found `%d' source files.", number_of_source_files); */
 
     if(dest_is_file) {
         LOG(DCOPY_LOG_DBG, "Infered that the destination is a file.");
@@ -78,7 +78,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
             sprintf(src_path_dirname, "%s", DCOPY_user_opts.src_path[0]);
             src_path_dirname = dirname(src_path_dirname);
 
-            LOG(DCOPY_LOG_DBG, "Enqueueing only a single source path `%s'.", DCOPY_user_opts.src_path[0]);
+            /* LOG(DCOPY_LOG_DBG, "Enqueueing only a single source path `%s'.", DCOPY_user_opts.src_path[0]); */
             char* op = DCOPY_encode_operation(STAT, 0, DCOPY_user_opts.src_path[0], \
                                               strlen(src_path_dirname), NULL);
             handle->enqueue(op);
@@ -115,7 +115,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
         char** src_path = DCOPY_user_opts.src_path;
 
         while(*src_path != NULL) {
-            LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", *(src_path));
+            /* LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", *(src_path)); */
             char* src_path_basename = NULL;
 
             /*
@@ -270,7 +270,7 @@ void DCOPY_parse_dest_path(char* path)
         strncpy(DCOPY_user_opts.dest_path, norm_path, PATH_MAX);
     }
 
-    LOG(DCOPY_LOG_DBG, "Using destination path `%s'.", DCOPY_user_opts.dest_path);
+    /* LOG(DCOPY_LOG_DBG, "Using destination path `%s'.", DCOPY_user_opts.dest_path); */
 }
 
 /**
@@ -322,14 +322,15 @@ void DCOPY_parse_path_args(char** argv, int optind_local, int argc)
     /*
      * Now, lets print everything out for debugging purposes.
      */
+/*
     char** dbg_p = DCOPY_user_opts.src_path;
 
     while(*dbg_p != NULL) {
         LOG(DCOPY_LOG_DBG, "Found a source path with name: `%s'", *(dbg_p));
         dbg_p++;
     }
-
     LOG(DCOPY_LOG_DBG, "Found a destination path with name: `%s'", DCOPY_user_opts.dest_path);
+*/
 }
 
 /* EOF */
