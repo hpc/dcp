@@ -29,6 +29,8 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     char buf[DCOPY_CHUNK_SIZE];
     char* source_path = op->operand;
 
+    bool is_file_to_file_copy = false;
+
     size_t bytes_read = 0;
     size_t bytes_written = 0;
 
@@ -46,9 +48,6 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
                 op->dest_base_appendix, \
                 op->operand + op->source_base_offset + 1);
     }
-
-    LOG(DCOPY_LOG_DBG, "Copying to destination path `%s' from source path `%s'.", dest_path, source_path);
-    LOG(DCOPY_LOG_DBG, "Copying chunk number `%d' from source path `%s'.", op->chunk, source_path);
 
     in = fopen(source_path, "rb");
 
@@ -80,6 +79,18 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
             return;
         }
+        else {
+            is_file_to_file_copy = true;
+        }
+    }
+
+    if(is_file_to_file_copy) {
+        LOG(DCOPY_LOG_DBG, "Copying to destination path `%s' from source path `%s' (chunk number %d).", \
+            DCOPY_user_opts.dest_path, source_path, op->chunk);
+    }
+    else {
+        LOG(DCOPY_LOG_DBG, "Copying to destination path `%s' from source path `%s' (chunk number %d).", \
+            dest_path, source_path, op->chunk);
     }
 
     if(fseek(in, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
