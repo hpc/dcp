@@ -210,7 +210,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CFLAGS = -ggdb -W -ansi -pedantic -Werror -Wall -Wextra -Wunused -Wshadow -Wwrite-strings -std=gnu99
+AM_CFLAGS = -ggdb -W -ansi -pedantic -Wall -Wextra -Wunused -Wshadow -Wwrite-strings -std=gnu99
 dcp_SOURCES = handle_args.c stat_file.c copy.c compare.c dcp.c
 dcp_LDADD = \
     $(libcircle_LIBS) \
