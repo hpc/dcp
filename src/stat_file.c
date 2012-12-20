@@ -76,11 +76,11 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
 
     if(S_ISDIR(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
-        LOG(DCOPY_LOG_DBG, "Stat operation found a directory at `%s'.", op->operand);
+        /* LOG(DCOPY_LOG_DBG, "Stat operation found a directory at `%s'.", op->operand); */
         DCOPY_stat_process_dir(op, handle);
     }
     else if(S_ISREG(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
-        LOG(DCOPY_LOG_DBG, "Stat operation found a file at `%s'.", op->operand);
+        /* LOG(DCOPY_LOG_DBG, "Stat operation found a file at `%s'.", op->operand); */
         DCOPY_stat_process_file(op, statbuf.st_size, handle);
     }
     else {
