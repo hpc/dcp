@@ -41,8 +41,15 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, \
                              char* dest_base_appendix)
 {
     char* result = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
-    sprintf(result, "%d:%d:%d:%s:%s", chunk, op, source_base_offset, \
-            operand, dest_base_appendix);
+
+    if(dest_base_appendix == NULL) {
+        sprintf(result, "%d:%d:%d:%s", chunk, op, source_base_offset, \
+                operand);
+    }
+    else {
+        sprintf(result, "%d:%d:%d:%s:%s", chunk, op, source_base_offset, \
+                operand, dest_base_appendix);
+    }
 
     return result;
 }
