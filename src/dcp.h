@@ -10,6 +10,7 @@
 #include <time.h>
 #include <unistd.h>
 
+/* FIXME: why was this number picked? */
 #define DCOPY_CHUNK_SIZE 4194304
 
 #ifndef PATH_MAX
