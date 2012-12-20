@@ -6,8 +6,8 @@ Note that dcp is in an early stage of development. To determine the current stat
 
 ### SYNOPSIS
 ```
-dcp [cCdfhpRrv] [--] source_file target_file
-dcp [cCdfhpRrv] [--] source_file ... target_directory
+dcp [cCdfhpRrUv] [--] source_file target_file
+dcp [cCdfhpRrUv] [--] source_file ... target_directory
 ```
 
 ### DESCRIPTION
@@ -48,6 +48,10 @@ Copy directories recursively, and do the right thing when objects other than ord
 **-r**, **--recursive-unspecified**
 
 Copy directories recursively, and ignore objects other than ordinary files or directories.
+
+**-U**, **--unreliable-filesystem**
+
+If the filesystem is very unreliable, this option may be used to always retry an operation when a failure occurs. If failures are permanent, this option will cause an infinite loop.
 
 **-v**, **--version**
 

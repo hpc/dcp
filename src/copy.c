@@ -72,13 +72,18 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
         if(outfd < 0) {
             LOG(DCOPY_LOG_ERR, "Unable to open destination path `%s'. %s", \
                 dest_path, strerror(errno));
+
+            /* FIXME: Remove this exit if the open is a temp condition. */
             exit(EXIT_FAILURE);
+            return;
         }
     }
 
     if(fseek(in, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
             source_path, strerror(errno));
+
+        /* FIXME: Remove this exit if the seek failure is a temp condition. */
         exit(EXIT_FAILURE);
         return;
     }
@@ -88,7 +93,10 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     if(bytes_read <= 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't read from source path `%s'. %s", \
             source_path, strerror(errno));
+
+        /* FIXME: Remove this exit if the read is a temp condition. */
         exit(EXIT_FAILURE);
+        return;
     }
 
     LOG(DCOPY_LOG_DBG, "Copy operation, we read `%zu' bytes.", bytes_read);
