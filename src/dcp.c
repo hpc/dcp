@@ -128,9 +128,6 @@ void DCOPY_epilogue(void)
     LOG(DCOPY_LOG_INFO, "Filecopy run started at `%s'.", starttime_str);
     LOG(DCOPY_LOG_INFO, "Filecopy run completed at `%s'.", endtime_str);
 
-    LOG(DCOPY_LOG_INFO, "Filecopy total time (seconds) for this run is `%f'.", \
-        difftime(DCOPY_statistics.time_started, DCOPY_statistics.time_ended));
-
     LOG(DCOPY_LOG_INFO, "Transfer rate is `%lf' bytes per second (`%ld' bytes in `%lf' seconds).", \
         rate, DCOPY_statistics.total_bytes_copied, rel_time);
 }
