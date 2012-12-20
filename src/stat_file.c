@@ -74,6 +74,10 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
 }
 
+/**
+ * This function inputs a file and creates chunk operations that get placed
+ * onto the libcircle queue for future processing by the copy stage.
+ */
 void DCOPY_stat_process_file(DCOPY_operation_t* op, size_t file_size, CIRCLE_handle* handle)
 {
     size_t chunk_index;
@@ -99,6 +103,11 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, size_t file_size, CIRCLE_han
     }
 }
 
+/**
+ * This function reads the contents of a directory and generates appropriate
+ * libcircle operations for every object in the directory. It then places those
+ * operations on the libcircle queue and returns.
+ */
 void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     DIR* curr_dir;
