@@ -242,6 +242,11 @@ int main(int argc, char** argv)
                 break;
 
             case 'f':
+
+                /* FIXME not implemented */
+                LOG(DCOPY_LOG_ERR, "Sorry, the force option is not implemented yet.");
+                exit(EXIT_FAILURE);
+
                 DCOPY_user_opts.force = true;
                 LOG(DCOPY_LOG_INFO, "Unlinking destionation file if create or truncate fails.");
                 break;
@@ -252,16 +257,30 @@ int main(int argc, char** argv)
                 break;
 
             case 'p':
+
+                /* FIXME not implemented */
+                LOG(DCOPY_LOG_ERR, "Sorry, the preserve option is not implemented yet.");
+                exit(EXIT_FAILURE);
+
                 DCOPY_user_opts.preserve = true;
                 LOG(DCOPY_LOG_INFO, "Preserving file attributes.");
                 break;
 
             case 'R':
+
+                /* FIXME not completely implemented */
+                LOG(DCOPY_LOG_WARN, "WARNING: The recursive option currently only supports files and directories!");
+
                 DCOPY_user_opts.recursive = true;
                 LOG(DCOPY_LOG_INFO, "Performing correct recursion.");
                 break;
 
             case 'r':
+
+                /* FIXME not implemented */
+                LOG(DCOPY_LOG_ERR, "Sorry, the recursive-unspecified option is not implemented yet.");
+                exit(EXIT_FAILURE);
+
                 DCOPY_user_opts.recursive_unspecified = true;
                 LOG(DCOPY_LOG_INFO, "Performing recursion while ignoring special files.");
                 break;
