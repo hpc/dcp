@@ -52,7 +52,7 @@ void DCOPY_do_compare(DCOPY_operation_t* op, CIRCLE_handle* handle)
         }
         else {
             /* Retry the entire compare operation. */
-            newop = DCOPY_encode_operation(COMPARE, op->chunk, src_path, op->source_base_offset, op->dest_base_appendix);
+            newop = DCOPY_encode_operation(COMPARE, op->chunk, src_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
             handle->enqueue(newop);
             free(newop);
 
@@ -85,7 +85,7 @@ void DCOPY_do_compare(DCOPY_operation_t* op, CIRCLE_handle* handle)
             }
             else {
                 /* Retry the entire compare operation. */
-                newop = DCOPY_encode_operation(COMPARE, op->chunk, src_path, op->source_base_offset, op->dest_base_appendix);
+                newop = DCOPY_encode_operation(COMPARE, op->chunk, src_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
                 handle->enqueue(newop);
                 free(newop);
 
@@ -125,7 +125,7 @@ void DCOPY_do_compare(DCOPY_operation_t* op, CIRCLE_handle* handle)
         }
         else {
             LOG(DCOPY_LOG_ERR, "Compare mismatch when copying from file `%s'. Requeueing file.", src_path);
-            newop = DCOPY_encode_operation(STAT, 0, src_path, op->source_base_offset, op->dest_base_appendix);
+            newop = DCOPY_encode_operation(STAT, 0, src_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
             handle->enqueue(newop);
             free(newop);
         }

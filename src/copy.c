@@ -30,12 +30,20 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     char* source_path = op->operand;
 
     bool is_file_to_file_copy = false;
+    bool unlink_on_failed_create_or_truncate = false;
 
     size_t bytes_read = 0;
     size_t bytes_written = 0;
 
     FILE* in;
     int outfd;
+
+    /* If we need to stat before an unlink. */
+    struct stat sb;
+
+    if(DCOPY_user_opts.force) {
+        unlink_on_failed_create_or_truncate = true;
+    }
 
     if(op->dest_base_appendix == NULL) {
         sprintf(dest_path, "%s/%s", \
@@ -54,12 +62,55 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     if(!in) {
         LOG(DCOPY_LOG_ERR, "Unable to open source path `%s'. %s", \
             source_path, strerror(errno));
+
+        if(DCOPY_user_opts.reliable_filesystem) {
+            exit(EXIT_FAILURE);
+        }
+
+        LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
         return;
     }
 
     outfd = open(dest_path, O_RDWR | O_CREAT, 00644);
 
-    if(outfd < 0) {
+    /* Force option handing for recursive-style copies. */
+    if((outfd < 0) && (ftruncate(outfd, op->file_size) < 0) && unlink_on_failed_create_or_truncate) {
+
+        /* If the stat() was successful and we're not a directory, lets try an unlink. */
+        if((stat(dest_path, &sb) == 0)) {
+            if(!S_ISDIR(sb.st_mode)) {
+                LOG(DCOPY_LOG_DBG, "Destination file creation failed on a recursive-style copy.");
+                LOG(DCOPY_LOG_DBG, "Attempting to unlink since force is enabled.");
+
+                if(unlink(dest_path) != 0) {
+                    LOG(DCOPY_LOG_ERR, "Could not unlink destination. %s", strerror(errno));
+
+                    if(DCOPY_user_opts.reliable_filesystem) {
+                        exit(EXIT_FAILURE);
+                    }
+
+                    LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+                    return;
+                }
+
+                /* Try it again. */
+                outfd = open(dest_path, O_RDWR | O_CREAT, 00644);
+                if(outfd < 0 && (ftruncate(outfd, op->file_size) < 0)) {
+                    LOG(DCOPY_LOG_ERR, "Could not open destination after an unlink. %s", strerror(errno));
+
+                    if(DCOPY_user_opts.reliable_filesystem) {
+                        exit(EXIT_FAILURE);
+                    }
+
+                    LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+                    return;
+                }
+            }
+        }
+    }
+
+    /* Fallback to file-to-file copy since it doesn't look like we're recursive.. */
+    if(outfd < 0 && (ftruncate(outfd, op->file_size) < 0)) {
         /*
          * Since we might be trying a file to file copy, lets try to open
          * the base instead. If it really is a directory, we'll go ahead and
@@ -68,16 +119,53 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
         LOG(DCOPY_LOG_DBG, "Attempting to see if this is a file to file copy.");
         outfd = open(DCOPY_user_opts.dest_path, O_RDWR | O_CREAT, 00644);
 
-        if(outfd < 0) {
+        if(outfd < 0 && (ftruncate(outfd, op->file_size) < 0)) {
             LOG(DCOPY_LOG_ERR, "Unable to open destination path `%s'. %s", \
                 dest_path, strerror(errno));
 
-            if(DCOPY_user_opts.reliable_filesystem) {
-                LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
-                exit(EXIT_FAILURE);
-            }
+            /* Force option handing for file-to-file style copies. */
+            if(unlink_on_failed_create_or_truncate) {
 
-            return;
+                /* If the stat() was successful and we're not a directory, lets try an unlink. */
+                if((stat(DCOPY_user_opts.dest_path, &sb) == 0)) {
+                    if(!S_ISDIR(sb.st_mode)) {
+                        LOG(DCOPY_LOG_DBG, "Destination file creation failed on a file-to-file style copy.");
+                        LOG(DCOPY_LOG_DBG, "Attempting to unlink since force is enabled.");
+
+                        if(unlink(DCOPY_user_opts.dest_path) != 0) {
+                            LOG(DCOPY_LOG_ERR, "Could not unlink destination. %s", strerror(errno));
+
+                            if(DCOPY_user_opts.reliable_filesystem) {
+                                exit(EXIT_FAILURE);
+                            }
+
+                            LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+                            return;
+                        }
+
+                        /* Try it again. */
+                        outfd = open(DCOPY_user_opts.dest_path, O_RDWR | O_CREAT, 00644);
+                        if(outfd < 0 && (ftruncate(outfd, op->file_size) < 0)) {
+                            LOG(DCOPY_LOG_ERR, "Could not open destination after an unlink. %s", strerror(errno));
+
+                            if(DCOPY_user_opts.reliable_filesystem) {
+                                exit(EXIT_FAILURE);
+                            }
+
+                            LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+                            return;
+                        }
+                    }
+                }
+            }
+            else {
+                if(DCOPY_user_opts.reliable_filesystem) {
+                    exit(EXIT_FAILURE);
+                }
+
+                LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+                return;
+            }
         }
         else {
             is_file_to_file_copy = true;
@@ -98,10 +186,10 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
             source_path, strerror(errno));
 
         if(DCOPY_user_opts.reliable_filesystem) {
-            LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
             exit(EXIT_FAILURE);
         }
 
+        LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
         return;
     }
 
@@ -112,16 +200,15 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
             source_path, strerror(errno));
 
         if(DCOPY_user_opts.reliable_filesystem) {
-            LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
             exit(EXIT_FAILURE);
         }
 
+        LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
         return;
     }
 
     LOG(DCOPY_LOG_DBG, "Copy operation, we read `%zu' bytes.", bytes_read);
 
-    /* FIXME: This writes out too many bytes!!! */
     lseek(outfd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
     bytes_written = write(outfd, buf, bytes_read);
 
@@ -136,7 +223,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
      * comparison stage.
      */
     if(!DCOPY_user_opts.skip_compare) {
-        char* newop = DCOPY_encode_operation(COMPARE, op->chunk, source_path, op->source_base_offset, op->dest_base_appendix);
+        char* newop = DCOPY_encode_operation(COMPARE, op->chunk, source_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
         handle->enqueue(newop);
         free(newop);
     }

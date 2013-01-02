@@ -67,7 +67,7 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
         }
         else {
             /* Retry the entire stat operation. */
-            newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->source_base_offset, op->dest_base_appendix);
+            newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->source_base_offset, op->dest_base_appendix, op->file_size);
             handle->enqueue(newop);
             free(newop);
 
@@ -93,7 +93,7 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
             LOG(DCOPY_LOG_DBG, "Since unreliable filesystem was specified, we're attempting to look at the file again.");
 
             /* Retry the entire stat operation. */
-            newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->source_base_offset, op->dest_base_appendix);
+            newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->source_base_offset, op->dest_base_appendix, op->file_size);
             handle->enqueue(newop);
             free(newop);
 
@@ -116,14 +116,14 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, size_t file_size, CIRCLE_han
 
     /* Encode and enqueue each chunk of the file for processing later. */
     for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
-        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, op->source_base_offset, op->dest_base_appendix);
+        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, op->source_base_offset, op->dest_base_appendix, file_size);
         handle->enqueue(newop);
         free(newop);
     }
 
     /* Encode and enqueue the last partial chunk. */
     if(num_chunks * DCOPY_CHUNK_SIZE < file_size) {
-        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, op->source_base_offset, op->dest_base_appendix);
+        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, op->source_base_offset, op->dest_base_appendix, file_size);
         handle->enqueue(newop);
         free(newop);
     }
@@ -174,7 +174,7 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
             LOG(DCOPY_LOG_DBG, "Since unreliable filesystem was specified, we're attempting to look at the directory again.");
 
             /* Retry the entire stat operation. */
-            newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->source_base_offset, op->dest_base_appendix);
+            newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->source_base_offset, op->dest_base_appendix, op->file_size);
             handle->enqueue(newop);
             free(newop);
 
@@ -193,7 +193,7 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
                 sprintf(newop_path, "%s/%s", op->operand, curr_dir_name);
 
-                newop = DCOPY_encode_operation(STAT, 0, newop_path, op->source_base_offset, op->dest_base_appendix);
+                newop = DCOPY_encode_operation(STAT, 0, newop_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
                 handle->enqueue(newop);
 
                 free(newop);

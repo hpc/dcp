@@ -40,17 +40,17 @@ void (*DCOPY_jump_table[4])(DCOPY_operation_t* op, CIRCLE_handle* handle);
  */
 char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, \
                              char* operand, uint16_t source_base_offset, \
-                             char* dest_base_appendix)
+                             char* dest_base_appendix, size_t file_size)
 {
     char* result = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
 
     if(dest_base_appendix == NULL) {
-        sprintf(result, "%d:%d:%d:%s", chunk, op, source_base_offset, \
-                operand);
+        sprintf(result, "%d:%d:%d:%s:%zu", chunk, op, source_base_offset, \
+                operand, file_size);
     }
     else {
-        sprintf(result, "%d:%d:%d:%s:%s", chunk, op, source_base_offset, \
-                operand, dest_base_appendix);
+        sprintf(result, "%d:%d:%d:%s:%s:%zu", chunk, op, source_base_offset, \
+                operand, dest_base_appendix, file_size);
     }
 
     return result;
@@ -61,6 +61,7 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, \
  */
 DCOPY_operation_t* DCOPY_decode_operation(char* op)
 {
+    char *str_file_size;
     DCOPY_operation_t* ret = (DCOPY_operation_t*) malloc(sizeof(DCOPY_operation_t));
 
     ret->operand = (char*) malloc(sizeof(char) * PATH_MAX);
@@ -70,6 +71,14 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
     ret->source_base_offset = atoi(strtok(NULL, ":"));
     ret->operand = strtok(NULL, ":");
     ret->dest_base_appendix = strtok(NULL, ":");
+
+    str_file_size = strtok(NULL, ":");
+    if(str_file_size != NULL) {
+        ret->file_size = atoi(str_file_size);
+    }
+    else {
+        ret->file_size = 0;
+    }
 
     return ret;
 }
@@ -246,10 +255,6 @@ int main(int argc, char** argv)
                 break;
 
             case 'f':
-
-                /* FIXME not implemented */
-                LOG(DCOPY_LOG_ERR, "Sorry, the force option is not implemented yet.");
-                exit(EXIT_FAILURE);
 
                 DCOPY_user_opts.force = true;
                 LOG(DCOPY_LOG_INFO, "Unlinking destionation file if create or truncate fails.");
