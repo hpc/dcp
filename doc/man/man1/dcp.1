@@ -30,7 +30,7 @@ Specify the level of debug information to output. Level may be one of: 'fatal', 
 
 .TP
 \fB\-f\fR, \fB\-\-force\fR
-Remove existing destination files if creation or truncation fails.
+Remove existing destination files if creation or truncation fails. If the destination filesystem is specified to be unreliable, specifying this option may lower performance (each failure will cause the entire file to be invalidated and copied again).
 
 .TP
 \fB\-h\fR, \fB\-\-help\fR
