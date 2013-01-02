@@ -58,6 +58,9 @@ dd if=/dev/urandom of=$PATH_F_RANDOM bs=3M count=3
 dd if=/dev/urandom of=$PATH_G_RANDOM bs=1M count=1
 dd if=/dev/urandom of=$PATH_H_RANDOM bs=6M count=2
 
+# FIXME: write the rest of this test.
+exit 1
+
 ##############################################################################
 # Test copying the directory to an empty file. The result should be an error.
 
