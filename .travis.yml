@@ -2,7 +2,7 @@ language: c
 
 before_install:
  - sudo apt-get update -qq
- - sudo apt-get install -qq check libopenmpi-dev openmpi-bin check bc
+ - sudo apt-get install -qq check libopenmpi-dev openmpi-bin check bc md5deep
  - git clone https://github.com/hpc/libcircle.git
  - pushd libcircle
  - ./autogen.sh && ./configure --enable-tests && make && make check && sudo make install

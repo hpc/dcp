@@ -121,6 +121,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     LOG(DCOPY_LOG_DBG, "Copy operation, we read `%zu' bytes.", bytes_read);
 
+    /* FIXME: This writes out too many bytes!!! */
     lseek(outfd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
     bytes_written = write(outfd, buf, bytes_read);
 

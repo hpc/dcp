@@ -109,14 +109,12 @@ void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
 void DCOPY_stat_process_file(DCOPY_operation_t* op, size_t file_size, CIRCLE_handle* handle)
 {
     size_t chunk_index;
-
-    /* Round up. FIXME: this generates some really ugly opcodes. */
-    size_t num_chunks = (size_t)(((double)file_size) / ((double)DCOPY_CHUNK_SIZE + 0.5f));
+    size_t num_chunks = file_size / DCOPY_CHUNK_SIZE;
 
     LOG(DCOPY_LOG_DBG, "File `%s' size is `%ld' with chunks `%zu' (total `%zu').", \
         op->operand, file_size, num_chunks, num_chunks * DCOPY_CHUNK_SIZE);
 
-    /* Encode and nqueue each chunk of the file for processing later. */
+    /* Encode and enqueue each chunk of the file for processing later. */
     for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
         char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, op->source_base_offset, op->dest_base_appendix);
         handle->enqueue(newop);

@@ -18,6 +18,9 @@ TEST_DCP_BIN=../src/dcp
 # The mpirun binary to use.
 TEST_MPIRUN_BIN=/usr/bin/mpirun
 
+# The md5deep binary to use.
+TEST_MD5DEEP_BIN=/usr/bin/md5deep
+
 # Basic counters for summary output
 TESTS_RUN=0
 TESTS_FAILED=0
@@ -42,6 +45,7 @@ echo "# ========================================================================
 export DCP_TEST_BIN=$(readlink -f $TEST_DCP_BIN)
 export DCP_TEST_TMP=$(readlink -f $TEST_TMP_DIR)
 export DCP_MPIRUN_BIN=$(readlink -f $TEST_MPIRUN_BIN)
+export DCP_MD5DEEP_BIN=$(readlink -f $TEST_MD5DEEP_BIN)
 
 # Tell the tests what mode we're in
 export DEBUG

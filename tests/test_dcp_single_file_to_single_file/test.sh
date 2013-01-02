@@ -24,6 +24,7 @@ set -x
 # Print out the basic paths we'll be using.
 echo "Using dcp binary at: $DCP_TEST_BIN"
 echo "Using mpirun binary at: $DCP_MPIRUN_BIN"
+echo "Using md5deep binary at: $DCP_MD5DEEP_BIN"
 echo "Using tmp directory at: $DCP_TEST_TMP"
 
 ##############################################################################
@@ -53,29 +54,29 @@ dd if=/dev/urandom of=$PATH_D_RANDOM bs=1M count=4 > /dev/null 2>&1
 dd if=/dev/urandom of=$PATH_E_RANDOM bs=1M count=3 > /dev/null 2>&1
 
 # Create checksums for files that exist on disk.
-MD5_B_EMPTY=$(md5sum -q "$PATH_B_EMPTY")
-MD5_C_EMPTY=$(md5sum -q "$PATH_C_EMPTY")
-MD5_D_RANDOM=$(md5sum -q "$PATH_D_RANDOM")
-MD5_E_RANDOM=$(md5sum -q "$PATH_E_RANDOM")
+MD5_B_EMPTY=$($DCP_MD5DEEP_BIN -q "$PATH_B_EMPTY")
+MD5_C_EMPTY=$($DCP_MD5DEEP_BIN -q "$PATH_C_EMPTY")
+MD5_D_RANDOM=$($DCP_MD5DEEP_BIN -q "$PATH_D_RANDOM")
+MD5_E_RANDOM=$($DCP_MD5DEEP_BIN -q "$PATH_E_RANDOM")
 
 ##############################################################################
 # Test copying an empty file to an empty file. The result should be two files
 # which remain empty with no error output.
 
-$DCP_MPIRUN_BIN -np 3 $DCP_TEST_BIN $PATH_B_EMPTY $PATH_C_EMPTY > /dev/null 2>&1
+$DCP_MPIRUN_BIN -np 3 $DCP_TEST_BIN $PATH_B_EMPTY $PATH_C_EMPTY
 
 if [[ $? -ne 0 ]]; then
-    echo "Error returned when copying empty file to empty file."
+    echo "Error returned when copying empty file to empty file (B -> C)."
     exit 1;
 fi
 
-if [[ "$MD5_B_EMPTY" != $(md5sum -q "$PATH_B_EMPTY") ]]; then
-    echo "MD5 mismatch when copying empty file to empty file (B)."
+if [[ "$MD5_B_EMPTY" != $($DCP_MD5DEEP_BIN -q "$PATH_B_EMPTY") ]]; then
+    echo "MD5 mismatch when copying empty file to empty file (B -> C)."
     exit 1
 fi
 
-if [[ "$MD5_C_EMPTY" != $(md5sum -q "$PATH_C_EMPTY") ]]; then
-    echo "MD5 mismatch when copying empty file to empty file (C)."
+if [[ "$MD5_C_EMPTY" != $($DCP_MD5DEEP_BIN -q "$PATH_C_EMPTY") ]]; then
+    echo "MD5 mismatch when copying empty file to empty file (B -> C)."
     exit 1
 fi
 
@@ -83,32 +84,31 @@ fi
 # Test copying a random file to an empty file. The result should be two files
 # which both contain the contents of the first random file.
 
-$DCP_MPIRUN_BIN -np 3 $DCP_TEST_BIN $PATH_D_RANDOM $PATH_B_EMPTY #> /dev/null 2>&1
+$DCP_MPIRUN_BIN -np 3 $DCP_TEST_BIN $PATH_D_RANDOM $PATH_B_EMPTY
 
 if [[ $? -ne 0 ]]; then
-    echo "Error returned when copying random file to empty file."
+    echo "Error returned when copying random file to empty file (D -> B)."
     exit 1;
 fi
 
-if [[ "$MD5_D_RANDOM" != $(md5sum -q "$PATH_B_EMPTY") ]]; then
-    echo "MD5 mismatch when copying random file to empty file (B)."
+if [[ "$MD5_D_RANDOM" != $($DCP_MD5DEEP_BIN -q "$PATH_B_EMPTY") ]]; then
+    echo "MD5 mismatch when copying random file to empty file (D -> B)."
     exit 1
 fi
-
 
 ##############################################################################
 # Test copying a random file to another random  file. The result should be two
 # files which both contain the contents of the first random file.
 
-$DCP_MPIRUN_BIN -np 3 $DCP_TEST_BIN $PATH_E_RANDOM $PATH_D_RANDOM > /dev/null 2>&1
+$DCP_MPIRUN_BIN -np 3 $DCP_TEST_BIN $PATH_E_RANDOM $PATH_D_RANDOM
 
 if [[ $? -ne 0 ]]; then
-    echo "Error returned when copying random file to random file."
+    echo "Error returned when copying random file to random file (E -> D)."
     exit 1;
 fi
 
-if [[ "$MD5_E_RANDOM" != $(md5sum -q "$PATH_D_RANDOM") ]]; then
-    echo "MD5 mismatch when copying random file to empty file (B)."
+if [[ "$MD5_E_RANDOM" != $($DCP_MD5DEEP_BIN -q "$PATH_D_RANDOM") ]]; then
+    echo "MD5 mismatch when copying random file to random file (E -> D)."
     exit 1
 fi
 
