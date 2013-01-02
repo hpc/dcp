@@ -19,7 +19,7 @@
 ##############################################################################
 
 # Turn on verbose output
-set -x
+#set -x
 
 # Print out the basic paths we'll be using.
 echo "Using dcp binary at: $DCP_TEST_BIN"
@@ -50,7 +50,7 @@ touch $PATH_B_EMPTY
 touch $PATH_C_EMPTY
 
 # Create the two random files.
-dd if=/dev/urandom of=$PATH_D_RANDOM bs=4M count=3
+dd if=/dev/urandom of=$PATH_D_RANDOM bs=4M count=5
 dd if=/dev/urandom of=$PATH_E_RANDOM bs=3M count=4
 
 # Stat the two random files.
