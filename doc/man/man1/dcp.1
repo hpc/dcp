@@ -30,7 +30,7 @@ Specify the level of debug information to output. Level may be one of: 'fatal', 
 
 .TP
 \fB\-f\fR, \fB\-\-force\fR
-Remove existing destination files if creation or truncation fails. If the destination filesystem is specified to be unreliable, specifying this option may lower performance (each failure will cause the entire file to be invalidated and copied again).
+Remove existing destination files if creation or truncation fails. If the destination filesystem is specified to be unreliable (\fB\-U\fR, \fB\-\-unreliable-filesystem\fR), this option may lower performance since each failure will cause the entire file to be invalidated and copied again.
 
 .TP
 \fB\-h\fR, \fB\-\-help\fR
@@ -50,8 +50,7 @@ Copy directories recursively, and ignore objects other than ordinary files or di
 
 .TP
 \fB\-U\fR, \fB\-\-unreliable-filesystem\fR
-
-If the filesystem is very unreliable, this option may be used to always retry an operation when a failure occurs. If failures are permanent, this option will cause an infinite loop.
+If the filesystem is very unreliable, this option may be used to always retry an operation when a failure occurs. If failures are permanent, this option will cause an infinite loop. Specifying this option when force is enabled (\fB\-f\fR, \fB\-\-force\fR) may lower performance.
 
 .TP
 \fB\-v\fR, \fB\-\-version\fR

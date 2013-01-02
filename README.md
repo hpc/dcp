@@ -31,7 +31,7 @@ Specify the level of debug information to output. Level may be one of: *fatal*, 
 
 **-f**, **--force**
 
-Remove existing destination files if creation or truncation fails. If the destination filesystem is specified to be unreliable, specifying this option may lower performance (each failure will cause the entire file to be invalidated and copied again).
+Remove existing destination files if creation or truncation fails. If the destination filesystem is specified to be unreliable (**-U**, **--unreliable-filesystem**), this option may lower performance since each failure will cause the entire file to be invalidated and copied again.
 
 **-h**, **--help**
 
@@ -51,7 +51,7 @@ Copy directories recursively, and ignore objects other than ordinary files or di
 
 **-U**, **--unreliable-filesystem**
 
-If the filesystem is very unreliable, this option may be used to always retry an operation when a failure occurs. If failures are permanent, this option will cause an infinite loop.
+If the filesystem is very unreliable, this option may be used to always retry an operation when a failure occurs. If failures are permanent, this option will cause an infinite loop. Specifying this option when force is enabled (**-f**, **--force**) may lower performance.
 
 **-v**, **--version**
 
