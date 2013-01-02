@@ -74,7 +74,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     outfd = open(dest_path, O_RDWR | O_CREAT, 00644);
 
     /* Force option handing for recursive-style copies. */
-    if((outfd < 0) && (ftruncate(outfd, op->file_size) < 0) && unlink_on_failed_create_or_truncate) {
+    if((outfd < 0) && (truncate(dest_path, op->file_size) < 0) && unlink_on_failed_create_or_truncate) {
 
         /* If the stat() was successful and we're not a directory, lets try an unlink. */
         if((stat(dest_path, &sb) == 0)) {
@@ -95,7 +95,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
                 /* Try it again. */
                 outfd = open(dest_path, O_RDWR | O_CREAT, 00644);
-                if(outfd < 0 && (ftruncate(outfd, op->file_size) < 0)) {
+                if(outfd < 0 && (truncate(dest_path, op->file_size) < 0)) {
                     LOG(DCOPY_LOG_ERR, "Could not open destination after an unlink. %s", strerror(errno));
 
                     if(DCOPY_user_opts.reliable_filesystem) {
@@ -110,7 +110,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
 
     /* Fallback to file-to-file copy since it doesn't look like we're recursive.. */
-    if(outfd < 0 && (ftruncate(outfd, op->file_size) < 0)) {
+    if(outfd < 0 && (truncate(dest_path, op->file_size) < 0)) {
         /*
          * Since we might be trying a file to file copy, lets try to open
          * the base instead. If it really is a directory, we'll go ahead and
@@ -119,7 +119,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
         LOG(DCOPY_LOG_DBG, "Attempting to see if this is a file to file copy.");
         outfd = open(DCOPY_user_opts.dest_path, O_RDWR | O_CREAT, 00644);
 
-        if(outfd < 0 && (ftruncate(outfd, op->file_size) < 0)) {
+        if(outfd < 0 && (truncate(DCOPY_user_opts.dest_path, op->file_size) < 0)) {
             LOG(DCOPY_LOG_ERR, "Unable to open destination path `%s'. %s", \
                 dest_path, strerror(errno));
 
@@ -145,7 +145,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
                         /* Try it again. */
                         outfd = open(DCOPY_user_opts.dest_path, O_RDWR | O_CREAT, 00644);
-                        if(outfd < 0 && (ftruncate(outfd, op->file_size) < 0)) {
+                        if(outfd < 0 && (truncate(DCOPY_user_opts.dest_path, op->file_size) < 0)) {
                             LOG(DCOPY_LOG_ERR, "Could not open destination after an unlink. %s", strerror(errno));
 
                             if(DCOPY_user_opts.reliable_filesystem) {
@@ -175,10 +175,19 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     if(is_file_to_file_copy) {
         LOG(DCOPY_LOG_INFO, "Copying to destination path `%s' from source path `%s' (chunk number %d).", \
             DCOPY_user_opts.dest_path, source_path, op->chunk);
+/* 
+        stat(DCOPY_user_opts.dest_path, &sb);
+        LOG(DCOPY_LOG_DBG, "Destination file size is `%zu'.", sb.st_size);
+*/
     }
     else {
         LOG(DCOPY_LOG_INFO, "Copying to destination path `%s' from source path `%s' (chunk number %d).", \
             dest_path, source_path, op->chunk);
+
+/*
+        stat(dest_path, &sb);
+        LOG(DCOPY_LOG_DBG, "Destination file size is `%zu'.", sb.st_size);
+*/
     }
 
     if(fseek(in, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
@@ -207,7 +216,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
         return;
     }
 
-    LOG(DCOPY_LOG_DBG, "Copy operation, we read `%zu' bytes.", bytes_read);
+    LOG(DCOPY_LOG_DBG, "Writing `%zu' bytes at offset `%d'.", bytes_read, DCOPY_CHUNK_SIZE * op->chunk);
 
     lseek(outfd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
     bytes_written = write(outfd, buf, bytes_read);
@@ -228,8 +237,13 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
         free(newop);
     }
 
-    fclose(in);
-    close(outfd);
+    if(fclose(in) < 0) {
+        LOG(DCOPY_LOG_DBG, "Close on source file failed. %s", strerror(errno));
+    }
+
+    if(close(outfd) < 0) {
+        LOG(DCOPY_LOG_DBG, "Close on destination file failed. %s", strerror(errno));
+    }
 
     return;
 }

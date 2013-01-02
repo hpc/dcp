@@ -118,6 +118,10 @@ void DCOPY_do_compare(DCOPY_operation_t* op, CIRCLE_handle* handle)
     src_bytes = fread(src_buf, 1, DCOPY_CHUNK_SIZE, src_stream);
     dest_bytes = fread(dest_buf, 1, DCOPY_CHUNK_SIZE, dest_stream);
 
+    if(src_bytes != dest_bytes) {
+        LOG(DCOPY_LOG_DBG, "Source byte count `%zu' does not match destination byte count %zu`'.", src_bytes, dest_bytes);
+    }
+
     if(src_bytes != dest_bytes || memcmp(src_buf, dest_buf, src_bytes) != 0) {
         if(DCOPY_user_opts.reliable_filesystem) {
             LOG(DCOPY_LOG_ERR, "Compare mismatch when copying from file `%s'.", src_path);
