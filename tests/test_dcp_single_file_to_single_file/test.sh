@@ -32,11 +32,11 @@ echo "Using tmp directory at: $DCP_TEST_TMP"
 #   * A file that doesn't exist at all.
 #   * Two files with zero length.
 #   * Two files which contain random data.
-PATH_A_NOEXIST="$DCP_TEST_TMP/single_file_to_single_file.$RANDOM.tmp"
-PATH_B_EMPTY="$DCP_TEST_TMP/single_file_to_single_file.$RANDOM.tmp"
-PATH_C_EMPTY="$DCP_TEST_TMP/single_file_to_single_file.$RANDOM.tmp"
-PATH_D_RANDOM="$DCP_TEST_TMP/single_file_to_single_file.$RANDOM.tmp"
-PATH_E_RANDOM="$DCP_TEST_TMP/single_file_to_single_file.$RANDOM.tmp"
+PATH_A_NOEXIST="$DCP_TEST_TMP/dcp_test_single_file_to_single_file.$RANDOM.tmp"
+PATH_B_EMPTY="$DCP_TEST_TMP/dcp_test_single_file_to_single_file.$RANDOM.tmp"
+PATH_C_EMPTY="$DCP_TEST_TMP/dcp_test_single_file_to_single_file.$RANDOM.tmp"
+PATH_D_RANDOM="$DCP_TEST_TMP/dcp_test_single_file_to_single_file.$RANDOM.tmp"
+PATH_E_RANDOM="$DCP_TEST_TMP/dcp_test_single_file_to_single_file.$RANDOM.tmp"
 
 # Print out the generated paths to make debugging easier.
 echo "A_NOEXIST path at: $PATH_A_NOEXIST"

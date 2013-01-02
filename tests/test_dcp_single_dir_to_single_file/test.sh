@@ -28,9 +28,9 @@ echo "Using tmp directory at: $DCP_TEST_TMP"
 #   * A directory.
 #   * A file with zero length.
 #   * A file which contains random data.
-PATH_A_DIRECTORY="$DCP_TEST_TMP/single_dir_to_single_file.$RANDOM.tmp"
-PATH_B_EMPTY="$DCP_TEST_TMP/single_dir_to_single_file.$RANDOM.tmp"
-PATH_C_RANDOM="$DCP_TEST_TMP/single_dir_to_single_file.$RANDOM.tmp"
+PATH_A_DIRECTORY="$DCP_TEST_TMP/dcp_test_single_dir_to_single_file.$RANDOM.tmp"
+PATH_B_EMPTY="$DCP_TEST_TMP/dcp_test_single_dir_to_single_file.$RANDOM.tmp"
+PATH_C_RANDOM="$DCP_TEST_TMP/dcp_test_single_dir_to_single_file.$RANDOM.tmp"
 
 # Print out the generated paths to make debugging easier.
 echo "A_DIRECTORY path at: $PATH_A_DIRECTORY"
