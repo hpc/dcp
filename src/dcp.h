@@ -18,7 +18,7 @@
 #endif
 
 typedef enum {
-    TREEWALK, PREPARE, COPY, COMPARE
+    TREEWALK, COPY, CLEANUP, COMPARE
 } DCOPY_operation_code_t;
 
 typedef struct {

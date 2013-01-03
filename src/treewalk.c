@@ -5,7 +5,7 @@
  * In the case of directories, we'll simply read the contents of a directory
  * and place each sub-object back on the queue to be treewalked again. In the
  * case of files, we chunk up each file and place it on the queue as another
- * libcircle action to be later processed by the PREPARE and COPY stages.
+ * libcircle action to be later processed by the COPY and CLEANUP stages.
  *
  * See the file "COPYING" for the full license governing this code.
  */
