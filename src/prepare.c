@@ -17,7 +17,7 @@ void DCOPY_do_prepare(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     char* newop;
 
-    newop = DCOPY_encode_operation(STAT, op->chunk, op->operand, \
+    newop = DCOPY_encode_operation(COPY, op->chunk, op->operand, \
             op->source_base_offset, op->dest_base_appendix, op->file_size);
     handle->enqueue(newop);
 

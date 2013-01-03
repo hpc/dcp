@@ -12,7 +12,7 @@
 
 #include "copy.h"
 #include "log.h"
-#include "stat_file.h"
+#include "treewalk.h"
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;

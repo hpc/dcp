@@ -13,7 +13,7 @@
 #include "dcp.h"
 
 #include "handle_args.h"
-#include "stat_file.h"
+#include "treewalk.h"
 
 #ifndef _POSIX_ARG_MAX
 #define MAX_ARGS 4096
@@ -82,7 +82,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
             src_path_dirname = dirname(src_path_dirname);
 
             /* LOG(DCOPY_LOG_DBG, "Enqueueing only a single source path `%s'.", DCOPY_user_opts.src_path[0]); */
-            char* op = DCOPY_encode_operation(PREPARE, 0, DCOPY_user_opts.src_path[0], \
+            char* op = DCOPY_encode_operation(TREEWALK, 0, DCOPY_user_opts.src_path[0], \
                                               strlen(src_path_dirname), NULL, 0);
             handle->enqueue(op);
         }
@@ -134,7 +134,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
                 src_path_basename = basename(src_path_basename);
             }
 
-            char* op = DCOPY_encode_operation(PREPARE, 0, *(src_path), strlen(*(src_path)), src_path_basename, 0);
+            char* op = DCOPY_encode_operation(TREEWALK, 0, *(src_path), strlen(*(src_path)), src_path_basename, 0);
             handle->enqueue(op);
 
             src_path++;

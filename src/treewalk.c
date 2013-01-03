@@ -11,7 +11,7 @@
 #include <unistd.h>
 
 #include "dcp.h"
-#include "stat_file.h"
+#include "treewalk.h"
 #include "log.h"
 
 /** Options specified by the user. */
@@ -54,7 +54,7 @@ bool DCOPY_is_regular_file(char* path)
  * This is the entry point for the "file stat stage". This function is called
  * from the jump table required for the main libcircle callbacks.
  */
-void DCOPY_do_stat(DCOPY_operation_t* op, CIRCLE_handle* handle)
+void DCOPY_do_treewalk(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     struct stat statbuf;
     int s = lstat(op->operand, &statbuf);
@@ -193,7 +193,7 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
                 sprintf(newop_path, "%s/%s", op->operand, curr_dir_name);
 
-                newop = DCOPY_encode_operation(STAT, 0, newop_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
+                newop = DCOPY_encode_operation(TREEWALK, 0, newop_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
                 handle->enqueue(newop);
 
                 free(newop);

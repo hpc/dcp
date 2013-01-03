@@ -14,7 +14,7 @@
 #include "handle_args.h"
 #include "compare.h"
 #include "copy.h"
-#include "stat_file.h"
+#include "treewalk.h"
 
 #include "../config.h"
 
@@ -100,9 +100,9 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
 {
     char op[2048];
     const char* DCOPY_op_string_table[] = {
+        "TREEWALK",
         "PREPARE",
         "COPY",
-        "STAT",
         "COMPARE"
     };
 
@@ -333,9 +333,9 @@ int main(int argc, char** argv)
     DCOPY_parse_path_args(argv, optind, argc);
 
     /* Initialize our jump table for core operations. */
-    DCOPY_jump_table[0] = DCOPY_do_prepare;
-    DCOPY_jump_table[1] = DCOPY_do_copy;
-    DCOPY_jump_table[2] = DCOPY_do_stat;
+    DCOPY_jump_table[0] = DCOPY_do_treewalk;
+    DCOPY_jump_table[1] = DCOPY_do_prepare;
+    DCOPY_jump_table[2] = DCOPY_do_copy;
     DCOPY_jump_table[3] = DCOPY_do_compare;
 
     /* Initialize our processing library and related callbacks. */
