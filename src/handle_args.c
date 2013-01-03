@@ -58,7 +58,10 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 
     uint32_t number_of_source_files = DCOPY_source_file_count();
 
-    /* LOG(DCOPY_LOG_DBG, "Found `%d' source files.", number_of_source_files); */
+    if(number_of_source_files < 1) {
+        LOG(DCOPY_LOG_ERR, "At least one valid source file must be specified.");
+        exit(EXIT_FAILURE);
+    }
 
     if(dest_is_file) {
         LOG(DCOPY_LOG_DBG, "Infered that the destination is a file.");
@@ -226,8 +229,13 @@ uint32_t DCOPY_source_file_count()
     char** src_path = DCOPY_user_opts.src_path;
 
     while(*src_path != NULL) {
-        source_file_count++;
-        src_path++;
+        if(access(*src_path, R_OK) < 0 ) {
+            LOG(DCOPY_LOG_ERR, "Could not access source file at `%s'. %s", \
+                *src_path, strerror(errno));
+        } else {
+            source_file_count++;
+            src_path++;
+        }
     }
 
     return source_file_count;
@@ -322,7 +330,6 @@ void DCOPY_parse_path_args(char** argv, int optind_local, int argc)
     /*
      * Now, lets print everything out for debugging purposes.
      */
-/*
     char** dbg_p = DCOPY_user_opts.src_path;
 
     while(*dbg_p != NULL) {
@@ -330,7 +337,6 @@ void DCOPY_parse_path_args(char** argv, int optind_local, int argc)
         dbg_p++;
     }
     LOG(DCOPY_LOG_DBG, "Found a destination path with name: `%s'", DCOPY_user_opts.dest_path);
-*/
 }
 
 /* EOF */
