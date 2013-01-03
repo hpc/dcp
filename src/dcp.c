@@ -10,6 +10,7 @@
 #include "log.h"
 #include "dcp.h"
 
+#include "prepare.h"
 #include "handle_args.h"
 #include "compare.h"
 #include "copy.h"
@@ -33,7 +34,7 @@ FILE* DCOPY_debug_stream;
 int CIRCLE_global_rank;
 
 /** A table of function pointers used for core operation. */
-void (*DCOPY_jump_table[4])(DCOPY_operation_t* op, CIRCLE_handle* handle);
+void (*DCOPY_jump_table[5])(DCOPY_operation_t* op, CIRCLE_handle* handle);
 
 /**
  * Encode an operation code for use on the distributed queue structure.
@@ -99,9 +100,10 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
 {
     char op[2048];
     const char* DCOPY_op_string_table[] = {
+        "PREPARE",
         "COPY",
-        "CHECKSUM",
-        "STAT"
+        "STAT",
+        "COMPARE"
     };
 
     /* Pop an item off the queue */
@@ -331,9 +333,10 @@ int main(int argc, char** argv)
     DCOPY_parse_path_args(argv, optind, argc);
 
     /* Initialize our jump table for core operations. */
+    DCOPY_jump_table[0] = DCOPY_do_prepare;
+    DCOPY_jump_table[1] = DCOPY_do_copy;
     DCOPY_jump_table[2] = DCOPY_do_stat;
-    DCOPY_jump_table[1] = DCOPY_do_compare;
-    DCOPY_jump_table[0] = DCOPY_do_copy;
+    DCOPY_jump_table[3] = DCOPY_do_compare;
 
     /* Initialize our processing library and related callbacks. */
     CIRCLE_global_rank = CIRCLE_init(argc, argv, CIRCLE_DEFAULT_FLAGS);

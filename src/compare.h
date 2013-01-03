@@ -1,7 +1,7 @@
 /* See the file "COPYING" for the full license governing this code. */
 
 #ifndef __DCP_COMPARE_H
-#define __DCP_compare_H
+#define __DCP_COMPARE_H
 
 #include "dcp.h"
 
