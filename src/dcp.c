@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include "log.h"
 #include "dcp.h"
@@ -39,22 +40,35 @@ void (*DCOPY_jump_table[5])(DCOPY_operation_t* op, CIRCLE_handle* handle);
 /**
  * Encode an operation code for use on the distributed queue structure.
  */
-char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, \
+char* DCOPY_encode_operation(DCOPY_operation_code_t code, uint32_t chunk, \
                              char* operand, uint16_t source_base_offset, \
                              char* dest_base_appendix, uint64_t file_size)
 {
-    char* result = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
+    char* op = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
+    int op_size = 0;
 
-    if(dest_base_appendix == NULL) {
-        sprintf(result, "%d:%d:%d:%s:%zu", chunk, op, source_base_offset, \
-                operand, file_size);
-    }
-    else {
-        sprintf(result, "%d:%d:%d:%s:%s:%zu", chunk, op, source_base_offset, \
-                operand, dest_base_appendix, file_size);
+    op_size += sprintf(op, "%" PRIu64 ":%" PRIu32 ":%" PRIu16 ":%d:%s", \
+                       file_size, chunk, source_base_offset, code, operand);
+
+    if(dest_base_appendix) {
+        op_size += sprintf(op + op_size, ":%s", dest_base_appendix);
     }
 
-    return result;
+    /*
+     * FIXME: This requires architecture changes in libcircle -- a redesign of
+     * internal queue data structures to allow void* types as queue elements
+     * instead of null terminated strings. Ignoring this problem by commenting
+     * out this check will likely cause silent data corruption.
+     */
+    if((op_size + 1) > CIRCLE_MAX_STRING_LEN) {
+        LOG(DCOPY_LOG_DBG, \
+            "Exceeded libcircle message size due to large file path. " \
+            "This is a known bug in dcp that we intend to fix. Sorry!");
+        exit(EXIT_FAILURE);
+    }
+
+    LOG(DCOPY_LOG_DBG, "Encoded operation is `%s'.", op);
+    return op;
 }
 
 /**
@@ -62,25 +76,30 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, \
  */
 DCOPY_operation_t* DCOPY_decode_operation(char* op)
 {
-    char* str_file_size;
     DCOPY_operation_t* ret = (DCOPY_operation_t*) malloc(sizeof(DCOPY_operation_t));
 
-    ret->operand = (char*) malloc(sizeof(char) * PATH_MAX);
+    if(sscanf(strtok(op, ":"), "%" SCNu64, &(ret->file_size)) != 1) {
+        LOG(DCOPY_LOG_ERR, "Could not decode file size attribute.");
+        exit(EXIT_FAILURE);
+    }
 
-    ret->chunk = atoi(strtok(op, ":"));
-    ret->code = atoi(strtok(NULL, ":"));
-    ret->source_base_offset = atoi(strtok(NULL, ":"));
-    ret->operand = strtok(NULL, ":");
+    if(sscanf(strtok(NULL, ":"), "%" SCNu32, &(ret->chunk)) != 1) {
+        LOG(DCOPY_LOG_ERR, "Could not decode chunk index attribute.");
+        exit(EXIT_FAILURE);
+    }
+
+    if(sscanf(strtok(NULL, ":"), "%" SCNu16, &(ret->source_base_offset)) != 1) {
+        LOG(DCOPY_LOG_ERR, "Could not decode source base offset attribute.");
+        exit(EXIT_FAILURE);
+    }
+
+    if(sscanf(strtok(NULL, ":"), "%d", (int*)&(ret->code)) != 1) {
+        LOG(DCOPY_LOG_ERR, "Could not decode stage code attribute.");
+        exit(EXIT_FAILURE);
+    }
+
+    ret->operand            = strtok(NULL, ":");
     ret->dest_base_appendix = strtok(NULL, ":");
-
-    str_file_size = strtok(NULL, ":");
-
-    if(str_file_size != NULL) {
-        ret->file_size = atoi(str_file_size);
-    }
-    else {
-        ret->file_size = 0;
-    }
 
     return ret;
 }
@@ -126,7 +145,7 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
 void DCOPY_epilogue(void)
 {
     double rel_time = DCOPY_statistics.wtime_ended - DCOPY_statistics.wtime_started;
-    double rate = DCOPY_statistics.total_bytes_copied / rel_time;
+    double rate = (double)DCOPY_statistics.total_bytes_copied / rel_time;
 
     char starttime_str[256];
     char endtime_str[256];
