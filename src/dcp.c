@@ -308,6 +308,7 @@ int main(int argc, char** argv)
                 break;
 
             case '?':
+            default:
 
                 if(optopt == 'd') {
                     DCOPY_print_usage(argv);

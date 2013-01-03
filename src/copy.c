@@ -17,9 +17,6 @@
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
 
-/** The loglevel that this instance of dcopy will output. */
-extern DCOPY_loglevel  DCOPY_debug_level;
-
 /** Statistics to gather for summary output. */
 extern DCOPY_statistics_t DCOPY_statistics;
 

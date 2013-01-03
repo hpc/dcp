@@ -10,14 +10,19 @@
  * See the file "COPYING" for the full license governing this code.
  */
 
+/* Enable posix extensions. */
+#ifndef _BSD_SOURCE
+#define _BSD_SOURCE
+#endif
+
 #include <dirent.h>
 #include <errno.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "dcp.h"
@@ -26,9 +31,6 @@
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
-
-/** The loglevel that this instance of dcopy will output. */
-extern DCOPY_loglevel DCOPY_debug_level;
 
 /**
  * Determine if the specified path is a directory.

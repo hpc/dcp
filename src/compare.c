@@ -12,9 +12,6 @@
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
 
-/** The loglevel that this instance of dcopy will output. */
-extern DCOPY_loglevel  DCOPY_debug_level;
-
 void DCOPY_do_compare(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     FILE* src_stream;
