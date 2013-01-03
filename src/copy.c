@@ -88,6 +88,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
                 /* Try it again. */
                 outfd = open(dest_path, O_RDWR | O_CREAT, 00644);
+
                 if(outfd < 0) {
                     LOG(DCOPY_LOG_ERR, "Could not open destination after an unlink. %s", strerror(errno));
 
@@ -138,6 +139,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
                         /* Try it again. */
                         outfd = open(DCOPY_user_opts.dest_path, O_RDWR | O_CREAT, 00644);
+
                         if(outfd < 0) {
                             LOG(DCOPY_LOG_ERR, "Could not open destination after an unlink. %s", strerror(errno));
 
@@ -168,19 +170,19 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     if(is_file_to_file_copy) {
         LOG(DCOPY_LOG_INFO, "Copying to destination path `%s' from source path `%s' (chunk number %d).", \
             DCOPY_user_opts.dest_path, source_path, op->chunk);
-/* 
-        stat(DCOPY_user_opts.dest_path, &sb);
-        LOG(DCOPY_LOG_DBG, "Destination file size is `%zu'.", sb.st_size);
-*/
+        /*
+                stat(DCOPY_user_opts.dest_path, &sb);
+                LOG(DCOPY_LOG_DBG, "Destination file size is `%zu'.", sb.st_size);
+        */
     }
     else {
         LOG(DCOPY_LOG_INFO, "Copying to destination path `%s' from source path `%s' (chunk number %d).", \
             dest_path, source_path, op->chunk);
 
-/*
-        stat(dest_path, &sb);
-        LOG(DCOPY_LOG_DBG, "Destination file size is `%zu'.", sb.st_size);
-*/
+        /*
+                stat(dest_path, &sb);
+                LOG(DCOPY_LOG_DBG, "Destination file size is `%zu'.", sb.st_size);
+        */
     }
 
     if(fseek(in, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {

@@ -62,7 +62,7 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, \
  */
 DCOPY_operation_t* DCOPY_decode_operation(char* op)
 {
-    char *str_file_size;
+    char* str_file_size;
     DCOPY_operation_t* ret = (DCOPY_operation_t*) malloc(sizeof(DCOPY_operation_t));
 
     ret->operand = (char*) malloc(sizeof(char) * PATH_MAX);
@@ -74,6 +74,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
     ret->dest_base_appendix = strtok(NULL, ":");
 
     str_file_size = strtok(NULL, ":");
+
     if(str_file_size != NULL) {
         ret->file_size = atoi(str_file_size);
     }

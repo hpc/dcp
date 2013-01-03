@@ -229,10 +229,11 @@ uint32_t DCOPY_source_file_count(void)
     char** src_path = DCOPY_user_opts.src_path;
 
     while(*src_path != NULL) {
-        if(access(*src_path, R_OK) < 0 ) {
+        if(access(*src_path, R_OK) < 0) {
             LOG(DCOPY_LOG_ERR, "Could not access source file at `%s'. %s", \
                 *src_path, strerror(errno));
-        } else {
+        }
+        else {
             source_file_count++;
             src_path++;
         }
@@ -336,6 +337,7 @@ void DCOPY_parse_path_args(char** argv, int optind_local, int argc)
         LOG(DCOPY_LOG_DBG, "Found a source path with name: `%s'", *(dbg_p));
         dbg_p++;
     }
+
     LOG(DCOPY_LOG_DBG, "Found a destination path with name: `%s'", DCOPY_user_opts.dest_path);
 }
 
