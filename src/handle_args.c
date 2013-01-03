@@ -163,7 +163,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
  *
  * @return true if the destination should be a directory, false otherwise.
  */
-bool DCOPY_dest_is_dir()
+bool DCOPY_dest_is_dir(void)
 {
     bool dest_path_is_dir = false;
 
@@ -223,7 +223,7 @@ bool DCOPY_dest_is_dir()
  *
  * @return the number of source paths specified by the user.
  */
-uint32_t DCOPY_source_file_count()
+uint32_t DCOPY_source_file_count(void)
 {
     uint32_t source_file_count = 0;
     char** src_path = DCOPY_user_opts.src_path;
