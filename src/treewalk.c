@@ -76,8 +76,9 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, CIRCLE_handle* handle)
             exit(EXIT_FAILURE);
         }
         else {
-            /* Retry the entire stat operation. */
-            newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->source_base_offset, op->dest_base_appendix, op->file_size);
+            /* Retry the treewalk operation. */
+            newop = DCOPY_encode_operation(TREEWALK, op->chunk, op->operand, \
+                    op->source_base_offset, op->dest_base_appendix, op->file_size);
             handle->enqueue(newop);
             free(newop);
 
@@ -102,8 +103,9 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, CIRCLE_handle* handle)
         else {
             LOG(DCOPY_LOG_DBG, "Since unreliable filesystem was specified, we're attempting to look at the file again.");
 
-            /* Retry the entire stat operation. */
-            newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->source_base_offset, op->dest_base_appendix, op->file_size);
+            /* Retry the treewalk operation. */
+            newop = DCOPY_encode_operation(TREEWALK, op->chunk, op->operand, \
+                    op->source_base_offset, op->dest_base_appendix, op->file_size);
             handle->enqueue(newop);
             free(newop);
 
@@ -184,7 +186,8 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
             LOG(DCOPY_LOG_DBG, "Since unreliable filesystem was specified, we're attempting to look at the directory again.");
 
             /* Retry the entire stat operation. */
-            newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, op->source_base_offset, op->dest_base_appendix, op->file_size);
+            newop = DCOPY_encode_operation(TREEWALK, op->chunk, op->operand, \
+                    op->source_base_offset, op->dest_base_appendix, op->file_size);
             handle->enqueue(newop);
             free(newop);
 
@@ -203,7 +206,8 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
                 sprintf(newop_path, "%s/%s", op->operand, curr_dir_name);
 
-                newop = DCOPY_encode_operation(TREEWALK, 0, newop_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
+                newop = DCOPY_encode_operation(TREEWALK, 0, newop_path, \
+                        op->source_base_offset, op->dest_base_appendix, op->file_size);
                 handle->enqueue(newop);
 
                 free(newop);
