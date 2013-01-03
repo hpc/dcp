@@ -41,7 +41,7 @@ void (*DCOPY_jump_table[5])(DCOPY_operation_t* op, CIRCLE_handle* handle);
  */
 char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, \
                              char* operand, uint16_t source_base_offset, \
-                             char* dest_base_appendix, size_t file_size)
+                             char* dest_base_appendix, uint64_t file_size)
 {
     char* result = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
 

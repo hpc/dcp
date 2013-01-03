@@ -34,30 +34,30 @@ typedef struct {
 } DCOPY_operation_t;
 
 typedef struct {
-    time_t time_started;
-    time_t time_ended;
-    double wtime_started;
-    double wtime_ended;
-    size_t total_bytes_copied;
+    uint64_t total_bytes_copied;
+    time_t   time_started;
+    time_t   time_ended;
+    double   wtime_started;
+    double   wtime_ended;
 } DCOPY_statistics_t;
 
 typedef struct {
-    char* dest_path;
+    char*  dest_path;
     char** src_path;
-    bool conditional;
-    bool skip_compare;
-    bool force;
-    bool preserve;
-    bool recursive;
-    bool recursive_unspecified;
-    bool reliable_filesystem;
+    bool   conditional;
+    bool   skip_compare;
+    bool   force;
+    bool   preserve;
+    bool   recursive;
+    bool   recursive_unspecified;
+    bool   reliable_filesystem;
     struct stat dest_stat;
 } DCOPY_options_t;
 
 DCOPY_operation_t* DCOPY_decode_operation(char* op);
 char* DCOPY_encode_operation(DCOPY_operation_code_t op, uint32_t chunk, \
                              char *operand, uint16_t source_base_offset, \
-                             char *dest_base_appendix, size_t file_size);
+                             char *dest_base_appendix, uint64_t file_size);
 
 void DCOPY_add_objects(CIRCLE_handle* handle);
 void DCOPY_process_objects(CIRCLE_handle* handle);
