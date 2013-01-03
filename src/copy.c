@@ -30,7 +30,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     char* source_path = op->operand;
 
     bool is_file_to_file_copy = false;
-    bool unlink_on_failed_create_or_truncate = false;
+    bool unlink_on_failed_create = DCOPY_user_opts.force;
 
     size_t bytes_read = 0;
     size_t bytes_written = 0;
@@ -40,10 +40,6 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     /* If we need to stat before an unlink. */
     struct stat sb;
-
-    if(DCOPY_user_opts.force) {
-        unlink_on_failed_create_or_truncate = true;
-    }
 
     if(op->dest_base_appendix == NULL) {
         sprintf(dest_path, "%s/%s", \
@@ -74,7 +70,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     outfd = open(dest_path, O_RDWR | O_CREAT, 00644);
 
     /* Force option handing for recursive-style copies. */
-    if((outfd < 0) && (truncate(dest_path, op->file_size) < 0) && unlink_on_failed_create_or_truncate) {
+    if((outfd < 0) && unlink_on_failed_create) {
 
         /* If the stat() was successful and we're not a directory, lets try an unlink. */
         if((stat(dest_path, &sb) == 0)) {
@@ -95,7 +91,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
                 /* Try it again. */
                 outfd = open(dest_path, O_RDWR | O_CREAT, 00644);
-                if(outfd < 0 && (truncate(dest_path, op->file_size) < 0)) {
+                if(outfd < 0) {
                     LOG(DCOPY_LOG_ERR, "Could not open destination after an unlink. %s", strerror(errno));
 
                     if(DCOPY_user_opts.reliable_filesystem) {
@@ -110,7 +106,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
 
     /* Fallback to file-to-file copy since it doesn't look like we're recursive.. */
-    if(outfd < 0 && (truncate(dest_path, op->file_size) < 0)) {
+    if(outfd < 0) {
         /*
          * Since we might be trying a file to file copy, lets try to open
          * the base instead. If it really is a directory, we'll go ahead and
@@ -119,12 +115,12 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
         LOG(DCOPY_LOG_DBG, "Attempting to see if this is a file to file copy.");
         outfd = open(DCOPY_user_opts.dest_path, O_RDWR | O_CREAT, 00644);
 
-        if(outfd < 0 && (truncate(DCOPY_user_opts.dest_path, op->file_size) < 0)) {
+        if(outfd < 0) {
             LOG(DCOPY_LOG_ERR, "Unable to open destination path `%s'. %s", \
                 dest_path, strerror(errno));
 
             /* Force option handing for file-to-file style copies. */
-            if(unlink_on_failed_create_or_truncate) {
+            if(unlink_on_failed_create) {
 
                 /* If the stat() was successful and we're not a directory, lets try an unlink. */
                 if((stat(DCOPY_user_opts.dest_path, &sb) == 0)) {
@@ -145,7 +141,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
                         /* Try it again. */
                         outfd = open(DCOPY_user_opts.dest_path, O_RDWR | O_CREAT, 00644);
-                        if(outfd < 0 && (truncate(DCOPY_user_opts.dest_path, op->file_size) < 0)) {
+                        if(outfd < 0) {
                             LOG(DCOPY_LOG_ERR, "Could not open destination after an unlink. %s", strerror(errno));
 
                             if(DCOPY_user_opts.reliable_filesystem) {
@@ -227,15 +223,9 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
     LOG(DCOPY_LOG_DBG, "Wrote %zu bytes (%ld total).", bytes_written, DCOPY_statistics.total_bytes_copied);
 
-    /*
-     * If the user is feeling brave, this is where we let them skip the
-     * comparison stage.
-     */
-    if(!DCOPY_user_opts.skip_compare) {
-        char* newop = DCOPY_encode_operation(COMPARE, op->chunk, source_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
-        handle->enqueue(newop);
-        free(newop);
-    }
+    char* newop = DCOPY_encode_operation(CLEANUP, op->chunk, source_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
+    handle->enqueue(newop);
+    free(newop);
 
     if(fclose(in) < 0) {
         LOG(DCOPY_LOG_DBG, "Close on source file failed. %s", strerror(errno));

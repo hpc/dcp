@@ -23,10 +23,18 @@ void DCOPY_do_cleanup(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     char* newop;
 
-    newop = DCOPY_encode_operation(COPY, op->chunk, op->operand, \
-            op->source_base_offset, op->dest_base_appendix, op->file_size);
-    handle->enqueue(newop);
+    /* TODO: preserve attributes and truncate (only on chunk 0s). */
 
+    /*
+     * If the user is feeling brave, this is where we let them skip the
+     * comparison stage.
+     */
+    if(!DCOPY_user_opts.skip_compare) {
+        newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, \
+                op->source_base_offset, op->dest_base_appendix, op->file_size);
+    }
+
+    handle->enqueue(newop);
     free(newop);
 
     return;
