@@ -2,7 +2,7 @@
 Makefile
 .deps
 stamp-h1
-
+gmon.out
 /autom4te.cache
 /config.h
 /config.log
@@ -12,4 +12,3 @@ stamp-h1
 /doc/Doxyfile
 /doc/html
 /doc/latex
-/tests/gmon.out
