@@ -10,8 +10,11 @@
 #include <time.h>
 #include <unistd.h>
 
-/* FIXME: why was this number picked? */
-#define DCOPY_CHUNK_SIZE 4194304
+/*
+ * This is the size of each chunk to be processed (in bytes). In 2012, most
+ * of our filesystems are using 4MB block sizes (4194304 bytes).
+ */
+#define DCOPY_CHUNK_SIZE (4194304)
 
 #ifndef PATH_MAX
   #define PATH_MAX (4096)
@@ -22,12 +25,12 @@ typedef enum {
 } DCOPY_operation_code_t;
 
 typedef struct {
-    DCOPY_operation_code_t code;
-    uint32_t chunk;
+    uint64_t file_size; /* Max 16EB total file size (Limited by chunk count) */
+    uint32_t chunk;     /* Max 16PB chunked file (Assuming 4MB chunk size) */
     uint16_t source_base_offset;
+    DCOPY_operation_code_t code;
     char* operand;
     char* dest_base_appendix;
-    size_t file_size;
 } DCOPY_operation_t;
 
 typedef struct {
