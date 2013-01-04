@@ -13289,6 +13289,27 @@ fi
 
 
 # Checks for library functs.
+ac_fn_c_check_func "$LINENO" "lseek64" "ac_cv_func_lseek64"
+if test "x$ac_cv_func_lseek64" = xyes; then :
+
+else
+  as_fn_error $? "This OS does not appear to support lseek64(3)." "$LINENO" 5
+fi
+
+ac_fn_c_check_func "$LINENO" "fstat64" "ac_cv_func_fstat64"
+if test "x$ac_cv_func_fstat64" = xyes; then :
+
+else
+  as_fn_error $? "This OS does not appear to support fstat64(3)." "$LINENO" 5
+fi
+
+ac_fn_c_check_func "$LINENO" "stat64" "ac_cv_func_stat64"
+if test "x$ac_cv_func_stat64" = xyes; then :
+
+else
+  as_fn_error $? "This OS does not appear to support stat64(3)." "$LINENO" 5
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether lstat correctly handles trailing slash" >&5
 $as_echo_n "checking whether lstat correctly handles trailing slash... " >&6; }
 if ${ac_cv_func_lstat_dereferences_slashed_symlink+:} false; then :

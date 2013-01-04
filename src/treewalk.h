@@ -3,6 +3,8 @@
 #ifndef __DCP_TREEWALK_H
 #define __DCP_TREEWALK_H
 
+#include "common.h"
+
 bool DCOPY_is_directory(char* path);
 bool DCOPY_is_regular_file(char* path);
 void DCOPY_do_treewalk(DCOPY_operation_t* op, CIRCLE_handle* handle);

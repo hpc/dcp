@@ -4,7 +4,7 @@ Makefile
 stamp-h1
 gmon.out
 /autom4te.cache
-/config.h
+/config.h*
 /config.log
 /config.status
 /libtool

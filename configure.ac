@@ -29,6 +29,9 @@ AC_PROG_LIBTOOL
 AC_TYPE_SIZE_T
 
 # Checks for library functs.
+AC_CHECK_FUNC(lseek64, , AC_MSG_ERROR([This OS does not appear to support lseek64(3).]))
+AC_CHECK_FUNC(fstat64, , AC_MSG_ERROR([This OS does not appear to support fstat64(3).]))
+AC_CHECK_FUNC(stat64, , AC_MSG_ERROR([This OS does not appear to support stat64(3).]))
 AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MALLOC
 

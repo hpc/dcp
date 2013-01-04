@@ -3,15 +3,7 @@
 #ifndef __DCOPY_HANDLE_ARGS_H
 #define __DCOPY_HANDLE_ARGS_H
 
-#include <stdbool.h>
-#include <libcircle.h>
-
-#include "log.h"
-#include "dcp.h"
-
-#ifndef ARG_MAX
-#define ARG_MAX _POSIX_ARG_MAX
-#endif
+#include "common.h"
 
 bool DCOPY_dest_is_dir(void);
 uint32_t DCOPY_source_file_count(void);

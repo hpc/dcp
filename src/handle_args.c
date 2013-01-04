@@ -1,5 +1,9 @@
 /* See the file "COPYING" for the full license governing this code. */
 
+#include "handle_args.h"
+#include "treewalk.h"
+#include "dcp.h"
+
 #include <errno.h>
 #include <libgen.h>
 #include <limits.h>
@@ -8,18 +12,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "log.h"
-#include "dcp.h"
-
-#include "handle_args.h"
-#include "treewalk.h"
-
-#ifndef _POSIX_ARG_MAX
-#define MAX_ARGS 4096
-#else
-#define MAX_ARGS _POSIX_ARG_MAX
-#endif
 
 /** Where we should store options specified by the user. */
 DCOPY_options_t DCOPY_user_opts;

@@ -6,12 +6,12 @@
  * See the file "COPYING" for the full license governing this code.
  */
 
+#include "cleanup.h"
+#include "dcp.h"
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "log.h"
-#include "cleanup.h"
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;

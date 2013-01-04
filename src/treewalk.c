@@ -10,10 +10,8 @@
  * See the file "COPYING" for the full license governing this code.
  */
 
-/* Enable posix extensions. */
-#ifndef _BSD_SOURCE
-#define _BSD_SOURCE
-#endif
+#include "treewalk.h"
+#include "dcp.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -24,10 +22,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
-#include "dcp.h"
-#include "treewalk.h"
-#include "log.h"
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;

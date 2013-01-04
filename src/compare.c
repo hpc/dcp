@@ -1,13 +1,13 @@
 /* See the file "COPYING" for the full license governing this code. */
 
+#include "compare.h"
+#include "dcp.h"
+
 #include <errno.h>
 #include <libgen.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "log.h"
-#include "compare.h"
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;

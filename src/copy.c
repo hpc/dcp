@@ -1,5 +1,9 @@
 /* See the file "COPYING" for the full license governing this code. */
 
+#include "copy.h"
+#include "treewalk.h"
+#include "dcp.h"
+
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
@@ -9,10 +13,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "copy.h"
-#include "log.h"
-#include "treewalk.h"
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;

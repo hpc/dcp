@@ -3,7 +3,7 @@
 #ifndef __DCP_COMPARE_H
 #define __DCP_COMPARE_H
 
-#include "dcp.h"
+#include "common.h"
 
 void DCOPY_do_compare(DCOPY_operation_t* op, CIRCLE_handle* handle);
 

@@ -1,14 +1,5 @@
 /* See the file "COPYING" for the full license governing this code. */
 
-#include <getopt.h>
-#include <libgen.h>
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <inttypes.h>
-
-#include "log.h"
 #include "dcp.h"
 
 #include "handle_args.h"
@@ -17,7 +8,13 @@
 #include "cleanup.h"
 #include "compare.h"
 
-#include "../config.h"
+#include <getopt.h>
+#include <libgen.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <inttypes.h>
 
 /** The loglevel that this instance of dcopy will output. */
 DCOPY_loglevel DCOPY_debug_level;
@@ -93,7 +90,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
         exit(EXIT_FAILURE);
     }
 
-    if(sscanf(strtok(NULL, ":"), "%d", (int*)&(ret->code)) != 1) {
+    if(sscanf(strtok(NULL, ":"), "%d", (int*) & (ret->code)) != 1) {
         LOG(DCOPY_LOG_ERR, "Could not decode stage code attribute.");
         exit(EXIT_FAILURE);
     }
