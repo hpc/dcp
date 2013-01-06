@@ -29,8 +29,8 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     bool is_file_to_file_copy = false;
     bool unlink_on_failed_create = DCOPY_user_opts.force;
 
-    size_t bytes_read = 0;
-    size_t bytes_written = 0;
+    uint64_t bytes_read = 0;
+    uint64_t bytes_written = 0;
 
     FILE* in;
     int outfd;
@@ -214,7 +214,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
     LOG(DCOPY_LOG_DBG, "Writing `%zu' bytes at offset `%d'.", bytes_read, DCOPY_CHUNK_SIZE * op->chunk);
 
     lseek(outfd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
-    bytes_written = write(outfd, buf, bytes_read);
+    bytes_written = (uint64_t) write(outfd, buf, bytes_read);
 
     if(bytes_written > 0) {
         DCOPY_statistics.total_bytes_copied += bytes_written;

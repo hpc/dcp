@@ -75,7 +75,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 
             /* LOG(DCOPY_LOG_DBG, "Enqueueing only a single source path `%s'.", DCOPY_user_opts.src_path[0]); */
             char* op = DCOPY_encode_operation(TREEWALK, 0, DCOPY_user_opts.src_path[0], \
-                                              strlen(src_path_dirname), NULL, 0);
+                                              (uint16_t)strlen(src_path_dirname), NULL, 0);
             handle->enqueue(op);
         }
         else {
@@ -126,7 +126,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
                 src_path_basename = basename(src_path_basename);
             }
 
-            char* op = DCOPY_encode_operation(TREEWALK, 0, *(src_path), strlen(*(src_path)), src_path_basename, 0);
+            char* op = DCOPY_encode_operation(TREEWALK, 0, *(src_path), (uint16_t)strlen(*(src_path)), src_path_basename, 0);
             handle->enqueue(op);
 
             src_path++;
@@ -304,7 +304,7 @@ void DCOPY_parse_src_paths(char** argv, int last_arg_index, int optind_local)
  */
 void DCOPY_parse_path_args(char** argv, int optind_local, int argc)
 {
-    size_t num_args = argc - optind_local;
+    int num_args = argc - optind_local;
     int last_arg_index = num_args + optind_local - 1;
 
     if(argv == NULL || num_args < 2) {

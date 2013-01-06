@@ -28,6 +28,9 @@ AC_PROG_LIBTOOL
 # Checks for typedefs, structs, and compiler options.
 AC_TYPE_SIZE_T
 
+# Try to set largefile support.
+AC_SYS_LARGEFILE
+
 # Checks for library functs.
 AC_CHECK_FUNC(lseek64, , AC_MSG_ERROR([This OS does not appear to support lseek64(3).]))
 AC_CHECK_FUNC(fstat64, , AC_MSG_ERROR([This OS does not appear to support fstat64(3).]))

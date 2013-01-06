@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
@@ -88,7 +89,7 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
     else if(S_ISREG(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
         /* LOG(DCOPY_LOG_DBG, "Stat operation found a file at `%s'.", op->operand); */
-        DCOPY_stat_process_file(op, statbuf.st_size, handle);
+        DCOPY_stat_process_file(op, (uint64_t)statbuf.st_size, handle);
     }
     else {
         LOG(DCOPY_LOG_DBG, "Encountered an unsupported file type at `%s'.", op->operand);
@@ -114,12 +115,12 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, CIRCLE_handle* handle)
  * This function inputs a file and creates chunk operations that get placed
  * onto the libcircle queue for future processing by the copy stage.
  */
-void DCOPY_stat_process_file(DCOPY_operation_t* op, size_t file_size, CIRCLE_handle* handle)
+void DCOPY_stat_process_file(DCOPY_operation_t* op, uint64_t file_size, CIRCLE_handle* handle)
 {
-    size_t chunk_index;
-    size_t num_chunks = file_size / DCOPY_CHUNK_SIZE;
+    uint32_t chunk_index;
+    uint32_t num_chunks = (uint32_t)file_size / DCOPY_CHUNK_SIZE;
 
-    LOG(DCOPY_LOG_DBG, "File `%s' size is `%ld' with chunks `%zu' (total `%zu').", \
+    LOG(DCOPY_LOG_DBG, "File `%s' size is `%" PRIu64 "' with chunks `%" PRIu32 "' (total `%" PRIu32 "').", \
         op->operand, file_size, num_chunks, num_chunks * DCOPY_CHUNK_SIZE);
 
     /* Encode and enqueue each chunk of the file for processing later. */
