@@ -47,11 +47,31 @@ typedef enum {
 } DCOPY_operation_code_t;
 
 typedef struct {
-    uint64_t file_size; /* Max 16EB total file size (Limited by chunk count) */
-    uint32_t chunk;     /* Max 16PB chunked file (Assuming 4MB chunk size) */
+    /*
+     * The max file size is 8EB, limited by the signed upcast of off64_t
+     * to uint64_t.
+     */
+    uint64_t file_size;
+
+    /*
+     * Assuming a 4MB chunk size, the maximum size of a chunked file is 16PB.
+     * This is limited by counting chunks in uint32_t (2^32 * 4MB).
+     */
+    uint32_t chunk;
+
+    /*
+     * This offset represents the index into the operand path that gives the
+     * starting index of the root path to copy from.
+     */
     uint16_t source_base_offset;
+
+    /* The operation type. */
     DCOPY_operation_code_t code;
+
+    /* The full source path. */
     char* operand;
+
+    /* FIXME: describe this. */
     char* dest_base_appendix;
 } DCOPY_operation_t;
 
