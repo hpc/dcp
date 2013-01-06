@@ -14,6 +14,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+/* FIXME: this file. */
+
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
 
