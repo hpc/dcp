@@ -25,6 +25,28 @@ int CIRCLE_global_rank;
 /** A table of function pointers used for core operation. */
 void (*DCOPY_jump_table[5])(DCOPY_operation_t* op, CIRCLE_handle* handle);
 
+void DCOPY_retry_failed_operation(CIRCLE_handle* handle, \
+                                  DCOPY_operation_code_t target, \
+                                  DCOPY_operation_t* op)
+{
+    char* new_op;
+
+    if(DCOPY_user_opts.reliable_filesystem) {
+        LOG(DCOPY_LOG_ERR, "Not retrying failed operation. " \
+            "reliable filesystem is specified.");
+        exit(EXIT_FAILURE);
+    }
+
+    new_op = DCOPY_encode_operation(target, op->chunk, op->operand, \
+                                    op->source_base_offset, \
+                                    op->dest_base_appendix, op->file_size);
+
+    handle->enqueue(new_op);
+    free(new_op);
+
+    return;
+}
+
 /**
  * Encode an operation code for use on the distributed queue structure.
  */
