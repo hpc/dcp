@@ -95,19 +95,24 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, uint64_t file_size, CIRCLE_h
     uint32_t chunk_index;
     uint32_t num_chunks = (uint32_t)file_size / DCOPY_CHUNK_SIZE;
 
-    LOG(DCOPY_LOG_DBG, "File `%s' size is `%" PRIu64 "' with chunks `%" PRIu32 "' (total `%" PRIu32 "').", \
+    LOG(DCOPY_LOG_DBG, "File `%s' size is `%" PRIu64 \
+        "' with chunks `%" PRIu32 "' (total `%" PRIu32 "').", \
         op->operand, file_size, num_chunks, num_chunks * DCOPY_CHUNK_SIZE);
 
     /* Encode and enqueue each chunk of the file for processing later. */
     for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
-        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, op->source_base_offset, op->dest_base_appendix, file_size);
+        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, \
+                                             op->source_base_offset, \
+                                             op->dest_base_appendix, file_size);
         handle->enqueue(newop);
         free(newop);
     }
 
     /* Encode and enqueue the last partial chunk. */
     if(num_chunks * DCOPY_CHUNK_SIZE < file_size) {
-        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, op->source_base_offset, op->dest_base_appendix, file_size);
+        char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, \
+                                             op->source_base_offset, \
+                                             op->dest_base_appendix, file_size);
         handle->enqueue(newop);
         free(newop);
     }
@@ -151,20 +156,8 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
         LOG(DCOPY_LOG_ERR, "Unable to open dir `%s'. %s", \
             op->operand, strerror(errno));
 
-        if(DCOPY_user_opts.reliable_filesystem) {
-            exit(EXIT_FAILURE);
-        }
-        else {
-            LOG(DCOPY_LOG_DBG, "Since unreliable filesystem was specified, we're attempting to look at the directory again.");
-
-            /* Retry the entire stat operation. */
-            newop = DCOPY_encode_operation(TREEWALK, op->chunk, op->operand, \
-                                           op->source_base_offset, op->dest_base_appendix, op->file_size);
-            handle->enqueue(newop);
-            free(newop);
-
-            return;
-        }
+        DCOPY_retry_failed_operation(TREEWALK, handle, op);
+        return;
     }
     else {
         while((curr_ent = readdir(curr_dir)) != NULL) {
@@ -178,6 +171,7 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
 
                 sprintf(newop_path, "%s/%s", op->operand, curr_dir_name);
 
+                /* Distributed recursion here. */
                 newop = DCOPY_encode_operation(TREEWALK, 0, newop_path, \
                                                op->source_base_offset, op->dest_base_appendix, op->file_size);
                 handle->enqueue(newop);
