@@ -20,14 +20,16 @@ extern DCOPY_options_t DCOPY_user_opts;
 extern DCOPY_statistics_t DCOPY_statistics;
 
 /** A table of function pointers used for core operation. */
-extern void (*DCOPY_jump_table[5])(DCOPY_operation_t* op, CIRCLE_handle* handle);
+extern void (*DCOPY_jump_table[5])(DCOPY_operation_t* op, \
+                                   CIRCLE_handle* handle);
 
 /**
  * Print out information on the results of the file copy.
  */
 void DCOPY_epilogue(void)
 {
-    double rel_time = DCOPY_statistics.wtime_ended - DCOPY_statistics.wtime_started;
+    double rel_time = DCOPY_statistics.wtime_ended - \
+                      DCOPY_statistics.wtime_started;
     double rate = (double)DCOPY_statistics.total_bytes_copied / rel_time;
 
     char starttime_str[256];
@@ -42,7 +44,8 @@ void DCOPY_epilogue(void)
     LOG(DCOPY_LOG_INFO, "Filecopy run started at `%s'.", starttime_str);
     LOG(DCOPY_LOG_INFO, "Filecopy run completed at `%s'.", endtime_str);
 
-    LOG(DCOPY_LOG_INFO, "Transfer rate is `%.0lf' bytes per second (`%.3ld' bytes in `%.3lf' seconds).", \
+    LOG(DCOPY_LOG_INFO, "Transfer rate is `%.0lf' bytes per second " \
+        "(`%.3ld' bytes in `%.3lf' seconds).", \
         rate, DCOPY_statistics.total_bytes_copied, rel_time);
 }
 
@@ -51,7 +54,8 @@ void DCOPY_epilogue(void)
  */
 void DCOPY_print_version()
 {
-    fprintf(stdout, "%s-%s <%s>\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_URL);
+    fprintf(stdout, "%s-%s <%s>\n", \
+            PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_URL);
 }
 
 /**
@@ -59,8 +63,9 @@ void DCOPY_print_version()
  */
 void DCOPY_print_usage(char** argv)
 {
-    fprintf(stdout, "usage: %s [cCdfhpRrv] [--] source_file target_file\n", argv[0]);
-    fprintf(stdout, "       %s [cCdfhpRrv] [--] source_file ... target_directory\n", argv[0]);
+    printf("usage: %s [cCdfhpRrv] [--] source_file target_file\n" \
+           "       %s [cCdfhpRrv] [--] source_file ... target_directory\n", \
+           argv[0], argv[0]);
 }
 
 int main(int argc, char** argv)
@@ -108,17 +113,19 @@ int main(int argc, char** argv)
     };
 
     /* Parse options */
-    while((c = getopt_long(argc, argv, "cCd:fhpRrUv", long_options, &option_index)) != -1) {
+    while((c = getopt_long(argc, argv, "cCd:fhpRrUv", \
+                           long_options, &option_index)) != -1) {
         switch(c) {
 
             case 'c':
                 DCOPY_user_opts.conditional = true;
-                LOG(DCOPY_LOG_INFO, "Performing a conditional copy over the destination path.");
+                LOG(DCOPY_LOG_INFO, "Performing a conditional copy.");
                 break;
 
             case 'C':
                 DCOPY_user_opts.skip_compare = true;
-                LOG(DCOPY_LOG_INFO, "Skipping the comparison stage, this may result in file corruption.");
+                LOG(DCOPY_LOG_INFO, "Skipping the comparison stage " \
+                    "(may result in corruption).");
                 break;
 
             case 'd':
@@ -154,7 +161,8 @@ int main(int argc, char** argv)
 
                 }
                 else {
-                    LOG(DCOPY_LOG_INFO, "Debug level `%s' not recognized. Defaulting to `info'.", optarg);
+                    LOG(DCOPY_LOG_INFO, "Debug level `%s' not recognized. " \
+                        "Defaulting to `info'.", optarg);
                 }
 
                 break;
@@ -162,7 +170,7 @@ int main(int argc, char** argv)
             case 'f':
 
                 DCOPY_user_opts.force = true;
-                LOG(DCOPY_LOG_INFO, "Unlinking destionation file if create or truncate fails.");
+                LOG(DCOPY_LOG_INFO, "Deleting destination on errors.");
                 break;
 
             case 'h':
@@ -178,27 +186,23 @@ int main(int argc, char** argv)
 
             case 'R':
 
-                /* FIXME not completely implemented */
-                LOG(DCOPY_LOG_WARN, "WARNING: The recursive option currently only supports files and directories!");
-
                 DCOPY_user_opts.recursive = true;
                 LOG(DCOPY_LOG_INFO, "Performing correct recursion.");
+                LOG(DCOPY_LOG_WARN, "Warning, only files and directories are implemented.");
                 break;
 
             case 'r':
 
-                /* FIXME not implemented */
-                LOG(DCOPY_LOG_ERR, "Sorry, the recursive-unspecified option is not implemented yet.");
-                exit(EXIT_FAILURE);
-
                 DCOPY_user_opts.recursive_unspecified = true;
-                LOG(DCOPY_LOG_INFO, "Performing recursion while ignoring special files.");
+                LOG(DCOPY_LOG_INFO, "Performing recursion. " \
+                    "Ignoring special files.");
                 break;
 
             case 'U':
 
                 DCOPY_user_opts.reliable_filesystem = false;
-                LOG(DCOPY_LOG_INFO, "Unreliable filesystem specified. Retry mode enabled.");
+                LOG(DCOPY_LOG_INFO, "Unreliable filesystem specified. " \
+                    "Retry mode enabled.");
                 break;
 
             case 'v':
@@ -211,7 +215,8 @@ int main(int argc, char** argv)
 
                 if(optopt == 'd') {
                     DCOPY_print_usage(argv);
-                    fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+                    fprintf(stderr, "Option -%c requires an argument.\n", \
+                            optopt);
                 }
                 else if(isprint(optopt)) {
                     DCOPY_print_usage(argv);
