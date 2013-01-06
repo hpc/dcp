@@ -33,7 +33,7 @@ void DCOPY_retry_failed_operation(CIRCLE_handle* handle, \
 
     if(DCOPY_user_opts.reliable_filesystem) {
         LOG(DCOPY_LOG_ERR, "Not retrying failed operation. " \
-            "reliable filesystem is specified.");
+            "Reliable filesystem is specified.");
         exit(EXIT_FAILURE);
     }
 
