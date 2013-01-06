@@ -81,8 +81,8 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t code, uint32_t chunk, \
                              char* operand, uint16_t source_base_offset, \
                              char* dest_base_appendix, uint64_t file_size);
 
-void DCOPY_retry_failed_operation(CIRCLE_handle* handle, \
-                                  DCOPY_operation_code_t target, \
+void DCOPY_retry_failed_operation(DCOPY_operation_code_t target, \
+                                  CIRCLE_handle* handle, \
                                   DCOPY_operation_t* op);
 
 void DCOPY_add_objects(CIRCLE_handle* handle);

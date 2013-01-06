@@ -25,8 +25,8 @@ int CIRCLE_global_rank;
 /** A table of function pointers used for core operation. */
 void (*DCOPY_jump_table[5])(DCOPY_operation_t* op, CIRCLE_handle* handle);
 
-void DCOPY_retry_failed_operation(CIRCLE_handle* handle, \
-                                  DCOPY_operation_code_t target, \
+void DCOPY_retry_failed_operation(DCOPY_operation_code_t target, \
+                                  CIRCLE_handle* handle, \
                                   DCOPY_operation_t* op)
 {
     char* new_op;
@@ -36,13 +36,16 @@ void DCOPY_retry_failed_operation(CIRCLE_handle* handle, \
             "Reliable filesystem is specified.");
         exit(EXIT_FAILURE);
     }
+    else {
+        LOG(DCOPY_LOG_INFO, "Attempting to retry operation.");
 
-    new_op = DCOPY_encode_operation(target, op->chunk, op->operand, \
-                                    op->source_base_offset, \
-                                    op->dest_base_appendix, op->file_size);
+        new_op = DCOPY_encode_operation(target, op->chunk, op->operand, \
+                                        op->source_base_offset, \
+                                        op->dest_base_appendix, op->file_size);
 
-    handle->enqueue(new_op);
-    free(new_op);
+        handle->enqueue(new_op);
+        free(new_op);
+    }
 
     return;
 }

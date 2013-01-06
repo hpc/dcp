@@ -64,22 +64,11 @@ bool DCOPY_is_regular_file(char* path)
 void DCOPY_do_treewalk(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     struct stat statbuf;
-    char* newop;
 
     if(lstat(op->operand, &statbuf) < 0) {
-        if(DCOPY_user_opts.reliable_filesystem) {
-            LOG(DCOPY_LOG_DBG, "Could not get info for `%s'. %s", op->operand, strerror(errno));
-            exit(EXIT_FAILURE);
-        }
-        else {
-            /* Retry the treewalk operation. */
-            newop = DCOPY_encode_operation(TREEWALK, op->chunk, op->operand, \
-                                           op->source_base_offset, op->dest_base_appendix, op->file_size);
-            handle->enqueue(newop);
-            free(newop);
-
-            return;
-        }
+        LOG(DCOPY_LOG_DBG, "Could not get info for `%s'. %s", op->operand, strerror(errno));
+        DCOPY_retry_failed_operation(TREEWALK, handle, op);
+        return;
     }
 
     if(S_ISDIR(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
@@ -92,21 +81,8 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, CIRCLE_handle* handle)
     }
     else {
         LOG(DCOPY_LOG_DBG, "Encountered an unsupported file type at `%s'.", op->operand);
-
-        if(DCOPY_user_opts.reliable_filesystem) {
-            exit(EXIT_FAILURE);
-        }
-        else {
-            LOG(DCOPY_LOG_DBG, "Since unreliable filesystem was specified, we're attempting to look at the file again.");
-
-            /* Retry the treewalk operation. */
-            newop = DCOPY_encode_operation(TREEWALK, op->chunk, op->operand, \
-                                           op->source_base_offset, op->dest_base_appendix, op->file_size);
-            handle->enqueue(newop);
-            free(newop);
-
-            return;
-        }
+        DCOPY_retry_failed_operation(TREEWALK, handle, op);
+        return;
     }
 }
 
