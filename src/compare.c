@@ -23,8 +23,6 @@ void DCOPY_do_compare(DCOPY_operation_t* op, \
     size_t src_bytes;
     size_t dest_bytes;
 
-    char* newop;
-
     char dest_path[PATH_MAX];
     char* src_path = op->operand;
 
@@ -45,23 +43,15 @@ void DCOPY_do_compare(DCOPY_operation_t* op, \
         LOG(DCOPY_LOG_ERR, "Compare stage is unable to open source file `%s'. %s", \
             src_path, strerror(errno));
 
-        if(DCOPY_user_opts.reliable_filesystem) {
-            exit(EXIT_FAILURE);
-        }
-        else {
-            /* Retry the entire compare operation. */
-            newop = DCOPY_encode_operation(COMPARE, op->chunk, src_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
-            handle->enqueue(newop);
-            free(newop);
+        DCOPY_retry_failed_operation(COMPARE, handle, op);
 
-            fclose(src_stream);
-            fclose(dest_stream);
+        fclose(src_stream);
+        fclose(dest_stream);
 
-            free(src_buf);
-            free(dest_buf);
+        free(src_buf);
+        free(dest_buf);
 
-            return;
-        }
+        return;
     }
 
     if(!dest_stream) {
@@ -77,24 +67,15 @@ void DCOPY_do_compare(DCOPY_operation_t* op, \
             LOG(DCOPY_LOG_ERR, "Unable to open destination path `%s'. %s", \
                 dest_path, strerror(errno));
 
-            if(DCOPY_user_opts.reliable_filesystem) {
-                LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
-                exit(EXIT_FAILURE);
-            }
-            else {
-                /* Retry the entire compare operation. */
-                newop = DCOPY_encode_operation(COMPARE, op->chunk, src_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
-                handle->enqueue(newop);
-                free(newop);
+            DCOPY_retry_failed_operation(COMPARE, handle, op);
 
-                fclose(src_stream);
-                fclose(dest_stream);
+            fclose(src_stream);
+            fclose(dest_stream);
 
-                free(src_buf);
-                free(dest_buf);
+            free(src_buf);
+            free(dest_buf);
 
-                return;
-            }
+            return;
         }
         else {
             is_file_to_file_compare = true;
@@ -121,16 +102,10 @@ void DCOPY_do_compare(DCOPY_operation_t* op, \
     }
 
     if(src_bytes != dest_bytes || memcmp(src_buf, dest_buf, src_bytes) != 0) {
-        if(DCOPY_user_opts.reliable_filesystem) {
-            LOG(DCOPY_LOG_ERR, "Compare mismatch when copying from file `%s'.", src_path);
-            exit(EXIT_FAILURE);
-        }
-        else {
-            LOG(DCOPY_LOG_ERR, "Compare mismatch when copying from file `%s'. Requeueing file.", src_path);
-            newop = DCOPY_encode_operation(TREEWALK, 0, src_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
-            handle->enqueue(newop);
-            free(newop);
-        }
+        LOG(DCOPY_LOG_ERR, "Compare mismatch when copying from file `%s'.", src_path);
+
+        DCOPY_retry_failed_operation(COPY, handle, op);
+        return;
     }
     else {
         LOG(DCOPY_LOG_DBG, "File `%s' (chunk `%d') compare successful.", src_path, op->chunk);
