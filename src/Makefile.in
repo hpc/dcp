@@ -51,9 +51,9 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_dcp_OBJECTS = dcp-handle_args.$(OBJEXT) dcp-treewalk.$(OBJEXT) \
-	dcp-copy.$(OBJEXT) dcp-cleanup.$(OBJEXT) dcp-compare.$(OBJEXT) \
-	dcp-dcp.$(OBJEXT)
+am_dcp_OBJECTS = dcp-common.$(OBJEXT) dcp-handle_args.$(OBJEXT) \
+	dcp-treewalk.$(OBJEXT) dcp-copy.$(OBJEXT) \
+	dcp-cleanup.$(OBJEXT) dcp-compare.$(OBJEXT) dcp-dcp.$(OBJEXT)
 dcp_OBJECTS = $(am_dcp_OBJECTS)
 am__DEPENDENCIES_1 =
 dcp_DEPENDENCIES = $(am__DEPENDENCIES_1)
@@ -212,7 +212,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = -std=gnu99 -ggdb -pg -W -pedantic -Wall -Wextra -Wdouble-promotion -Wformat=2 -Winit-self -Wmissing-include-dirs -Wswitch-default -Wswitch-enum -Wuninitialized -Wunknown-pragmas -Wstrict-aliasing -Wfloat-equal -Wundef -Wunsafe-loop-optimizations -Wbad-function-cast -Wcast-qual -Wcast-align -Wconversion -Wlogical-op -Wstrict-prototypes -Wmissing-prototypes -Wnormalized=nfc -Wredundant-decls -Winline -Wdisabled-optimization -Wshadow -Wwrite-strings
-dcp_SOURCES = handle_args.c treewalk.c copy.c cleanup.c compare.c dcp.c
+dcp_SOURCES = common.c handle_args.c treewalk.c copy.c cleanup.c compare.c dcp.c
 dcp_LDADD = \
     $(libcircle_LIBS) \
     $(MPI_CLDFLAGS)
@@ -310,6 +310,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dcp-cleanup.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dcp-common.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dcp-compare.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dcp-copy.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dcp-dcp.Po@am__quote@
@@ -336,6 +337,20 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+dcp-common.o: common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dcp-common.o -MD -MP -MF $(DEPDIR)/dcp-common.Tpo -c -o dcp-common.o `test -f 'common.c' || echo '$(srcdir)/'`common.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dcp-common.Tpo $(DEPDIR)/dcp-common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='common.c' object='dcp-common.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dcp-common.o `test -f 'common.c' || echo '$(srcdir)/'`common.c
+
+dcp-common.obj: common.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dcp-common.obj -MD -MP -MF $(DEPDIR)/dcp-common.Tpo -c -o dcp-common.obj `if test -f 'common.c'; then $(CYGPATH_W) 'common.c'; else $(CYGPATH_W) '$(srcdir)/common.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dcp-common.Tpo $(DEPDIR)/dcp-common.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='common.c' object='dcp-common.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o dcp-common.obj `if test -f 'common.c'; then $(CYGPATH_W) 'common.c'; else $(CYGPATH_W) '$(srcdir)/common.c'; fi`
 
 dcp-handle_args.o: handle_args.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(dcp_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dcp-handle_args.o -MD -MP -MF $(DEPDIR)/dcp-handle_args.Tpo -c -o dcp-handle_args.o `test -f 'handle_args.c' || echo '$(srcdir)/'`handle_args.c

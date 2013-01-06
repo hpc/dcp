@@ -33,9 +33,9 @@ extern DCOPY_options_t DCOPY_user_opts;
 bool DCOPY_is_directory(char* path)
 {
     struct stat statbuf;
-    int s = lstat(path, &statbuf);
 
-    if(s == -1) {
+    if(lstat(path, &statbuf) < 0) {
+        LOG(DCOPY_LOG_ERR, "Could not get info for `%s'. %s", path, strerror(errno));
         return false;
     }
 
@@ -48,9 +48,9 @@ bool DCOPY_is_directory(char* path)
 bool DCOPY_is_regular_file(char* path)
 {
     struct stat statbuf;
-    int s = lstat(path, &statbuf);
 
-    if(s == -1) {
+    if(lstat(path, &statbuf) < 0) {
+        LOG(DCOPY_LOG_ERR, "Could not get info for `%s'. %s", path, strerror(errno));
         return false;
     }
 
@@ -64,12 +64,11 @@ bool DCOPY_is_regular_file(char* path)
 void DCOPY_do_treewalk(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
     struct stat statbuf;
-    int s = lstat(op->operand, &statbuf);
     char* newop;
 
-    if(s < 0) {
+    if(lstat(op->operand, &statbuf) < 0) {
         if(DCOPY_user_opts.reliable_filesystem) {
-            LOG(DCOPY_LOG_DBG, "Could not stat file at `%s'.", op->operand);
+            LOG(DCOPY_LOG_DBG, "Could not get info for `%s'. %s", op->operand, strerror(errno));
             exit(EXIT_FAILURE);
         }
         else {
