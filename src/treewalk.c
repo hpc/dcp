@@ -93,7 +93,7 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, CIRCLE_handle* handle)
 void DCOPY_stat_process_file(DCOPY_operation_t* op, uint64_t file_size, CIRCLE_handle* handle)
 {
     uint32_t chunk_index;
-    uint32_t num_chunks = (uint32_t)file_size / DCOPY_CHUNK_SIZE;
+    uint32_t num_chunks = (uint32_t)(file_size / DCOPY_CHUNK_SIZE);
 
     LOG(DCOPY_LOG_DBG, "File `%s' size is `%" PRIu64 \
         "' with chunks `%" PRIu32 "' (total `%" PRIu32 "').", \
