@@ -53,9 +53,12 @@ void DCOPY_retry_failed_operation(DCOPY_operation_code_t target, \
 /**
  * Encode an operation code for use on the distributed queue structure.
  */
-char* DCOPY_encode_operation(DCOPY_operation_code_t code, uint32_t chunk, \
-                             char* operand, uint16_t source_base_offset, \
-                             char* dest_base_appendix, uint64_t file_size)
+char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
+                             uint32_t chunk, \
+                             char* operand, \
+                             uint16_t source_base_offset, \
+                             char* dest_base_appendix, \
+                             uint64_t file_size)
 {
     char* op = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
     int op_size = 0;

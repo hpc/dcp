@@ -16,25 +16,29 @@
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
 
-void DCOPY_set_preserve_permissions(DCOPY_operation_t* op, CIRCLE_handle* handle)
+void DCOPY_set_preserve_permissions(DCOPY_operation_t* op, \
+                                    CIRCLE_handle* handle)
 {
     LOG(DCOPY_LOG_ERR, "Preserving ownership not implemented yet.");
     /* TODO: preserve permissions, requeue to cleanup if fail and unreliable. */
 }
 
-void DCOPY_set_preserve_ownership(DCOPY_operation_t* op, CIRCLE_handle* handle)
+void DCOPY_set_preserve_ownership(DCOPY_operation_t* op, \
+                                  CIRCLE_handle* handle)
 {
     LOG(DCOPY_LOG_ERR, "Preserving ownership not implemented yet.");
     /* TODO: preserve ownership, requeue to cleanup if fail and unreliable. */
 }
 
-void DCOPY_truncate_file(DCOPY_operation_t* op, CIRCLE_handle* handle)
+void DCOPY_truncate_file(DCOPY_operation_t* op, \
+                         CIRCLE_handle* handle)
 {
     LOG(DCOPY_LOG_ERR, "Truncate not implemented yet. Files may be corrupt.");
     /* TODO: truncate file, requeue to cleanup if fail and unreliable. */
 }
 
-void DCOPY_do_cleanup(DCOPY_operation_t* op, CIRCLE_handle* handle)
+void DCOPY_do_cleanup(DCOPY_operation_t* op, \
+                      CIRCLE_handle* handle)
 {
     char* newop;
 

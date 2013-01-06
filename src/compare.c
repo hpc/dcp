@@ -12,7 +12,8 @@
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
 
-void DCOPY_do_compare(DCOPY_operation_t* op, CIRCLE_handle* handle)
+void DCOPY_do_compare(DCOPY_operation_t* op, \
+                      CIRCLE_handle* handle)
 {
     FILE* src_stream;
     FILE* dest_stream;

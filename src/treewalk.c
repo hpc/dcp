@@ -61,7 +61,8 @@ bool DCOPY_is_regular_file(char* path)
  * This is the entry point for the "file stat stage". This function is called
  * from the jump table required for the main libcircle callbacks.
  */
-void DCOPY_do_treewalk(DCOPY_operation_t* op, CIRCLE_handle* handle)
+void DCOPY_do_treewalk(DCOPY_operation_t* op, \
+                       CIRCLE_handle* handle)
 {
     struct stat statbuf;
 
@@ -90,7 +91,9 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, CIRCLE_handle* handle)
  * This function inputs a file and creates chunk operations that get placed
  * onto the libcircle queue for future processing by the copy stage.
  */
-void DCOPY_stat_process_file(DCOPY_operation_t* op, uint64_t file_size, CIRCLE_handle* handle)
+void DCOPY_stat_process_file(DCOPY_operation_t* op, \
+                             uint64_t file_size, \
+                             CIRCLE_handle* handle)
 {
     uint32_t chunk_index;
     uint32_t num_chunks = (uint32_t)(file_size / DCOPY_CHUNK_SIZE);
@@ -123,7 +126,8 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, uint64_t file_size, CIRCLE_h
  * libcircle operations for every object in the directory. It then places those
  * operations on the libcircle queue and returns.
  */
-void DCOPY_stat_process_dir(DCOPY_operation_t* op, CIRCLE_handle* handle)
+void DCOPY_stat_process_dir(DCOPY_operation_t* op, \
+                            CIRCLE_handle* handle)
 {
     DIR* curr_dir;
     char* curr_dir_name;

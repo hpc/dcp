@@ -280,7 +280,9 @@ void DCOPY_parse_dest_path(char* path)
 /**
  * Grab the source paths.
  */
-void DCOPY_parse_src_paths(char** argv, int last_arg_index, int optind_local)
+void DCOPY_parse_src_paths(char** argv, \
+                           int last_arg_index, \
+                           int optind_local)
 {
     int opt_index = 0;
 
@@ -305,7 +307,9 @@ void DCOPY_parse_src_paths(char** argv, int last_arg_index, int optind_local)
 /**
  * Parse the source and destination paths that the user has provided.
  */
-void DCOPY_parse_path_args(char** argv, int optind_local, int argc)
+void DCOPY_parse_path_args(char** argv, \
+                           int optind_local, \
+                           int argc)
 {
     int num_args = argc - optind_local;
     int last_arg_index = num_args + optind_local - 1;

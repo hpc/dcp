@@ -22,7 +22,8 @@ extern DCOPY_options_t DCOPY_user_opts;
 /** Statistics to gather for summary output. */
 extern DCOPY_statistics_t DCOPY_statistics;
 
-void DCOPY_do_copy(DCOPY_operation_t* op, CIRCLE_handle* handle)
+void DCOPY_do_copy(DCOPY_operation_t* op, \
+                   CIRCLE_handle* handle)
 {
     char dest_path[PATH_MAX];
     char buf[DCOPY_CHUNK_SIZE];

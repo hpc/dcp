@@ -68,7 +68,8 @@ void DCOPY_print_usage(char** argv)
            argv[0], argv[0]);
 }
 
-int main(int argc, char** argv)
+int main(int argc, \
+         char** argv)
 {
     int c;
     int option_index = 0;
