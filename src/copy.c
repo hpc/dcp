@@ -59,11 +59,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
         LOG(DCOPY_LOG_ERR, "Unable to open source path `%s'. %s", \
             source_path, strerror(errno));
 
-        if(DCOPY_user_opts.reliable_filesystem) {
-            exit(EXIT_FAILURE);
-        }
-
-        LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+        DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
 
@@ -81,11 +77,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
                 if(unlink(dest_path) != 0) {
                     LOG(DCOPY_LOG_ERR, "Could not unlink destination. %s", strerror(errno));
 
-                    if(DCOPY_user_opts.reliable_filesystem) {
-                        exit(EXIT_FAILURE);
-                    }
-
-                    LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+                    DCOPY_retry_failed_operation(COPY, handle, op);
                     return;
                 }
 
@@ -95,11 +87,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
                 if(outfd < 0) {
                     LOG(DCOPY_LOG_ERR, "Could not open destination after an unlink. %s", strerror(errno));
 
-                    if(DCOPY_user_opts.reliable_filesystem) {
-                        exit(EXIT_FAILURE);
-                    }
-
-                    LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+                    DCOPY_retry_failed_operation(COPY, handle, op);
                     return;
                 }
             }
@@ -132,11 +120,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
                         if(unlink(DCOPY_user_opts.dest_path) != 0) {
                             LOG(DCOPY_LOG_ERR, "Could not unlink destination. %s", strerror(errno));
 
-                            if(DCOPY_user_opts.reliable_filesystem) {
-                                exit(EXIT_FAILURE);
-                            }
-
-                            LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+                            DCOPY_retry_failed_operation(COPY, handle, op);
                             return;
                         }
 
@@ -146,22 +130,14 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
                         if(outfd < 0) {
                             LOG(DCOPY_LOG_ERR, "Could not open destination after an unlink. %s", strerror(errno));
 
-                            if(DCOPY_user_opts.reliable_filesystem) {
-                                exit(EXIT_FAILURE);
-                            }
-
-                            LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+                            DCOPY_retry_failed_operation(COPY, handle, op);
                             return;
                         }
                     }
                 }
             }
             else {
-                if(DCOPY_user_opts.reliable_filesystem) {
-                    exit(EXIT_FAILURE);
-                }
-
-                LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+                DCOPY_retry_failed_operation(COPY, handle, op);
                 return;
             }
         }
@@ -192,11 +168,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
         LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
             source_path, strerror(errno));
 
-        if(DCOPY_user_opts.reliable_filesystem) {
-            exit(EXIT_FAILURE);
-        }
-
-        LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+        DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
 
@@ -206,11 +178,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
         LOG(DCOPY_LOG_ERR, "Couldn't read from source path `%s'. %s", \
             source_path, strerror(errno));
 
-        if(DCOPY_user_opts.reliable_filesystem) {
-            exit(EXIT_FAILURE);
-        }
-
-        LOG(DCOPY_LOG_ERR, "Retrying since unreliable filesystem was specified.");
+        DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
 
