@@ -286,10 +286,6 @@ int main(int argc, char** argv)
 
             case 'p':
 
-                /* FIXME not implemented */
-                LOG(DCOPY_LOG_ERR, "Sorry, the preserve option is not implemented yet.");
-                exit(EXIT_FAILURE);
-
                 DCOPY_user_opts.preserve = true;
                 LOG(DCOPY_LOG_INFO, "Preserving file attributes.");
                 break;
