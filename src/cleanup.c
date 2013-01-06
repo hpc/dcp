@@ -18,13 +18,13 @@ extern DCOPY_options_t DCOPY_user_opts;
 
 void DCOPY_set_preserve_permissions(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
-    LOG(DCOPY_LOG_ERR, "Preserving owndership not implemented yet.");
+    LOG(DCOPY_LOG_ERR, "Preserving ownership not implemented yet.");
     /* TODO: preserve permissions, requeue to cleanup if fail and unreliable. */
 }
 
 void DCOPY_set_preserve_ownership(DCOPY_operation_t* op, CIRCLE_handle* handle)
 {
-    LOG(DCOPY_LOG_ERR, "Preserving owndership not implemented yet.");
+    LOG(DCOPY_LOG_ERR, "Preserving ownership not implemented yet.");
     /* TODO: preserve ownership, requeue to cleanup if fail and unreliable. */
 }
 
