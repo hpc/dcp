@@ -44,7 +44,7 @@ void DCOPY_do_cleanup(DCOPY_operation_t* op, CIRCLE_handle* handle)
         if(DCOPY_user_opts.preserve) {
             DCOPY_set_preserve_permissions(op, handle);
             DCOPY_set_preserve_ownership(op, handle);
-        }    
+        }
 
         DCOPY_truncate_file(op, handle);
     }

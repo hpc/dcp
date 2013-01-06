@@ -77,6 +77,8 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
             char* op = DCOPY_encode_operation(TREEWALK, 0, DCOPY_user_opts.src_path[0], \
                                               (uint16_t)strlen(src_path_dirname), NULL, 0);
             handle->enqueue(op);
+            free(opts_dest_path_dirname);
+            free(src_path_dirname);
         }
         else {
             /*
@@ -128,6 +130,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 
             char* op = DCOPY_encode_operation(TREEWALK, 0, *(src_path), (uint16_t)strlen(*(src_path)), src_path_basename, 0);
             handle->enqueue(op);
+            free(src_path_basename);
 
             src_path++;
         }
