@@ -33,7 +33,7 @@
 #define DCOPY_CHUNK_SIZE (4194304)
 
 #ifndef PATH_MAX
-  #define PATH_MAX (4096)
+#define PATH_MAX (4096)
 #endif
 
 #ifndef _POSIX_ARG_MAX
