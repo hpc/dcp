@@ -110,6 +110,8 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     if(fseek(in_ptr, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
             op->operand, strerror(errno));
+
+        /* Handle operation requeue in parent function. */
         return -1;
     }
 
@@ -118,6 +120,8 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     if(num_of_bytes_read <= 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't read from source path `%s'. %s", \
             op->operand, strerror(errno));
+
+        /* Handle operation requeue in parent function. */
         return -1;
     }
 
@@ -127,6 +131,8 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     if(lseek(out_fd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) < 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path (source is `%s'). %s", \
             op->operand, strerror(errno));
+
+        /* Handle operation requeue in parent function. */
         return -1;
     }
 
@@ -135,6 +141,8 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     if(num_of_bytes_written < 0) {
         LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. %s", \
             op->operand, strerror(errno));
+
+        /* Handle operation requeue in parent function. */
         return -1;
     }
 
