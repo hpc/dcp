@@ -69,6 +69,8 @@ FILE* DCOPY_open_input_file(DCOPY_operation_t* op)
 }
 
 /*
+ * Open the output file.
+ *
  * This function needs figure out if this is a file-to-file copy or a
  * recursive copy, then return an fd based on the result. The treewalk
  * stage has already setup a directory structure for us to use.
@@ -103,7 +105,7 @@ int DCOPY_open_output_file(DCOPY_operation_t* op)
 
     /*
      * If we're recursive, we'll be doing this again and again, so try
-     * recursive first.
+     * recursive first. If it fails, then do the file-to-file.
      */
     if((out_fd = open(dest_path_recursive, O_RDWR | O_CREAT, 00644)) < 0) {
 
@@ -117,6 +119,8 @@ int DCOPY_open_output_file(DCOPY_operation_t* op)
     if(out_fd < 0) {
         LOG(DCOPY_LOG_DBG, "Failed to open destination path when copying " \
                            "from source `%s'.", op->operand);
+
+        /* Handle operation requeue in parent function. */
     }
 
     return out_fd;
