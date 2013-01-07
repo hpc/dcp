@@ -71,7 +71,12 @@ typedef struct {
     /* The full source path. */
     char* operand;
 
-    /* FIXME: describe this. */
+    /*
+     * If the destination already existed before this copy started, we want to
+     * copy the files to a location inside the destination. This is to keep
+     * track of the path inside the destination (especially in the recursive
+     * case).
+     */
     char* dest_base_appendix;
 } DCOPY_operation_t;
 

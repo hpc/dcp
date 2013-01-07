@@ -63,6 +63,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
          * must be a file.
          */
         if(number_of_source_files == 1 && DCOPY_is_regular_file(DCOPY_user_opts.src_path[0])) {
+
             /* Make a copy of the dest path so we can run dirname on it. */
             opts_dest_path_dirname = (char*) malloc(sizeof(char) * PATH_MAX);
             sprintf(opts_dest_path_dirname, "%s", DCOPY_user_opts.dest_path);
@@ -76,7 +77,9 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
             /* LOG(DCOPY_LOG_DBG, "Enqueueing only a single source path `%s'.", DCOPY_user_opts.src_path[0]); */
             char* op = DCOPY_encode_operation(TREEWALK, 0, DCOPY_user_opts.src_path[0], \
                                               (uint16_t)strlen(src_path_dirname), NULL, 0);
+
             handle->enqueue(op);
+
             free(opts_dest_path_dirname);
             free(src_path_dirname);
         }
@@ -128,7 +131,9 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
                 src_path_basename = basename(src_path_basename);
             }
 
-            char* op = DCOPY_encode_operation(TREEWALK, 0, *(src_path), (uint16_t)strlen(*(src_path)), src_path_basename, 0);
+            char* op = DCOPY_encode_operation(TREEWALK, 0, *(src_path), \
+                                              (uint16_t)strlen(*(src_path)), \
+                                              src_path_basename, 0);
             handle->enqueue(op);
             free(src_path_basename);
 
