@@ -32,8 +32,23 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
 
     int out_fd = DCOPY_open_output_file(op);
     if(out_fd < 0) {
-        DCOPY_retry_failed_operation(COPY, handle, op);
-        return;
+        /*
+         * If the force option is specified, try to unlink the destination and
+         * reopen before doing the optional requeue.
+         */
+        if(DCOPY_user_opts.force) {
+            DCOPY_unlink_destination(op);
+            out_fd = DCOPY_open_output_file(op);
+
+            if(out_fd < 0) {
+                DCOPY_retry_failed_operation(COPY, handle, op);
+                return;
+            }
+        }
+        else {
+            DCOPY_retry_failed_operation(COPY, handle, op);
+            return;
+        }
     }
 
     if(DCOPY_perform_copy(op, in_ptr, out_fd) < 0) {
@@ -52,6 +67,13 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
     DCOPY_enqueue_cleanup_stage(op, handle);
 
     return;
+}
+
+/* Unlink the destination file. */
+FILE* DCOPY_unlink_destination(DCOPY_operation_t* op)
+{
+    /* TODO: unlink the dest file. */
+    LOG(DCOPY_LOG_DBG, "Force option unlink destination not implemented yet.");
 }
 
 /* Open the input file. */
