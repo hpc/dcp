@@ -54,6 +54,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
     return;
 }
 
+/* Open the input file. */
 FILE* DCOPY_open_input_file(DCOPY_operation_t* op)
 {
     FILE* in_ptr = fopen(op->operand, "rb");
@@ -61,14 +62,22 @@ FILE* DCOPY_open_input_file(DCOPY_operation_t* op)
     if(in_ptr == NULL) {
         LOG(DCOPY_LOG_DBG, "Failed to open input file `%s'. %s", \
             op->operand, strerror(errno));
+        /* Handle operation requeue in parent function. */
     }
 
     return in_ptr;
 }
 
+/*
+ * This function needs figure out if this is a file-to-file copy or a
+ * recursive copy, then return an fd based on the result. The treewalk
+ * stage has already setup a directory structure for us to use.
+ */
 int DCOPY_open_output_file(DCOPY_operation_t* op)
 {
     char dest_path[PATH_MAX];
+
+    /* FIXME: path wrangling needed here. */
 
     if(op->dest_base_appendix == NULL) {
         sprintf(dest_path, "%s/%s", \
@@ -85,6 +94,10 @@ int DCOPY_open_output_file(DCOPY_operation_t* op)
     return open(dest_path, O_RDWR | O_CREAT, 00644);
 }
 
+/*
+ * Perform the actual copy on this chunk and increment the global statistics
+ * counter.
+ */
 int DCOPY_perform_copy(DCOPY_operation_t* op, \
                        FILE* in_ptr, \
                        int out_fd)
@@ -135,6 +148,10 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     return 1;
 }
 
+/*
+ * Encode and enqueue the cleanup stage for this chunk so the file is
+ * truncated and (if specified via getopt) permissions are preserved.
+ */
 void DCOPY_enqueue_cleanup_stage(DCOPY_operation_t* op, \
                                  CIRCLE_handle* handle)
 {
