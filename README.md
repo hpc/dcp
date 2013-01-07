@@ -58,7 +58,7 @@ If the filesystem is very unreliable, this option may be used to always retry an
 Print version information and exit.
 
 ### File size limit notes
-Please note that (by default) dcp is designed for copying files up to 16 petabytes in size. If operations are required on larger files, dcp.h must be modified -- for example, increasing the block size to 64 megabytes will allow for files up to 256 petabytes in size. Without moving to a 128 bit address space, the maximum theoretical file size dcp can copy is 16 exabytes.
+Please note that (by default) dcp is designed for copying files up to 16 petabytes in size. If operations are required on larger files, dcp.h must be modified -- for example, increasing the block size to 64 megabytes will allow for files up to 256 petabytes in size. Without moving to a 128 bit address space, the maximum theoretical file size dcp can copy is 8 exabytes (due to the signed nature of off64_t).
 
 ### Known bugs
 When the force option is specified and truncation fails, the copy and truncation will be stuck in an infinite loop until the truncation operation returns with success.
