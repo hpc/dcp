@@ -120,4 +120,10 @@ void DCOPY_process_objects(CIRCLE_handle* handle);
 
 void DCOPY_unlink_destination(DCOPY_operation_t* op);
 
+FILE* DCOPY_open_input_stream(DCOPY_operation_t* op);
+
+FILE* DCOPY_open_output_stream(DCOPY_operation_t* op);
+
+int DCOPY_open_output_fd(DCOPY_operation_t* op);
+
 #endif /* __COMMON_H_ */

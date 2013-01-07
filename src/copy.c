@@ -24,14 +24,14 @@ extern DCOPY_statistics_t DCOPY_statistics;
 void DCOPY_do_copy(DCOPY_operation_t* op, \
                    CIRCLE_handle* handle)
 {
-    FILE* in_ptr = DCOPY_open_input_file(op);
+    FILE* in_ptr = DCOPY_open_input_stream(op);
 
     if(in_ptr == NULL) {
         DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
 
-    int out_fd = DCOPY_open_output_file(op);
+    int out_fd = DCOPY_open_output_fd(op);
 
     if(out_fd < 0) {
         /*
@@ -40,7 +40,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
          */
         if(DCOPY_user_opts.force) {
             DCOPY_unlink_destination(op);
-            out_fd = DCOPY_open_output_file(op);
+            out_fd = DCOPY_open_output_fd(op);
 
             if(out_fd < 0) {
                 DCOPY_retry_failed_operation(COPY, handle, op);
@@ -69,78 +69,6 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
     DCOPY_enqueue_cleanup_stage(op, handle);
 
     return;
-}
-
-/* Open the input file. */
-FILE* DCOPY_open_input_file(DCOPY_operation_t* op)
-{
-    FILE* in_ptr = fopen(op->operand, "rb");
-
-    if(in_ptr == NULL) {
-        LOG(DCOPY_LOG_DBG, "Failed to open input file `%s'. %s", \
-            op->operand, strerror(errno));
-        /* Handle operation requeue in parent function. */
-    }
-
-    return in_ptr;
-}
-
-/*
- * Open the output file.
- *
- * This function needs figure out if this is a file-to-file copy or a
- * recursive copy, then return an fd based on the result. The treewalk
- * stage has already setup a directory structure for us to use.
- */
-int DCOPY_open_output_file(DCOPY_operation_t* op)
-{
-    char dest_path_recursive[PATH_MAX];
-    char dest_path_file_to_file[PATH_MAX];
-
-    int out_fd = -1;
-
-    if(op->dest_base_appendix == NULL) {
-        sprintf(dest_path_recursive, "%s/%s", \
-                DCOPY_user_opts.dest_path, \
-                op->operand + op->source_base_offset + 1);
-
-        strncpy(dest_path_file_to_file, DCOPY_user_opts.dest_path, PATH_MAX);
-    }
-    else {
-        sprintf(dest_path_recursive, "%s/%s/%s", \
-                DCOPY_user_opts.dest_path, \
-                op->dest_base_appendix, \
-                op->operand + op->source_base_offset + 1);
-
-        sprintf(dest_path_file_to_file, "%s/%s", \
-                DCOPY_user_opts.dest_path, \
-                op->dest_base_appendix);
-    }
-
-    LOG(DCOPY_LOG_DBG, "Opening destination path `%s' (recursive).", \
-        dest_path_recursive);
-
-    /*
-     * If we're recursive, we'll be doing this again and again, so try
-     * recursive first. If it fails, then do the file-to-file.
-     */
-    if((out_fd = open(dest_path_recursive, O_RDWR | O_CREAT, S_IRWXU)) < 0) {
-
-        LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
-            "(file-to-file fallback).", \
-            dest_path_file_to_file);
-
-        out_fd = open(dest_path_file_to_file, O_RDWR | O_CREAT, S_IRWXU);
-    }
-
-    if(out_fd < 0) {
-        LOG(DCOPY_LOG_DBG, "Failed to open destination path when copying " \
-            "from source `%s'. %s", op->operand, strerror(errno));
-
-        /* Handle operation requeue in parent function. */
-    }
-
-    return out_fd;
 }
 
 /*

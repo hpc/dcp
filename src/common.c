@@ -7,6 +7,9 @@
 #include <inttypes.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 /** The loglevel that this instance of dcopy will output. */
 DCOPY_loglevel DCOPY_debug_level;
@@ -190,6 +193,135 @@ void DCOPY_unlink_destination(DCOPY_operation_t* op)
     }
 
     return;
+}
+
+/* Open the input file. */
+FILE* DCOPY_open_input_stream(DCOPY_operation_t* op)
+{
+    FILE* in_ptr = fopen(op->operand, "rb");
+
+    if(in_ptr == NULL) {
+        LOG(DCOPY_LOG_DBG, "Failed to open input file `%s'. %s", \
+            op->operand, strerror(errno));
+        /* Handle operation requeue in parent function. */
+    }
+
+    return in_ptr;
+}
+
+/*
+ * Open the output file and return a stream.
+ *
+ * This function needs figure out if this is a file-to-file copy or a
+ * recursive copy, then return a FILE* based on the result.
+ */
+FILE* DCOPY_open_output_stream(DCOPY_operation_t* op)
+{
+    char dest_path_recursive[PATH_MAX];
+    char dest_path_file_to_file[PATH_MAX];
+
+    FILE* out_ptr = NULL;
+
+    if(op->dest_base_appendix == NULL) {
+        sprintf(dest_path_recursive, "%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->operand + op->source_base_offset + 1);
+
+        strncpy(dest_path_file_to_file, DCOPY_user_opts.dest_path, PATH_MAX);
+    }
+    else {
+        sprintf(dest_path_recursive, "%s/%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->dest_base_appendix, \
+                op->operand + op->source_base_offset + 1);
+
+        sprintf(dest_path_file_to_file, "%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->dest_base_appendix);
+    }
+
+    LOG(DCOPY_LOG_DBG, "Opening destination path `%s' (recursive).", \
+        dest_path_recursive);
+
+    /*
+     * If we're recursive, we'll be doing this again and again, so try
+     * recursive first. If it fails, then do the file-to-file.
+     */
+    if((out_ptr = fopen(dest_path_recursive, "rb")) == NULL) {
+
+        LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
+            "(file-to-file fallback).", \
+            dest_path_file_to_file);
+
+        out_ptr = fopen(dest_path_file_to_file, "rb");
+    }
+
+    if(out_ptr == NULL) {
+        LOG(DCOPY_LOG_DBG, "Failed to open destination path when comparing " \
+            "from source `%s'. %s", op->operand, strerror(errno));
+
+        /* Handle operation requeue in parent function. */
+    }
+
+    return out_ptr;
+}
+
+/*
+ * Open the output file and return a descriptor.
+ *
+ * This function needs figure out if this is a file-to-file copy or a
+ * recursive copy, then return an fd based on the result. The treewalk
+ * stage has already setup a directory structure for us to use.
+ */
+int DCOPY_open_output_fd(DCOPY_operation_t* op)
+{
+    char dest_path_recursive[PATH_MAX];
+    char dest_path_file_to_file[PATH_MAX];
+
+    int out_fd = -1;
+
+    if(op->dest_base_appendix == NULL) {
+        sprintf(dest_path_recursive, "%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->operand + op->source_base_offset + 1);
+
+        strncpy(dest_path_file_to_file, DCOPY_user_opts.dest_path, PATH_MAX);
+    }
+    else {
+        sprintf(dest_path_recursive, "%s/%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->dest_base_appendix, \
+                op->operand + op->source_base_offset + 1);
+
+        sprintf(dest_path_file_to_file, "%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->dest_base_appendix);
+    }
+
+    LOG(DCOPY_LOG_DBG, "Opening destination path `%s' (recursive).", \
+        dest_path_recursive);
+
+    /*
+     * If we're recursive, we'll be doing this again and again, so try
+     * recursive first. If it fails, then do the file-to-file.
+     */
+    if((out_fd = open(dest_path_recursive, O_RDWR | O_CREAT, S_IRWXU)) < 0) {
+
+        LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
+            "(file-to-file fallback).", \
+            dest_path_file_to_file);
+
+        out_fd = open(dest_path_file_to_file, O_RDWR | O_CREAT, S_IRWXU);
+    }
+
+    if(out_fd < 0) {
+        LOG(DCOPY_LOG_DBG, "Failed to open destination path when copying " \
+            "from source `%s'. %s", op->operand, strerror(errno));
+
+        /* Handle operation requeue in parent function. */
+    }
+
+    return out_fd;
 }
 
 /* EOF */
