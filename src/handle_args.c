@@ -116,7 +116,8 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 
         while(*src_path != NULL) {
             /* LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", *(src_path)); */
-            char* src_path_basename = (char*) malloc(sizeof(char) * PATH_MAX);
+            char* src_path_basename_tmp = (char*) malloc(sizeof(char) * PATH_MAX);
+            char* src_path_basename = NULL;
 
             /*
              * If the destination directory already exists, we want to place
@@ -126,15 +127,15 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
              */
             if(dest_already_exists && !DCOPY_user_opts.conditional) {
                 /* Make a copy of the src path so we can run basename on it. */
-                sprintf(src_path_basename, "%s", DCOPY_user_opts.src_path[0]);
-                src_path_basename = basename(src_path_basename);
+                sprintf(src_path_basename_tmp, "%s", DCOPY_user_opts.src_path[0]);
+                src_path_basename = basename(src_path_basename_tmp);
             }
 
             char* op = DCOPY_encode_operation(TREEWALK, 0, *(src_path), \
                                               (uint16_t)strlen(*(src_path)), \
                                               src_path_basename, 0);
             handle->enqueue(op);
-            free(src_path_basename);
+            free(src_path_basename_tmp);
 
             src_path++;
         }
