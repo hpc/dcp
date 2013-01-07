@@ -70,7 +70,7 @@ fi
 
 $DCP_CMP_BIN $PATH_B_EMPTY $PATH_C_EMPTY
 if [[ $? -ne 0 ]]; then
-    echo "MD5 mismatch when copying empty file to empty file (B -> C)."
+    echo "CMP mismatch when copying empty file to empty file (B -> C)."
     exit 1
 fi
 
@@ -86,7 +86,7 @@ fi
 
 $DCP_CMP_BIN $PATH_D_RANDOM $PATH_B_EMPTY
 if [[ $? -ne 0 ]]; then
-    echo "MD5 mismatch when copying random file to empty file (D -> B)."
+    echo "CMP mismatch when copying random file to empty file (D -> B)."
     exit 1
 fi
 
@@ -102,7 +102,7 @@ fi
 
 $DCP_CMP_BIN $PATH_D_RANDOM $PATH_E_RANDOM
 if [[ $? -ne 0 ]]; then
-    echo "MD5 mismatch when copying random file to random file (D -> E)."
+    echo "CMP mismatch when copying random file to random file (D -> E)."
     exit 1
 fi
 

@@ -87,7 +87,7 @@ fi
 
 $DCP_CMP_BIN "$PATH_D_DIRECTORY/$(basename $PATH_C_RANDOM)" $PATH_C_RANDOM
 if [[ $? -ne 0 ]]; then
-    echo "MD5 mismatch when copying a random file to a directory (C -> D/C)."
+    echo "CMP mismatch when copying a random file to a directory (C -> D/C)."
     exit 1
 fi
 
