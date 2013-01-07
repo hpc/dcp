@@ -8,9 +8,16 @@ AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([foreign])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-# Check for compilers.
+# Check for programs
 AC_PROG_CC
-AM_PROG_CC_C_O
+AC_PROG_CXX
+AC_PROG_AWK
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_MAKE_SET
+AC_PROG_RANLIB
 
 # Needed for docs
 X_AC_DCOPY_DOXYGEN
@@ -25,18 +32,27 @@ PKG_CHECK_MODULES([libcircle], libcircle)
 #LT_INIT
 AC_PROG_LIBTOOL
 
-# Checks for typedefs, structs, and compiler options.
-AC_TYPE_SIZE_T
+# Checks for headers.
+AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h unistd.h])
 
-# Try to set largefile support.
+# Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_TYPE_OFF_T
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
+AC_TYPE_UINT16_T
+AC_TYPE_UINT32_T
+AC_TYPE_UINT64_T
+
+# Check for largefile support.
 AC_SYS_LARGEFILE
 
-# Checks for library functs.
+AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
+AC_FUNC_MALLOC
+AC_CHECK_FUNCS([memset realpath strerror])
 AC_CHECK_FUNC(lseek64, , AC_MSG_ERROR([This OS does not appear to support lseek64(3).]))
 AC_CHECK_FUNC(fstat64, , AC_MSG_ERROR([This OS does not appear to support fstat64(3).]))
 AC_CHECK_FUNC(stat64, , AC_MSG_ERROR([This OS does not appear to support stat64(3).]))
-AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
-AC_FUNC_MALLOC
 
 AC_CONFIG_FILES([Makefile              \
                  src/Makefile          \
