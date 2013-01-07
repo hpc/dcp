@@ -12,6 +12,8 @@
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
 
+/* FIXME: this file. */
+
 void DCOPY_do_compare(DCOPY_operation_t* op, \
                       CIRCLE_handle* handle)
 {
