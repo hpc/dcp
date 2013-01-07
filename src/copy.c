@@ -75,23 +75,51 @@ FILE* DCOPY_open_input_file(DCOPY_operation_t* op)
  */
 int DCOPY_open_output_file(DCOPY_operation_t* op)
 {
-    char dest_path[PATH_MAX];
+    char dest_path_recursive[PATH_MAX];
+    char dest_path_file_to_file[PATH_MAX];
 
-    /* FIXME: path wrangling needed here. */
+    int out_fd = -1;
 
     if(op->dest_base_appendix == NULL) {
-        sprintf(dest_path, "%s/%s", \
+        sprintf(dest_path_recursive, "%s/%s", \
                 DCOPY_user_opts.dest_path, \
                 op->operand + op->source_base_offset + 1);
+
+        strncpy(dest_path_file_to_file, DCOPY_user_opts.dest_path, PATH_MAX);
     }
     else {
-        sprintf(dest_path, "%s/%s/%s", \
+        sprintf(dest_path_recursive, "%s/%s/%s", \
                 DCOPY_user_opts.dest_path, \
                 op->dest_base_appendix, \
                 op->operand + op->source_base_offset + 1);
+
+        sprintf(dest_path_file_to_file, "%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->dest_base_appendix);
     }
 
-    return open(dest_path, O_RDWR | O_CREAT, 00644);
+    LOG(DCOPY_LOG_DBG, "Opening destination path `%s' (recursive).", \
+        dest_path_recursive);
+
+    /*
+     * If we're recursive, we'll be doing this again and again, so try
+     * recursive first.
+     */
+    if((out_fd = open(dest_path_recursive, O_RDWR | O_CREAT, 00644)) < 0) {
+
+        LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
+            "(file-to-file fallback).", \
+            dest_path_file_to_file);
+
+        out_fd = open(dest_path_file_to_file, O_RDWR | O_CREAT, 00644);
+    }
+
+    if(out_fd < 0) {
+        LOG(DCOPY_LOG_DBG, "Failed to open destination path when copying " \
+                           "from source `%s'.", op->operand);
+    }
+
+    return out_fd;
 }
 
 /*
