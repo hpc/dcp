@@ -124,18 +124,18 @@ int DCOPY_open_output_file(DCOPY_operation_t* op)
      * If we're recursive, we'll be doing this again and again, so try
      * recursive first. If it fails, then do the file-to-file.
      */
-    if((out_fd = open(dest_path_recursive, O_RDWR | O_CREAT, 00644)) < 0) {
+    if((out_fd = open(dest_path_recursive, O_RDWR | O_CREAT, S_IRWXU)) < 0) {
 
         LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
             "(file-to-file fallback).", \
             dest_path_file_to_file);
 
-        out_fd = open(dest_path_file_to_file, O_RDWR | O_CREAT, 00644);
+        out_fd = open(dest_path_file_to_file, O_RDWR | O_CREAT, S_IRWXU);
     }
 
     if(out_fd < 0) {
         LOG(DCOPY_LOG_DBG, "Failed to open destination path when copying " \
-            "from source `%s'.", op->operand);
+            "from source `%s'. %s", op->operand, strerror(errno));
 
         /* Handle operation requeue in parent function. */
     }

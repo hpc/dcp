@@ -71,7 +71,7 @@ fi
 
 $DCP_CMP_BIN "$PATH_D_DIRECTORY/$(basename $PATH_B_EMPTY)" $PATH_B_EMPTY
 if [[ $? -ne 0 ]]; then
-    echo "MD5 mismatch when copying empty file to a directory (B -> D/B)."
+    echo "CMP mismatch when copying empty file to a directory (B -> D/B)."
     exit 1
 fi
 
