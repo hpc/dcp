@@ -83,7 +83,6 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
         exit(EXIT_FAILURE);
     }
 
-    LOG(DCOPY_LOG_DBG, "Encoded operation is `%s'.", op);
     return op;
 }
 
