@@ -14,32 +14,61 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-/* FIXME: this file. */
-
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
 
 /** Statistics to gather for summary output. */
 extern DCOPY_statistics_t DCOPY_statistics;
 
+/* The entrance point to the copy operation. */
 void DCOPY_do_copy(DCOPY_operation_t* op, \
                    CIRCLE_handle* handle)
 {
+    FILE* in_ptr = DCOPY_open_input_file(op);
+    if(in_ptr == NULL) {
+        DCOPY_retry_failed_operation(COPY, handle, op);
+        return;
+    }
+
+    int out_fd = DCOPY_open_output_file(op);
+    if(out_fd < 0) {
+        DCOPY_retry_failed_operation(COPY, handle, op);
+        return;
+    }
+
+    if(DCOPY_perform_copy(op, in_ptr, out_fd) < 0) {
+        DCOPY_retry_failed_operation(COPY, handle, op);
+        return;
+    }
+
+    if(fclose(in_ptr) < 0) {
+        LOG(DCOPY_LOG_DBG, "Close on source file failed. %s", strerror(errno));
+    }
+
+    if(close(out_fd) < 0) {
+        LOG(DCOPY_LOG_DBG, "Close on destination file failed. %s", strerror(errno));
+    }
+
+    DCOPY_enqueue_cleanup_stage(op, handle);
+
+    return;
+}
+
+FILE* DCOPY_open_input_file(DCOPY_operation_t* op)
+{
+    FILE* in_ptr = fopen(op->operand, "rb");
+
+    if(in_ptr == NULL) {
+        LOG(DCOPY_LOG_DBG, "Failed to open input file `%s'. %s", \
+            op->operand, strerror(errno));
+    }
+
+    return in_ptr;
+}
+
+int DCOPY_open_output_file(DCOPY_operation_t* op)
+{
     char dest_path[PATH_MAX];
-    char buf[DCOPY_CHUNK_SIZE];
-    char* source_path = op->operand;
-
-    bool is_file_to_file_copy = false;
-    bool unlink_on_failed_create = DCOPY_user_opts.force;
-
-    uint64_t bytes_read = 0;
-    uint64_t bytes_written = 0;
-
-    FILE* in;
-    int outfd;
-
-    /* If we need to stat before an unlink. */
-    struct stat sb;
 
     if(op->dest_base_appendix == NULL) {
         sprintf(dest_path, "%s/%s", \
@@ -53,159 +82,69 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
                 op->operand + op->source_base_offset + 1);
     }
 
-    in = fopen(source_path, "rb");
+    return open(dest_path, O_RDWR | O_CREAT, 00644);
+}
 
-    if(!in) {
-        LOG(DCOPY_LOG_ERR, "Unable to open source path `%s'. %s", \
-            source_path, strerror(errno));
+int DCOPY_perform_copy(DCOPY_operation_t* op, \
+                       FILE* in_ptr, \
+                       int out_fd)
+{
+    char io_buf[DCOPY_CHUNK_SIZE];
 
-        DCOPY_retry_failed_operation(COPY, handle, op);
-        return;
-    }
+    size_t num_of_bytes_read = 0;
+    ssize_t num_of_bytes_written = 0;
 
-    outfd = open(dest_path, O_RDWR | O_CREAT, 00644);
-
-    /* Force option handing for recursive-style copies. */
-    if((outfd < 0) && unlink_on_failed_create) {
-
-        /* If the stat() was successful and we're not a directory, lets try an unlink. */
-        if((stat(dest_path, &sb) == 0)) {
-            if(!S_ISDIR(sb.st_mode)) {
-                LOG(DCOPY_LOG_DBG, "Destination file creation failed on a recursive-style copy.");
-                LOG(DCOPY_LOG_DBG, "Attempting to unlink since force is enabled.");
-
-                if(unlink(dest_path) != 0) {
-                    LOG(DCOPY_LOG_ERR, "Could not unlink destination. %s", strerror(errno));
-
-                    DCOPY_retry_failed_operation(COPY, handle, op);
-                    return;
-                }
-
-                /* Try it again. */
-                outfd = open(dest_path, O_RDWR | O_CREAT, 00644);
-
-                if(outfd < 0) {
-                    LOG(DCOPY_LOG_ERR, "Could not open destination after an unlink. %s", strerror(errno));
-
-                    DCOPY_retry_failed_operation(COPY, handle, op);
-                    return;
-                }
-            }
-        }
-    }
-
-    /* Fallback to file-to-file copy since it doesn't look like we're recursive.. */
-    if(outfd < 0) {
-        /*
-         * Since we might be trying a file to file copy, lets try to open
-         * the base instead. If it really is a directory, we'll go ahead and
-         * fail.
-         */
-        LOG(DCOPY_LOG_DBG, "Attempting to see if this is a file to file copy.");
-        outfd = open(DCOPY_user_opts.dest_path, O_RDWR | O_CREAT, 00644);
-
-        if(outfd < 0) {
-            LOG(DCOPY_LOG_ERR, "Unable to open destination path `%s'. %s", \
-                dest_path, strerror(errno));
-
-            /* Force option handing for file-to-file style copies. */
-            if(unlink_on_failed_create) {
-
-                /* If the stat() was successful and we're not a directory, lets try an unlink. */
-                if((stat(DCOPY_user_opts.dest_path, &sb) == 0)) {
-                    if(!S_ISDIR(sb.st_mode)) {
-                        LOG(DCOPY_LOG_DBG, "Destination file creation failed on a file-to-file style copy.");
-                        LOG(DCOPY_LOG_DBG, "Attempting to unlink since force is enabled.");
-
-                        if(unlink(DCOPY_user_opts.dest_path) != 0) {
-                            LOG(DCOPY_LOG_ERR, "Could not unlink destination. %s", strerror(errno));
-
-                            DCOPY_retry_failed_operation(COPY, handle, op);
-                            return;
-                        }
-
-                        /* Try it again. */
-                        outfd = open(DCOPY_user_opts.dest_path, O_RDWR | O_CREAT, 00644);
-
-                        if(outfd < 0) {
-                            LOG(DCOPY_LOG_ERR, "Could not open destination after an unlink. %s", strerror(errno));
-
-                            DCOPY_retry_failed_operation(COPY, handle, op);
-                            return;
-                        }
-                    }
-                }
-            }
-            else {
-                DCOPY_retry_failed_operation(COPY, handle, op);
-                return;
-            }
-        }
-        else {
-            is_file_to_file_copy = true;
-        }
-    }
-
-    if(is_file_to_file_copy) {
-        LOG(DCOPY_LOG_INFO, "Copying to destination path `%s' from source path `%s' (chunk number %d).", \
-            DCOPY_user_opts.dest_path, source_path, op->chunk);
-        /*
-                stat(DCOPY_user_opts.dest_path, &sb);
-                LOG(DCOPY_LOG_DBG, "Destination file size is `%zu'.", sb.st_size);
-        */
-    }
-    else {
-        LOG(DCOPY_LOG_INFO, "Copying to destination path `%s' from source path `%s' (chunk number %d).", \
-            dest_path, source_path, op->chunk);
-
-        /*
-                stat(dest_path, &sb);
-                LOG(DCOPY_LOG_DBG, "Destination file size is `%zu'.", sb.st_size);
-        */
-    }
-
-    if(fseek(in, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
+    if(fseek(in_ptr, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
-            source_path, strerror(errno));
-
-        DCOPY_retry_failed_operation(COPY, handle, op);
-        return;
+            op->operand, strerror(errno));
+        return -1;
     }
 
-    bytes_read = fread((void*)buf, 1, DCOPY_CHUNK_SIZE, in);
+    num_of_bytes_read = fread((void*)io_buf, 1, DCOPY_CHUNK_SIZE, in_ptr);
 
-    if(bytes_read <= 0) {
+    if(num_of_bytes_read <= 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't read from source path `%s'. %s", \
-            source_path, strerror(errno));
-
-        DCOPY_retry_failed_operation(COPY, handle, op);
-        return;
+            op->operand, strerror(errno));
+        return -1;
     }
 
-    LOG(DCOPY_LOG_DBG, "Writing `%zu' bytes at offset `%d'.", bytes_read, DCOPY_CHUNK_SIZE * op->chunk);
+    LOG(DCOPY_LOG_DBG, "Read `%zu' bytes at offset `%d'.", num_of_bytes_read, \
+        DCOPY_CHUNK_SIZE * op->chunk);
 
-    lseek(outfd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
-    bytes_written = (uint64_t) write(outfd, buf, bytes_read);
-
-    if(bytes_written > 0) {
-        DCOPY_statistics.total_bytes_copied += bytes_written;
+    if(lseek(out_fd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) < 0) {
+        LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path (source is `%s'). %s", \
+            op->operand, strerror(errno));
+        return -1;
     }
 
-    LOG(DCOPY_LOG_DBG, "Wrote %zu bytes (%ld total).", bytes_written, DCOPY_statistics.total_bytes_copied);
+    num_of_bytes_written = write(out_fd, io_buf, num_of_bytes_read);
 
-    char* newop = DCOPY_encode_operation(CLEANUP, op->chunk, source_path, op->source_base_offset, op->dest_base_appendix, op->file_size);
+    if(num_of_bytes_written < 0) {
+        LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. %s", \
+            op->operand, strerror(errno));
+        return -1;
+    }
+
+    /* Increment the global counter. */
+    DCOPY_statistics.total_bytes_copied += (uint64_t) num_of_bytes_written;
+
+    LOG(DCOPY_LOG_DBG, "Wrote %zu bytes at offset `%d' (%zu total).", \
+        num_of_bytes_written, DCOPY_CHUNK_SIZE * op->chunk, \
+        DCOPY_statistics.total_bytes_copied);
+
+    return 1;
+}
+
+void DCOPY_enqueue_cleanup_stage(DCOPY_operation_t* op, \
+                                 CIRCLE_handle* handle)
+{
+    char* newop;
+
+    newop = DCOPY_encode_operation(CLEANUP, op->chunk, op->operand, \
+                                   op->source_base_offset, \
+                                   op->dest_base_appendix, op->file_size);
     handle->enqueue(newop);
     free(newop);
-
-    if(fclose(in) < 0) {
-        LOG(DCOPY_LOG_DBG, "Close on source file failed. %s", strerror(errno));
-    }
-
-    if(close(outfd) < 0) {
-        LOG(DCOPY_LOG_DBG, "Close on destination file failed. %s", strerror(errno));
-    }
-
-    return;
 }
 
 /* EOF */
