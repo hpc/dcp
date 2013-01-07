@@ -335,6 +335,7 @@ void DCOPY_parse_path_args(char** argv, \
     /*
      * Now, lets print everything out for debugging purposes.
      */
+/*
     char** dbg_p = DCOPY_user_opts.src_path;
 
     while(*dbg_p != NULL) {
@@ -343,6 +344,7 @@ void DCOPY_parse_path_args(char** argv, \
     }
 
     LOG(DCOPY_LOG_DBG, "Found a destination path with name: `%s'", DCOPY_user_opts.dest_path);
+*/
 }
 
 /* EOF */

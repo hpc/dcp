@@ -94,7 +94,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
 
     num_of_bytes_read = fread((void*)io_buf, 1, DCOPY_CHUNK_SIZE, in_ptr);
 
-    if(num_of_bytes_read <= 0) {
+    if(num_of_bytes_read <= 0 && op->file_size > 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't read from source path `%s'. %s", \
             op->operand, strerror(errno));
 
@@ -115,7 +115,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
 
     num_of_bytes_written = write(out_fd, io_buf, num_of_bytes_read);
 
-    if(num_of_bytes_written < 0) {
+    if(num_of_bytes_written < 0 && op->file_size > 0) {
         LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. %s", \
             op->operand, strerror(errno));
 

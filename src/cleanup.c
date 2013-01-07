@@ -54,6 +54,8 @@ void DCOPY_truncate_file(DCOPY_operation_t* op, \
                 op->dest_base_appendix);
     }
 
+    LOG(DCOPY_LOG_DBG, "Truncating file to `%zu'.", op->file_size);
+
     /*
      * Try the recursive file before file-to-file. The cast below requires us
      * to have a maximum file_size of 2^63, not 2^64.
