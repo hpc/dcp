@@ -8,7 +8,7 @@
 void DCOPY_do_copy(DCOPY_operation_t* op, \
                    CIRCLE_handle* handle);
 
-FILE* DCOPY_unlink_destination(DCOPY_operation_t* op);
+void DCOPY_unlink_destination(DCOPY_operation_t* op);
 
 FILE* DCOPY_open_input_file(DCOPY_operation_t* op);
 
