@@ -56,6 +56,9 @@ If the filesystem is very unreliable, this option may be used to always retry an
 \fB\-v\fR, \fB\-\-version\fR
 Print version information and exit.
 
+.SH "KNOWN BUGS"
+When the force option is specified and truncation fails, the copy and truncation will be stuck in an infinite loop until the truncation option returns with success.
+
 .SH "COPYING"
 Copyright (C) 2011-2012 Los Alamos National Security.
 

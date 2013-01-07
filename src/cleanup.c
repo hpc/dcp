@@ -33,8 +33,41 @@ void DCOPY_set_preserve_ownership(DCOPY_operation_t* op, \
 void DCOPY_truncate_file(DCOPY_operation_t* op, \
                          CIRCLE_handle* handle)
 {
-    LOG(DCOPY_LOG_ERR, "Truncate not implemented yet. Files may be corrupt.");
-    /* TODO: truncate file, requeue to cleanup if fail and unreliable. */
+    char dest_path_recursive[PATH_MAX];
+    char dest_path_file_to_file[PATH_MAX];
+
+    if(op->dest_base_appendix == NULL) {
+        sprintf(dest_path_recursive, "%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->operand + op->source_base_offset + 1);
+
+        strncpy(dest_path_file_to_file, DCOPY_user_opts.dest_path, PATH_MAX);
+    }
+    else {
+        sprintf(dest_path_recursive, "%s/%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->dest_base_appendix, \
+                op->operand + op->source_base_offset + 1);
+
+        sprintf(dest_path_file_to_file, "%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->dest_base_appendix);
+    }
+
+    /*
+     * Try the recursive file before file-to-file. The cast below requires us
+     * to have a maximum file_size of 2^63, not 2^64.
+     */
+    if(truncate(dest_path_recursive, (off_t) op->file_size) < 0) {
+        LOG(DCOPY_LOG_DBG, "Failed to truncate destination file (recursive).");
+
+        if(truncate(dest_path_file_to_file, (off_t) op->file_size) < 0) {
+            LOG(DCOPY_LOG_ERR, "Failed to truncate destination file.");
+
+            DCOPY_retry_failed_operation(COPY, handle, op);
+            return;
+        }
+    }
 }
 
 void DCOPY_do_cleanup(DCOPY_operation_t* op, \

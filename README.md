@@ -60,6 +60,9 @@ Print version information and exit.
 ### File size limit notes
 Please note that (by default) dcp is designed for copying files up to 16 petabytes in size. If operations are required on larger files, dcp.h must be modified -- for example, increasing the block size to 64 megabytes will allow for files up to 256 petabytes in size. Without moving to a 128 bit address space, the maximum theoretical file size dcp can copy is 16 exabytes.
 
+### Known bugs
+When the force option is specified and truncation fails, the copy and truncation will be stuck in an infinite loop until the truncation option returns with success.
+
 ### RPM CREATION
 To create a dcp rpm, simply follow these steps. Replace *version* and
 *release* with the appropriate values.

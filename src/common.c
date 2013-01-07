@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <string.h>
+#include <errno.h>
 
 /** The loglevel that this instance of dcopy will output. */
 DCOPY_loglevel DCOPY_debug_level;
@@ -151,6 +152,43 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
     DCOPY_jump_table[opt->code](opt, handle);
 
     free(opt);
+    return;
+}
+
+/* Unlink the destination file. */
+void DCOPY_unlink_destination(DCOPY_operation_t* op)
+{
+    char dest_path_recursive[PATH_MAX];
+    char dest_path_file_to_file[PATH_MAX];
+
+    if(op->dest_base_appendix == NULL) {
+        sprintf(dest_path_recursive, "%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->operand + op->source_base_offset + 1);
+
+        strncpy(dest_path_file_to_file, DCOPY_user_opts.dest_path, PATH_MAX);
+    }
+    else {
+        sprintf(dest_path_recursive, "%s/%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->dest_base_appendix, \
+                op->operand + op->source_base_offset + 1);
+
+        sprintf(dest_path_file_to_file, "%s/%s", \
+                DCOPY_user_opts.dest_path, \
+                op->dest_base_appendix);
+    }
+
+    if(unlink(dest_path_recursive) < 0) {
+        LOG(DCOPY_LOG_DBG, "Failed to unlink recursive style destination. " \
+            "%s", strerror(errno));
+    }
+
+    if(unlink(dest_path_file_to_file) < 0) {
+        LOG(DCOPY_LOG_DBG, "Failed to unlink file-to-file style destination. " \
+            "%s", strerror(errno));
+    }
+
     return;
 }
 

@@ -118,4 +118,6 @@ void DCOPY_add_objects(CIRCLE_handle* handle);
 
 void DCOPY_process_objects(CIRCLE_handle* handle);
 
+void DCOPY_unlink_destination(DCOPY_operation_t* op);
+
 #endif /* __COMMON_H_ */
