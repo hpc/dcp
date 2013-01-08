@@ -78,6 +78,10 @@ int DCOPY_perform_compare(DCOPY_operation_t* op, \
         LOG(DCOPY_LOG_DBG, "Source byte count `%zu' does not match " \
             "destination byte count '%zu' of total file size `%zu'.", \
             num_of_in_bytes, num_of_out_bytes, op->file_size);
+
+        free(src_buf);
+        free(dest_buf);
+
         return -1;
     }
 
@@ -85,11 +89,18 @@ int DCOPY_perform_compare(DCOPY_operation_t* op, \
         LOG(DCOPY_LOG_ERR, "Compare mismatch when copying from file `%s'.", \
             op->operand);
 
+        free(src_buf);
+        free(dest_buf);
+
         return -1;
     }
     else {
         LOG(DCOPY_LOG_DBG, "File `%s' (chunk `%d') compare successful.", \
             op->operand, op->chunk);
+
+        free(src_buf);
+        free(dest_buf);
+
         return 1;
     }
 }
