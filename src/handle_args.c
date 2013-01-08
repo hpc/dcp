@@ -115,7 +115,8 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
         char** src_path = DCOPY_user_opts.src_path;
 
         while(*src_path != NULL) {
-            /* LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", *(src_path)); */
+            LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", *(src_path));
+
             char* src_path_basename_tmp = (char*) malloc(sizeof(char) * PATH_MAX);
             char* src_path_basename = NULL;
 
@@ -127,7 +128,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
              */
             if(dest_already_exists && !DCOPY_user_opts.conditional) {
                 /* Make a copy of the src path so we can run basename on it. */
-                sprintf(src_path_basename_tmp, "%s", DCOPY_user_opts.src_path[0]);
+                strncpy(src_path_basename_tmp, *src_path, PATH_MAX);
                 src_path_basename = basename(src_path_basename_tmp);
             }
 

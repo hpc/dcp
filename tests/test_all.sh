@@ -7,7 +7,7 @@
 ###############################################################################
 
 # Turn this on if you want output from each test printed out.
-#DEBUG=1
+DEBUG=1
 
 # A temporary directory that all tests can use for scratch files.
 TEST_TMP_DIR=/tmp

@@ -76,8 +76,8 @@ int DCOPY_perform_compare(DCOPY_operation_t* op, \
 
     if(num_of_in_bytes != num_of_out_bytes) {
         LOG(DCOPY_LOG_DBG, "Source byte count `%zu' does not match " \
-            "destination byte count %zu`'.", \
-            num_of_in_bytes, num_of_out_bytes);
+            "destination byte count '%zu' of total file size `%zu'.", \
+            num_of_in_bytes, num_of_out_bytes, op->file_size);
         return -1;
     }
 
