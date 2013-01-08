@@ -98,8 +98,8 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, \
     int32_t chunk_index;
     int32_t num_chunks = (int32_t)(file_size / (int64_t)DCOPY_CHUNK_SIZE);
 
-    LOG(DCOPY_LOG_DBG, "File `%s' size is `%" PRIu64 \
-        "' with chunks `%" PRIu32 "' (total `%" PRIu64 "').", \
+    LOG(DCOPY_LOG_DBG, "File `%s' size is `%" PRId64 \
+        "' with chunks `%" PRId32 "' (total `%" PRId64 "').", \
         op->operand, file_size, num_chunks, \
         ((int64_t)num_chunks * (int64_t)DCOPY_CHUNK_SIZE));
 

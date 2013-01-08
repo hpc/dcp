@@ -92,7 +92,7 @@ typedef struct {
 } DCOPY_operation_t;
 
 typedef struct {
-    uint64_t total_bytes_copied;
+    int64_t  total_bytes_copied;
     time_t   time_started;
     time_t   time_ended;
     double   wtime_started;

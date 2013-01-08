@@ -12,6 +12,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
@@ -109,7 +110,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
 
 /*
     LOG(DCOPY_LOG_DBG, "Read `%zu' bytes at offset `%zu'.", num_of_bytes_read, \
-        (uint64_t)DCOPY_CHUNK_SIZE * (uint64_t)op->chunk);
+        (int64_t)DCOPY_CHUNK_SIZE * (int64_t)op->chunk);
 */
 
     if(lseek64(out_fd, (int64_t)DCOPY_CHUNK_SIZE * (int64_t)op->chunk, SEEK_SET) < 0) {
@@ -133,9 +134,9 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     }
 
     /* Increment the global counter. */
-    DCOPY_statistics.total_bytes_copied += (uint64_t) num_of_bytes_written;
+    DCOPY_statistics.total_bytes_copied += num_of_bytes_written;
 
-    LOG(DCOPY_LOG_DBG, "Wrote %zu bytes at offset `%zu' (%zu total).", \
+    LOG(DCOPY_LOG_DBG, "Wrote `%zu' bytes at offset `%" PRId64 "' (`%" PRId64 "' total).", \
         num_of_bytes_written, (int64_t)DCOPY_CHUNK_SIZE * (int64_t)op->chunk, \
         DCOPY_statistics.total_bytes_copied);
 
