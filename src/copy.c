@@ -125,8 +125,8 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     /* Increment the global counter. */
     DCOPY_statistics.total_bytes_copied += (uint64_t) num_of_bytes_written;
 
-    LOG(DCOPY_LOG_DBG, "Wrote %zu bytes at offset `%d' (%zu total).", \
-        num_of_bytes_written, DCOPY_CHUNK_SIZE * op->chunk, \
+    LOG(DCOPY_LOG_DBG, "Wrote %zu bytes at offset `%zu' (%zu total).", \
+        num_of_bytes_written, (uint64_t)DCOPY_CHUNK_SIZE * (uint64_t)op->chunk, \
         DCOPY_statistics.total_bytes_copied);
 
     return 1;
