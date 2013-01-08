@@ -92,31 +92,31 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, \
  * onto the libcircle queue for future processing by the copy stage.
  */
 void DCOPY_stat_process_file(DCOPY_operation_t* op, \
-                             off64_t file_size, \
+                             int64_t file_size, \
                              CIRCLE_handle* handle)
 {
-    uint32_t chunk_index;
-    uint32_t num_chunks = (uint32_t)((uint64_t)file_size / (uint64_t)DCOPY_CHUNK_SIZE);
+    int32_t chunk_index;
+    int32_t num_chunks = (int32_t)(file_size / (int64_t)DCOPY_CHUNK_SIZE);
 
     LOG(DCOPY_LOG_DBG, "File `%s' size is `%" PRIu64 \
         "' with chunks `%" PRIu32 "' (total `%" PRIu64 "').", \
         op->operand, file_size, num_chunks, \
-        (uint64_t)num_chunks * (uint64_t)DCOPY_CHUNK_SIZE);
+        ((int64_t)num_chunks * (int64_t)DCOPY_CHUNK_SIZE));
 
     /* Encode and enqueue each chunk of the file for processing later. */
     for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
         char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, \
                                              op->source_base_offset, \
-                                             op->dest_base_appendix, (uint64_t)file_size);
+                                             op->dest_base_appendix, (int64_t)file_size);
         handle->enqueue(newop);
         free(newop);
     }
 
     /* Encode and enqueue the last partial chunk. */
-    if(((uint64_t)num_chunks * (uint64_t)DCOPY_CHUNK_SIZE) < (uint64_t)file_size || num_chunks == 0) {
+    if(((int64_t)num_chunks * (int64_t)DCOPY_CHUNK_SIZE) < file_size || num_chunks == 0) {
         char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, \
                                              op->source_base_offset, \
-                                             op->dest_base_appendix, (uint64_t)file_size);
+                                             op->dest_base_appendix, file_size);
         handle->enqueue(newop);
         free(newop);
     }

@@ -58,16 +58,16 @@ void DCOPY_retry_failed_operation(DCOPY_operation_code_t target, \
  * Encode an operation code for use on the distributed queue structure.
  */
 char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
-                             uint32_t chunk, \
+                             int32_t chunk, \
                              char* operand, \
                              uint16_t source_base_offset, \
                              char* dest_base_appendix, \
-                             uint64_t file_size)
+                             int64_t file_size)
 {
     char* op = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
     int op_size = 0;
 
-    op_size += sprintf(op, "%" PRIu64 ":%" PRIu32 ":%" PRIu16 ":%d:%s", \
+    op_size += sprintf(op, "%" PRIi64 ":%" PRIi32 ":%" PRIu16 ":%d:%s", \
                        file_size, chunk, source_base_offset, code, operand);
 
     if(dest_base_appendix) {
@@ -97,12 +97,12 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
 {
     DCOPY_operation_t* ret = (DCOPY_operation_t*) malloc(sizeof(DCOPY_operation_t));
 
-    if(sscanf(strtok(op, ":"), "%" SCNu64, &(ret->file_size)) != 1) {
+    if(sscanf(strtok(op, ":"), "%" SCNi64, &(ret->file_size)) != 1) {
         LOG(DCOPY_LOG_ERR, "Could not decode file size attribute.");
         exit(EXIT_FAILURE);
     }
 
-    if(sscanf(strtok(NULL, ":"), "%" SCNu32, &(ret->chunk)) != 1) {
+    if(sscanf(strtok(NULL, ":"), "%" SCNi32, &(ret->chunk)) != 1) {
         LOG(DCOPY_LOG_ERR, "Could not decode chunk index attribute.");
         exit(EXIT_FAILURE);
     }

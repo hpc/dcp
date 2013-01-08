@@ -83,7 +83,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     size_t num_of_bytes_read = 0;
     ssize_t num_of_bytes_written = 0;
 
-    if(fseeko64(in_ptr, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
+    if(fseeko64(in_ptr, (int64_t)DCOPY_CHUNK_SIZE * (int64_t)op->chunk, SEEK_SET) != 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
             op->operand, strerror(errno));
 
@@ -112,7 +112,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         (uint64_t)DCOPY_CHUNK_SIZE * (uint64_t)op->chunk);
 */
 
-    if(lseek64(out_fd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) < 0) {
+    if(lseek64(out_fd, (int64_t)DCOPY_CHUNK_SIZE * (int64_t)op->chunk, SEEK_SET) < 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path (source is `%s'). %s", \
             op->operand, strerror(errno));
 
@@ -136,7 +136,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     DCOPY_statistics.total_bytes_copied += (uint64_t) num_of_bytes_written;
 
     LOG(DCOPY_LOG_DBG, "Wrote %zu bytes at offset `%zu' (%zu total).", \
-        num_of_bytes_written, (uint64_t)DCOPY_CHUNK_SIZE * (uint64_t)op->chunk, \
+        num_of_bytes_written, (int64_t)DCOPY_CHUNK_SIZE * (int64_t)op->chunk, \
         DCOPY_statistics.total_bytes_copied);
 
     free(io_buf);

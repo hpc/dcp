@@ -65,10 +65,10 @@ int DCOPY_perform_compare(DCOPY_operation_t* op, \
     size_t num_of_in_bytes = 0;
     size_t num_of_out_bytes = 0;
 
-    void* src_buf = (void*) malloc(DCOPY_CHUNK_SIZE);
-    void* dest_buf = (void*) malloc(DCOPY_CHUNK_SIZE);
+    void* src_buf = (void*) malloc(sizeof(char) * DCOPY_CHUNK_SIZE);
+    void* dest_buf = (void*) malloc(sizeof(char) * DCOPY_CHUNK_SIZE);
 
-    fseeko64(in_ptr, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
+    fseeko64(in_ptr, (int64_t)DCOPY_CHUNK_SIZE * (int64_t)op->chunk, SEEK_SET);
     fseeko64(out_ptr, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
 
     num_of_in_bytes = fread(src_buf, 1, DCOPY_CHUNK_SIZE, in_ptr);
