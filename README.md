@@ -1,9 +1,6 @@
 # dcp
 ##### A tool to copy file(s) in parallel on a distributed system.
 
-### IN-DEVELOPMENT WARNING
-Note that dcp is in an early stage of development. To determine the current state of dcp, please view the test results at the bottom of the latest build output on <https://travis-ci.org/hpc/dcp>.
-
 ### SYNOPSIS
 ```
 dcp [cCdfhpRrUv] [--] source_file target_file
@@ -63,9 +60,8 @@ Please note that (by default) dcp is designed for copying files up to 16 petabyt
 ### Known bugs
 When the force option is specified and truncation fails, the copy and truncation will be stuck in an infinite loop until the truncation operation returns with success.
 
-### RPM CREATION
-To create a dcp rpm, simply follow these steps. Replace *version* and
-*release* with the appropriate values.
+### RPM Creation
+First, check the status of the test suite at <https://travis-ci.org/hpc/dcp>. If all tests are passing, create an rpm using the following instructions. Replace *version* and *release* with the appropriate values.
 
 ```
 git clone https://github.com/hpc/dcp.git dcp-<version>-<release>
