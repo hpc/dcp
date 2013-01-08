@@ -136,8 +136,8 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     /* Increment the global counter. */
     DCOPY_statistics.total_bytes_copied += num_of_bytes_written;
 
-    LOG(DCOPY_LOG_DBG, "Wrote `%zu' bytes at offset `%" PRId64 "' (`%" PRId64 "' total).", \
-        num_of_bytes_written, (int64_t)DCOPY_CHUNK_SIZE * (int64_t)op->chunk, \
+    LOG(DCOPY_LOG_DBG, "Wrote `%zu' bytes at segment `%" PRId64 "', offset `%" PRId64 "' (`%" PRId64 "' total).", \
+        num_of_bytes_written, op->chunk, DCOPY_CHUNK_SIZE * op->chunk, \
         DCOPY_statistics.total_bytes_copied);
 
     free(io_buf);
