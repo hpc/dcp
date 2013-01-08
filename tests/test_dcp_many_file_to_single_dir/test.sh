@@ -16,7 +16,7 @@
 ##############################################################################
 
 # Turn on verbose output
-set -x
+#set -x
 
 # Print out the basic paths we'll be using.
 echo "Using dcp binary at: $DCP_TEST_BIN"
