@@ -108,7 +108,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         (uint64_t)DCOPY_CHUNK_SIZE * (uint64_t)op->chunk);
 */
 
-    if(lseek64(out_fd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) < 0) {
+    if(lseek64(out_fd, (off64_t)((uint64_t)DCOPY_CHUNK_SIZE * (uint64_t)op->chunk), SEEK_SET) < 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path (source is `%s'). %s", \
             op->operand, strerror(errno));
 
