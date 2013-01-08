@@ -78,20 +78,21 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
                        FILE* in_ptr, \
                        int out_fd)
 {
-    char io_buf[DCOPY_CHUNK_SIZE];
+    char* io_buf = (char*) malloc(sizeof(char) * DCOPY_CHUNK_SIZE);
 
     size_t num_of_bytes_read = 0;
     ssize_t num_of_bytes_written = 0;
 
-    if(fseeko64(in_ptr, (off64_t)((uint64_t)DCOPY_CHUNK_SIZE * (uint64_t)op->chunk), SEEK_SET) != 0) {
+    if(fseeko64(in_ptr, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
             op->operand, strerror(errno));
 
+        free(io_buf);
         /* Handle operation requeue in parent function. */
         return -1;
     }
 
-    num_of_bytes_read = fread((void*)io_buf, 1, DCOPY_CHUNK_SIZE, in_ptr);
+    num_of_bytes_read = fread(io_buf, 1, DCOPY_CHUNK_SIZE, in_ptr);
 
     LOG(DCOPY_LOG_DBG, "Number of bytes read is `%zu'.", num_of_bytes_read);
 
@@ -99,6 +100,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         LOG(DCOPY_LOG_ERR, "Couldn't read from source path `%s'. %s", \
             op->operand, strerror(errno));
 
+        free(io_buf);
         /* Handle operation requeue in parent function. */
         return -1;
     }
@@ -108,10 +110,11 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         (uint64_t)DCOPY_CHUNK_SIZE * (uint64_t)op->chunk);
 */
 
-    if(lseek64(out_fd, (off64_t)((uint64_t)DCOPY_CHUNK_SIZE * (uint64_t)op->chunk), SEEK_SET) < 0) {
+    if(lseek64(out_fd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) < 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path (source is `%s'). %s", \
             op->operand, strerror(errno));
 
+        free(io_buf);
         /* Handle operation requeue in parent function. */
         return -1;
     }
@@ -122,6 +125,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. %s", \
             op->operand, strerror(errno));
 
+        free(io_buf);
         /* Handle operation requeue in parent function. */
         return -1;
     }
@@ -133,6 +137,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         num_of_bytes_written, (uint64_t)DCOPY_CHUNK_SIZE * (uint64_t)op->chunk, \
         DCOPY_statistics.total_bytes_copied);
 
+    free(io_buf);
     return 1;
 }
 
