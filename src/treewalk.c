@@ -95,25 +95,25 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, \
                              int64_t file_size, \
                              CIRCLE_handle* handle)
 {
-    int32_t chunk_index;
-    int32_t num_chunks = (int32_t)(file_size / (int64_t)DCOPY_CHUNK_SIZE);
+    int64_t chunk_index;
+    int64_t num_chunks = file_size / DCOPY_CHUNK_SIZE;
 
     LOG(DCOPY_LOG_DBG, "File `%s' size is `%" PRId64 \
-        "' with chunks `%" PRId32 "' (total `%" PRId64 "').", \
+        "' with chunks `%" PRId64 "' (total `%" PRId64 "').", \
         op->operand, file_size, num_chunks, \
-        ((int64_t)num_chunks * (int64_t)DCOPY_CHUNK_SIZE));
+        num_chunks * DCOPY_CHUNK_SIZE);
 
     /* Encode and enqueue each chunk of the file for processing later. */
     for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
         char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, \
                                              op->source_base_offset, \
-                                             op->dest_base_appendix, (int64_t)file_size);
+                                             op->dest_base_appendix, file_size);
         handle->enqueue(newop);
         free(newop);
     }
 
     /* Encode and enqueue the last partial chunk. */
-    if(((int64_t)num_chunks * (int64_t)DCOPY_CHUNK_SIZE) < file_size || num_chunks == 0) {
+    if((num_chunks * DCOPY_CHUNK_SIZE) < file_size || num_chunks == 0) {
         char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, \
                                              op->source_base_offset, \
                                              op->dest_base_appendix, file_size);

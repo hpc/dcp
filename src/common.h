@@ -42,7 +42,7 @@
  * This is the size of each chunk to be processed (in bytes). In 2012, most
  * of our filesystems are using 4MB block sizes (4194304 bytes).
  */
-#define DCOPY_CHUNK_SIZE ((int32_t)(4194304))
+#define DCOPY_CHUNK_SIZE ((int64_t)(4194304))
 
 #ifndef PATH_MAX
 #define PATH_MAX (4096)
@@ -60,15 +60,14 @@ typedef enum {
 
 typedef struct {
     /*
-     * The max file size is 8EB.
+     * The total file size.
      */
     int64_t file_size;
 
     /*
-     * Assuming a 4MB chunk size, the maximum size of a chunked file is 8PB.
-     * This is limited by counting chunks in int32_t (2^31 * 4MB).
+     * The chunk number this operation is associated with.
      */
-    int32_t chunk;
+    int64_t chunk;
 
     /*
      * This offset represents the index into the operand path that gives the
@@ -114,7 +113,7 @@ typedef struct {
 DCOPY_operation_t* DCOPY_decode_operation(char* op);
 
 char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
-                             int32_t chunk, \
+                             int64_t chunk, \
                              char* operand, \
                              uint16_t source_base_offset, \
                              char* dest_base_appendix, \

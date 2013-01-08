@@ -58,7 +58,7 @@ void DCOPY_retry_failed_operation(DCOPY_operation_code_t target, \
  * Encode an operation code for use on the distributed queue structure.
  */
 char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
-                             int32_t chunk, \
+                             int64_t chunk, \
                              char* operand, \
                              uint16_t source_base_offset, \
                              char* dest_base_appendix, \
@@ -67,7 +67,7 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
     char* op = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
     int op_size = 0;
 
-    op_size += sprintf(op, "%" PRIi64 ":%" PRIi32 ":%" PRIu16 ":%d:%s", \
+    op_size += sprintf(op, "%" PRIi64 ":%" PRIi64 ":%" PRIu16 ":%d:%s", \
                        file_size, chunk, source_base_offset, code, operand);
 
     if(dest_base_appendix) {
@@ -102,7 +102,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
         exit(EXIT_FAILURE);
     }
 
-    if(sscanf(strtok(NULL, ":"), "%" SCNi32, &(ret->chunk)) != 1) {
+    if(sscanf(strtok(NULL, ":"), "%" SCNi64, &(ret->chunk)) != 1) {
         LOG(DCOPY_LOG_ERR, "Could not decode chunk index attribute.");
         exit(EXIT_FAILURE);
     }
