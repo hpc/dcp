@@ -39,10 +39,10 @@
 #include <unistd.h>
 
 /*
- * This is the size of each chunk to be processed (in bytes). In 2012, most
- * of our filesystems are using 4MB block sizes (4194304 bytes).
+ * This is the size of each chunk to be processed (in bytes).
  */
-#define DCOPY_CHUNK_SIZE ((int64_t)(4194304))
+#define DCOPY_CHUNK_SIZE ((int64_t)(33554432)) /* 32MB chunk */
+/* #define DCOPY_CHUNK_SIZE ((int64_t)(4194304)) 4MB chunk */
 
 #ifndef PATH_MAX
 #define PATH_MAX (4096)
