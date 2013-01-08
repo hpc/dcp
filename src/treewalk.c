@@ -78,7 +78,7 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, \
     }
     else if(S_ISREG(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
         /* LOG(DCOPY_LOG_DBG, "Stat operation found a file at `%s'.", op->operand); */
-        DCOPY_stat_process_file(op, (uint64_t)statbuf.st_size, handle);
+        DCOPY_stat_process_file(op, statbuf.st_size, handle);
     }
     else {
         LOG(DCOPY_LOG_DBG, "Encountered an unsupported file type at `%s'.", op->operand);
@@ -92,30 +92,31 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, \
  * onto the libcircle queue for future processing by the copy stage.
  */
 void DCOPY_stat_process_file(DCOPY_operation_t* op, \
-                             uint64_t file_size, \
+                             off64_t file_size, \
                              CIRCLE_handle* handle)
 {
     uint32_t chunk_index;
-    uint32_t num_chunks = (uint32_t)(file_size / DCOPY_CHUNK_SIZE);
+    uint32_t num_chunks = (uint32_t)((uint64_t)file_size / (uint64_t)DCOPY_CHUNK_SIZE);
 
     LOG(DCOPY_LOG_DBG, "File `%s' size is `%" PRIu64 \
-        "' with chunks `%" PRIu32 "' (total `%" PRIu32 "').", \
-        op->operand, file_size, num_chunks, num_chunks * DCOPY_CHUNK_SIZE);
+        "' with chunks `%" PRIu32 "' (total `%" PRIu64 "').", \
+        op->operand, file_size, num_chunks, \
+        (uint64_t)num_chunks * (uint64_t)DCOPY_CHUNK_SIZE);
 
     /* Encode and enqueue each chunk of the file for processing later. */
     for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
         char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, \
                                              op->source_base_offset, \
-                                             op->dest_base_appendix, file_size);
+                                             op->dest_base_appendix, (uint64_t)file_size);
         handle->enqueue(newop);
         free(newop);
     }
 
     /* Encode and enqueue the last partial chunk. */
-    if(num_chunks * DCOPY_CHUNK_SIZE < file_size || num_chunks == 0) {
+    if(((uint64_t)num_chunks * (uint64_t)DCOPY_CHUNK_SIZE) < (uint64_t)file_size || num_chunks == 0) {
         char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, \
                                              op->source_base_offset, \
-                                             op->dest_base_appendix, file_size);
+                                             op->dest_base_appendix, (uint64_t)file_size);
         handle->enqueue(newop);
         free(newop);
     }

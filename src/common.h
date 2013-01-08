@@ -36,7 +36,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <unistd.h>
 
 /*
@@ -111,7 +110,6 @@ typedef struct {
     bool   recursive;
     bool   recursive_unspecified;
     bool   reliable_filesystem;
-    struct stat dest_stat;
 } DCOPY_options_t;
 
 DCOPY_operation_t* DCOPY_decode_operation(char* op);
