@@ -101,8 +101,8 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         return -1;
     }
 
-    LOG(DCOPY_LOG_DBG, "Read `%zu' bytes at offset `%d'.", num_of_bytes_read, \
-        DCOPY_CHUNK_SIZE * op->chunk);
+    LOG(DCOPY_LOG_DBG, "Read `%zu' bytes at offset `%zu'.", num_of_bytes_read, \
+        (uint64_t)DCOPY_CHUNK_SIZE * (uint64_t)op->chunk);
 
     if(lseek64(out_fd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) < 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path (source is `%s'). %s", \

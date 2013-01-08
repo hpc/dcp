@@ -216,7 +216,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CFLAGS = -std=gnu99 -ggdb -W -pedantic -Wall -Wextra -Wformat=2 -Winit-self -Wmissing-include-dirs -Wswitch-default -Wswitch-enum -Wuninitialized -Wunknown-pragmas -Wstrict-aliasing -Wfloat-equal -Wundef -Wunsafe-loop-optimizations -Wbad-function-cast -Wcast-qual -Wcast-align -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wnormalized=nfc -Wredundant-decls -Winline -Wdisabled-optimization -Wshadow -Wwrite-strings
+AM_CFLAGS = -std=gnu99 -ftrapv -ggdb -W -pedantic -Wall -Wextra -Wformat=2 -Winit-self -Wmissing-include-dirs -Wswitch-default -Wswitch-enum -Wuninitialized -Wunknown-pragmas -Wstrict-aliasing -Wfloat-equal -Wundef -Wunsafe-loop-optimizations -Wbad-function-cast -Wcast-qual -Wcast-align -Wconversion -Wstrict-prototypes -Wmissing-prototypes -Wnormalized=nfc -Wredundant-decls -Winline -Wdisabled-optimization -Wshadow -Wwrite-strings
 dcp_SOURCES = common.c handle_args.c treewalk.c copy.c cleanup.c compare.c dcp.c
 dcp_LDADD = \
     $(libcircle_LIBS) \
