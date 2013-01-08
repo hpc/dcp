@@ -32,9 +32,9 @@ extern DCOPY_options_t DCOPY_user_opts;
  */
 bool DCOPY_is_directory(char* path)
 {
-    struct stat statbuf;
+    struct stat64 statbuf;
 
-    if(lstat(path, &statbuf) < 0) {
+    if(lstat64(path, &statbuf) < 0) {
         LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a directory. %s", path, strerror(errno));
         return false;
     }
@@ -47,9 +47,9 @@ bool DCOPY_is_directory(char* path)
  */
 bool DCOPY_is_regular_file(char* path)
 {
-    struct stat statbuf;
+    struct stat64 statbuf;
 
-    if(lstat(path, &statbuf) < 0) {
+    if(lstat64(path, &statbuf) < 0) {
         LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a file. %s", path, strerror(errno));
         return false;
     }
@@ -64,9 +64,9 @@ bool DCOPY_is_regular_file(char* path)
 void DCOPY_do_treewalk(DCOPY_operation_t* op, \
                        CIRCLE_handle* handle)
 {
-    struct stat statbuf;
+    struct stat64 statbuf;
 
-    if(lstat(op->operand, &statbuf) < 0) {
+    if(lstat64(op->operand, &statbuf) < 0) {
         LOG(DCOPY_LOG_DBG, "Could not get info for `%s'. %s", op->operand, strerror(errno));
         DCOPY_retry_failed_operation(TREEWALK, handle, op);
         return;

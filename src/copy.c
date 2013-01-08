@@ -10,7 +10,6 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -84,7 +83,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     size_t num_of_bytes_read = 0;
     ssize_t num_of_bytes_written = 0;
 
-    if(fseek(in_ptr, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
+    if(fseeko(in_ptr, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) != 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
             op->operand, strerror(errno));
 
@@ -105,7 +104,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     LOG(DCOPY_LOG_DBG, "Read `%zu' bytes at offset `%d'.", num_of_bytes_read, \
         DCOPY_CHUNK_SIZE * op->chunk);
 
-    if(lseek(out_fd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) < 0) {
+    if(lseek64(out_fd, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET) < 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path (source is `%s'). %s", \
             op->operand, strerror(errno));
 

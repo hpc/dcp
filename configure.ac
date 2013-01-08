@@ -1,4 +1,4 @@
-AC_INIT([dcp],[0.0.1],[github-hpc@lanl.gov],[dcp],[http://github.com/hpc/dcp])
+AC_INIT([dcp],[0.0.2],[github-hpc@lanl.gov],[dcp],[http://github.com/hpc/dcp])
 
 # Keep artifacts in directories as much as possible.
 AC_CONFIG_AUX_DIR(auxdir)
@@ -46,7 +46,7 @@ AC_TYPE_UINT64_T
 
 # Check for largefile support.
 AC_SYS_LARGEFILE
-
+AC_FUNC_FSEEKO
 AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([memset realpath strerror])

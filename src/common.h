@@ -10,8 +10,21 @@
 #include "log.h"
 
 /* Make sure we're using 64 bit file handling. */
+#ifdef _FILE_OFFSET_BITS
+#undef _FILE_OFFSET_BITS
+#define _FILE_OFFSET_BITS 64
+#endif
+
 #ifndef _LARGEFILE64_SOURCE
 #define _LARGEFILE64_SOURCE 1
+#endif
+
+#ifndef __USE_LARGEFILE64
+#define __USE_LARGEFILE64
+#endif
+
+#ifndef _LARGEFILE_SOURCE
+#define _LARGEFILE_SOURCE
 #endif
 
 /* Enable posix extensions (popen). */
