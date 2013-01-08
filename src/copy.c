@@ -141,9 +141,21 @@ void DCOPY_enqueue_cleanup_stage(DCOPY_operation_t* op, \
 {
     char* newop;
 
-    newop = DCOPY_encode_operation(CLEANUP, op->chunk, op->operand, \
-                                   op->source_base_offset, \
-                                   op->dest_base_appendix, op->file_size);
+    /*
+     * If this isn't chunk 0, skip the cleanup stage and go directly to the
+     * compare stage.
+     */
+    if(op->chunk == 0) {
+        newop = DCOPY_encode_operation(CLEANUP, op->chunk, op->operand, \
+                                       op->source_base_offset, \
+                                       op->dest_base_appendix, op->file_size);
+    }
+    else {
+        newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, \
+                                       op->source_base_offset, \
+                                       op->dest_base_appendix, op->file_size);
+    }
+
     handle->enqueue(newop);
     free(newop);
 }
