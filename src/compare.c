@@ -95,8 +95,10 @@ int DCOPY_perform_compare(DCOPY_operation_t* op, \
         return -1;
     }
     else {
+/*
         LOG(DCOPY_LOG_DBG, "File `%s' (chunk `%d') compare successful.", \
             op->operand, op->chunk);
+*/
 
         free(src_buf);
         free(dest_buf);

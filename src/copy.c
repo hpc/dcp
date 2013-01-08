@@ -94,7 +94,9 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
 
     num_of_bytes_read = fread(io_buf, 1, DCOPY_CHUNK_SIZE, in_ptr);
 
+/*
     LOG(DCOPY_LOG_DBG, "Number of bytes read is `%zu'.", num_of_bytes_read);
+*/
 
     if(num_of_bytes_read <= 0 && op->file_size > 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't read from source path `%s'. %s", \
