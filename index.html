@@ -1,0 +1,107 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>DCP - Distributed File Copy by hpc</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>DCP - Distributed File Copy</h1>
+        <p>A file copy program that evenly distributes work across a large cluster without centralized state.</p>
+
+        <p class="view"><a href="https://github.com/hpc/dcp">View the Project on GitHub <small>hpc/dcp</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/hpc/dcp/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/hpc/dcp/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/hpc/dcp">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h3>DESCRIPTION</h3>
+
+<p>dcp is a file copy tool in the spirit of <em>cp(1)</em> that evenly distributes work across a large cluster without any centralized state. It is designed for copying files which are located on a distributed parallel file system. The method used in the file copy process is a self-stabilization algorithm which enables per-node autonomous processing and a token passing scheme to detect termination.</p>
+
+<h3>SYNOPSIS</h3>
+
+<pre><code>dcp [cCdfhpRrUv] [--] source_file target_file
+dcp [cCdfhpRrUv] [--] source_file ... target_directory
+</code></pre>
+
+<h3>PREREQUISITES</h3>
+
+<p>An MPI environment is required (such as <a href="http://www.open-mpi.org/">Open MPI</a>'s <em>mpirun(1)</em>) as well as the self-stabilization library known as <a href="https://github.com/hpc/libcircle">LibCircle</a>.</p>
+
+<h3>OPTIONS</h3>
+
+<p><strong>-c</strong>, <strong>--conditional</strong></p>
+
+<p>When copying a source directory to a destination directory, copy the source directory over the destination directory. The default behavior is to copy the source directory inside the destination directory.</p>
+
+<p><strong>-C</strong>, <strong>--skip-compare</strong></p>
+
+<p>Skip the compare operation to confirm file integrity. When using this option, a file integrity check, such as md5sum, should be performed after the file(s) have been copied.</p>
+
+<p><strong>-d </strong>, <strong>--debug=level</strong></p>
+
+<p>Specify the level of debug information to output. Level may be one of: <em>fatal</em>, <em>err</em>, <em>warn</em>, <em>info</em>, or <em>dbg</em>. Increasingly verbose debug levels include the output of less verbose debug levels.</p>
+
+<p><strong>-f</strong>, <strong>--force</strong></p>
+
+<p>Remove existing destination files if creation or truncation fails. If the destination filesystem is specified to be unreliable (-U, --unreliable-filesystem), this option may lower performance since each failure will cause the entire file to be invalidated and copied again.</p>
+
+<p><strong>-h</strong>, <strong>--help</strong></p>
+
+<p>Print a brief message listing the <em>dcp(1)</em> options and usage.</p>
+
+<p><strong>-p</strong>, <strong>--preserve</strong></p>
+
+<p>Preserve the original files' owner, group, permissions (including the setuid and setgid bits), time of last  modification and time of last access. In case duplication of owner or group fails, the setuid and setgid bits are cleared.</p>
+
+<p><strong>-R</strong>, <strong>--recursive</strong></p>
+
+<p>Copy directories recursively, and do the right thing when objects other than ordinary files or directories are encountered.</p>
+
+<p><strong>-r</strong>, <strong>--recursive-unspecified</strong></p>
+
+<p>Copy directories recursively, and ignore objects other than ordinary files or directories.</p>
+
+<p><strong>-U</strong>, <strong>--unreliable-filesystem</strong></p>
+
+<p>If the filesystem is very unreliable, this option may be used to always retry an operation when a failure occurs. If failures are permanent, this option will cause an infinite loop. Specifying this option when force is enabled (-f, --force) may lower performance.</p>
+
+<p><strong>-v</strong>, <strong>--version</strong></p>
+
+<p>Print version information and exit.</p>
+
+<h3>File size limit notes</h3>
+
+<p>Please note that (by default) dcp is designed for copying files up to 16 petabytes in size. If operations are required on larger files, dcp.h must be modified -- for example, increasing the block size to 64 megabytes will allow for files up to 256 petabytes in size. Without moving to a 128 bit address space, the maximum theoretical file size dcp can copy is 8 exabytes (due to the signed nature of off64_t).</p>
+
+<h3>Contributions</h3>
+
+<p>Please view the <a href="https://github.com/hpc/dcp/blob/master/HACKING.md">HACKING</a> file for more information on how to contribute to dcp.</p>
+
+<h3>COPYING</h3>
+
+<p>See the included <a href="https://github.com/hpc/dcp/blob/master/COPYING">COPYING</a> file for additional information. </p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/hpc">hpc</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
