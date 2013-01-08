@@ -3,12 +3,6 @@
 #ifndef __COMMON_H_
 #define __COMMON_H_
 
-/* Autotool defines. */
-#include "../config.h"
-
-/* Common logging. */
-#include "log.h"
-
 /* Make sure we're using 64 bit file handling. */
 #ifdef _FILE_OFFSET_BITS
 #undef _FILE_OFFSET_BITS
@@ -31,6 +25,12 @@
 #ifndef _BSD_SOURCE
 #define _BSD_SOURCE 1
 #endif
+
+/* Autotool defines. */
+#include "../config.h"
+
+/* Common logging. */
+#include "log.h"
 
 #include <libcircle.h>
 #include <stdbool.h>

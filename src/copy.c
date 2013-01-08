@@ -83,7 +83,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     size_t num_of_bytes_read = 0;
     ssize_t num_of_bytes_written = 0;
 
-    if(fseeko(in_ptr, (off64_t)((uint64_t)DCOPY_CHUNK_SIZE * (uint64_t)op->chunk), SEEK_SET) != 0) {
+    if(fseeko64(in_ptr, (off64_t)((uint64_t)DCOPY_CHUNK_SIZE * (uint64_t)op->chunk), SEEK_SET) != 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
             op->operand, strerror(errno));
 
