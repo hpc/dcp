@@ -202,7 +202,7 @@ void DCOPY_unlink_destination(DCOPY_operation_t* op)
 /* Open the input file. */
 FILE* DCOPY_open_input_stream(DCOPY_operation_t* op)
 {
-    FILE* in_ptr = fopen(op->operand, "rb");
+    FILE* in_ptr = fopen64(op->operand, "rb");
 
     if(in_ptr == NULL) {
         LOG(DCOPY_LOG_DBG, "Failed to open input file `%s'. %s", \
@@ -253,7 +253,7 @@ FILE* DCOPY_open_output_stream(DCOPY_operation_t* op)
      * If we're recursive, we'll be doing this again and again, so try
      * recursive first. If it fails, then do the file-to-file.
      */
-    if((out_ptr = fopen(dest_path_recursive, "rb")) == NULL) {
+    if((out_ptr = fopen64(dest_path_recursive, "rb")) == NULL) {
 
 /*
         LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
@@ -261,7 +261,7 @@ FILE* DCOPY_open_output_stream(DCOPY_operation_t* op)
             dest_path_file_to_file);
 */
 
-        out_ptr = fopen(dest_path_file_to_file, "rb");
+        out_ptr = fopen64(dest_path_file_to_file, "rb");
     }
 
     if(out_ptr == NULL) {
@@ -315,14 +315,14 @@ int DCOPY_open_output_fd(DCOPY_operation_t* op)
      * If we're recursive, we'll be doing this again and again, so try
      * recursive first. If it fails, then do the file-to-file.
      */
-    if((out_fd = open(dest_path_recursive, O_RDWR | O_CREAT, S_IRWXU)) < 0) {
+    if((out_fd = open64(dest_path_recursive, O_RDWR | O_CREAT, S_IRWXU)) < 0) {
 /*
         LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
             "(file-to-file fallback).", \
             dest_path_file_to_file);
 */
 
-        out_fd = open(dest_path_file_to_file, O_RDWR | O_CREAT, S_IRWXU);
+        out_fd = open64(dest_path_file_to_file, O_RDWR | O_CREAT, S_IRWXU);
     }
 
     if(out_fd < 0) {
