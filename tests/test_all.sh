@@ -10,7 +10,7 @@
 DEBUG=1
 
 # A temporary directory that all tests can use for scratch files.
-TEST_TMP_DIR=/tmp
+TEST_TMP_DIR=../tmp
 
 # The dcp binary path to use. This must be relative to the test_all.sh script.
 TEST_DCP_BIN=../src/dcp
@@ -34,6 +34,9 @@ shopt -s nullglob
 
 # Make sure we're in the same directory as the tests.
 pushd $TESTS_DIR > /dev/null
+
+# Make a temp dir for tests.
+mkdir $TEST_TMP_DIR
 
 echo "# =============================================================================="
 echo "# Running ALL tests for DCP."
