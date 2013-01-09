@@ -1,4 +1,4 @@
-AC_INIT([dcp],[0.0.2],[github-hpc@lanl.gov],[dcp],[http://github.com/hpc/dcp])
+AC_INIT([dcp],[0.0.3],[github-hpc@lanl.gov],[dcp],[http://github.com/hpc/dcp])
 
 # Keep artifacts in directories as much as possible.
 AC_CONFIG_AUX_DIR(auxdir)
