@@ -12,6 +12,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
@@ -45,7 +46,7 @@ void DCOPY_epilogue(void)
     LOG(DCOPY_LOG_INFO, "Filecopy run completed at `%s'.", endtime_str);
 
     LOG(DCOPY_LOG_INFO, "Transfer rate is `%.0lf' bytes per second " \
-        "(`%.3ld' bytes in `%.3lf' seconds).", \
+        "(`%.3" PRId64 "' bytes in `%.3lf' seconds).", \
         rate, DCOPY_statistics.total_bytes_copied, rel_time);
 }
 
