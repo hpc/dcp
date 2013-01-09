@@ -573,7 +573,7 @@ PACKAGE_TARNAME='dcp'
 PACKAGE_VERSION='0.0.3'
 PACKAGE_STRING='dcp 0.0.3'
 PACKAGE_BUGREPORT='github-hpc@lanl.gov'
-PACKAGE_URL='http://github.com/hpc/dcp'
+PACKAGE_URL='http://filecopy.org'
 
 # Factoring default headers for most tests.
 ac_includes_default="\
@@ -1442,7 +1442,7 @@ Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
 
 Report bugs to <github-hpc@lanl.gov>.
-dcp home page: <http://github.com/hpc/dcp>.
+dcp home page: <http://filecopy.org>.
 _ACEOF
 ac_status=$?
 fi
@@ -6028,7 +6028,7 @@ Configuration commands:
 $config_commands
 
 Report bugs to <github-hpc@lanl.gov>.
-dcp home page: <http://github.com/hpc/dcp>."
+dcp home page: <http://filecopy.org>."
 
 _ACEOF
 cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
@@ -19005,7 +19005,7 @@ Configuration commands:
 $config_commands
 
 Report bugs to <github-hpc@lanl.gov>.
-dcp home page: <http://github.com/hpc/dcp>."
+dcp home page: <http://filecopy.org>."
 
 _ACEOF
 cat >>$CONFIG_STATUS <<_ACEOF || ac_write_fail=1
