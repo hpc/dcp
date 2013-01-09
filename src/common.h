@@ -26,6 +26,11 @@
 #define _BSD_SOURCE 1
 #endif
 
+/* For O_NOATIME support */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 /* Autotool defines. */
 #include "../config.h"
 
