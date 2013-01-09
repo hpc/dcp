@@ -1,11 +1,11 @@
 Name: dcp
-Version: 0.1
-Release: 1
+Version: 0.0.3
+Release: 0
 Summary: distributed file copy tool
 License: LANL LA-CC
 Group: System Environment/Base
-Source: %{name}-%{version}-%{release}.tgz
-BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}
+Source: %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}
 URL: http://github.com/hpc/dcp
 Requires: libcircle
 
@@ -20,7 +20,7 @@ without centralized state.
 ###############################################################################
 
 %prep
-%setup -n %{name}-%{version}-%{release}
+%setup -n %{name}-%{version}
 
 %build
 %configure --program-prefix=%{?_program_prefix:%{_program_prefix}}
