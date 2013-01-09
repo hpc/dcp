@@ -61,7 +61,7 @@ Please note that (by default) dcp is designed for copying files up to 16 petabyt
 When the force option is specified and truncation fails, the copy and truncation will be stuck in an infinite loop until the truncation operation returns with success.
 
 ### RPM Creation
-First, check the status of the test suite at <https://travis-ci.org/hpc/dcp>. If all tests are passing, create an rpm using the following instructions. Replace *version* and *release* with the appropriate values.
+First, check the [![Build Status](https://travis-ci.org/hpc/dcp.png?branch=master)](https://travis-ci.org/hpc/dcp). If all tests are passing, create an rpm using the following instructions. Replace *version* and *release* with the appropriate values.
 
 ```
 git clone https://github.com/hpc/dcp.git dcp-<version>-<release>
