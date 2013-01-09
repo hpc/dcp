@@ -125,7 +125,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
 
 /**
  * The initial seeding callback for items to process on the distributed queue
- * structure. We all all of our source items to the queue here.
+ * structure. We send all of our source items to the queue here.
  */
 void DCOPY_add_objects(CIRCLE_handle* handle)
 {
@@ -137,7 +137,7 @@ void DCOPY_add_objects(CIRCLE_handle* handle)
  */
 void DCOPY_process_objects(CIRCLE_handle* handle)
 {
-    char op[2048];
+    char op[CIRCLE_MAX_STRING_LEN];
 /*
     const char* DCOPY_op_string_table[] = {
         "TREEWALK",
