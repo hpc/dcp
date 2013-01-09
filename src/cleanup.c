@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <inttypes.h>
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
@@ -54,7 +55,7 @@ void DCOPY_truncate_file(DCOPY_operation_t* op, \
                 op->dest_base_appendix);
     }
 
-    LOG(DCOPY_LOG_DBG, "Truncating file to `%zu'.", op->file_size);
+    LOG(DCOPY_LOG_DBG, "Truncating file to `%" PRId64 "'.", op->file_size);
 
     /*
      * Try the recursive file before file-to-file. The cast below requires us
