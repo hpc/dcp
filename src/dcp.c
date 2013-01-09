@@ -20,7 +20,13 @@ extern DCOPY_options_t DCOPY_user_opts;
 /** Statistics to gather for summary output. */
 extern DCOPY_statistics_t DCOPY_statistics;
 
-/** A table of function pointers used for core operation. */
+/*
+ * A table of function pointers used for core operation. These functions
+ * perform each stage of the file copy operation: "treewalk", "copy",
+ * "cleanup", and "compare". File operations are usually passed through
+ * all stages in a linear fashion unless a failure occurs. If a failure
+ * occurs, the operation may be passed to a previous stage.
+ */
 extern void (*DCOPY_jump_table[5])(DCOPY_operation_t* op, \
                                    CIRCLE_handle* handle);
 
