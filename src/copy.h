@@ -9,7 +9,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
                    CIRCLE_handle* handle);
 
 int DCOPY_perform_copy(DCOPY_operation_t* op, \
-                       FILE* in_ptr, \
+                       int in_fd, \
                        int out_fd);
 
 void DCOPY_enqueue_cleanup_stage(DCOPY_operation_t* op, \

@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <inttypes.h>
+#include <sys/sendfile.h>
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
@@ -24,9 +25,9 @@ extern DCOPY_statistics_t DCOPY_statistics;
 void DCOPY_do_copy(DCOPY_operation_t* op, \
                    CIRCLE_handle* handle)
 {
-    FILE* in_ptr = DCOPY_open_input_stream(op);
+    int in_fd = DCOPY_open_input_fd(op);
 
-    if(in_ptr == NULL) {
+    if(in_fd < 0) {
         DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
@@ -53,12 +54,12 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
         }
     }
 
-    if(DCOPY_perform_copy(op, in_ptr, out_fd) < 0) {
+    if(DCOPY_perform_copy(op, in_fd, out_fd) < 0) {
         DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
 
-    if(fclose(in_ptr) < 0) {
+    if(close(in_fd) < 0) {
         LOG(DCOPY_LOG_DBG, "Close on source file failed. %s", strerror(errno));
     }
 
@@ -76,59 +77,19 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
  * counter.
  */
 int DCOPY_perform_copy(DCOPY_operation_t* op, \
-                       FILE* in_ptr, \
+                       int in_fd, \
                        int out_fd)
 {
-    char* io_buf = (char*) malloc(sizeof(char) * DCOPY_CHUNK_SIZE);
+    off64_t offset = DCOPY_CHUNK_SIZE * op->chunk;
 
-    size_t num_of_bytes_read = 0;
-    ssize_t num_of_bytes_written = 0;
-
-    if(fseeko64(in_ptr, (int64_t)DCOPY_CHUNK_SIZE * (int64_t)op->chunk, SEEK_SET) != 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
-            op->operand, strerror(errno));
-
-        free(io_buf);
-        /* Handle operation requeue in parent function. */
-        return -1;
-    }
-
-    num_of_bytes_read = fread(io_buf, 1, DCOPY_CHUNK_SIZE, in_ptr);
-
-/*
-    LOG(DCOPY_LOG_DBG, "Number of bytes read is `%zu'.", num_of_bytes_read);
-*/
-
-    if(num_of_bytes_read <= 0 && op->file_size > 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't read from source path `%s'. %s", \
-            op->operand, strerror(errno));
-
-        free(io_buf);
-        /* Handle operation requeue in parent function. */
-        return -1;
-    }
-
-/*
-    LOG(DCOPY_LOG_DBG, "Read `%zu' bytes at offset `%zu'.", num_of_bytes_read, \
-        (int64_t)DCOPY_CHUNK_SIZE * (int64_t)op->chunk);
-*/
-
-    if(lseek64(out_fd, (int64_t)DCOPY_CHUNK_SIZE * (int64_t)op->chunk, SEEK_SET) < 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path (source is `%s'). %s", \
-            op->operand, strerror(errno));
-
-        free(io_buf);
-        /* Handle operation requeue in parent function. */
-        return -1;
-    }
-
-    num_of_bytes_written = write(out_fd, io_buf, num_of_bytes_read);
+    ssize_t num_of_bytes_written = sendfile(out_fd, in_fd, \
+                                            &offset, \
+                                            DCOPY_CHUNK_SIZE);
 
     if(num_of_bytes_written < 0 && op->file_size > 0) {
         LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. %s", \
             op->operand, strerror(errno));
 
-        free(io_buf);
         /* Handle operation requeue in parent function. */
         return -1;
     }
@@ -140,7 +101,6 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         num_of_bytes_written, op->chunk, DCOPY_CHUNK_SIZE * op->chunk, \
         DCOPY_statistics.total_bytes_copied);
 
-    free(io_buf);
     return 1;
 }
 

@@ -46,7 +46,8 @@
 /*
  * This is the size of each chunk to be processed (in bytes).
  */
-#define DCOPY_CHUNK_SIZE ((int64_t)(33554432)) /* 32MB chunk */
+#define DCOPY_CHUNK_SIZE ((int64_t)(536870912)) /* 512MB chunk */
+/* #define DCOPY_CHUNK_SIZE ((int64_t)(33554432)) 32MB chunk */
 /* #define DCOPY_CHUNK_SIZE ((int64_t)(4194304)) 4MB chunk */
 
 #ifndef PATH_MAX
@@ -135,6 +136,8 @@ void DCOPY_process_objects(CIRCLE_handle* handle);
 void DCOPY_unlink_destination(DCOPY_operation_t* op);
 
 FILE* DCOPY_open_input_stream(DCOPY_operation_t* op);
+
+int DCOPY_open_input_fd(DCOPY_operation_t* op);
 
 FILE* DCOPY_open_output_stream(DCOPY_operation_t* op);
 

@@ -199,7 +199,7 @@ void DCOPY_unlink_destination(DCOPY_operation_t* op)
     return;
 }
 
-/* Open the input file. */
+/* Open the input file as a stream. */
 FILE* DCOPY_open_input_stream(DCOPY_operation_t* op)
 {
     FILE* in_ptr = fopen64(op->operand, "rb");
@@ -211,6 +211,20 @@ FILE* DCOPY_open_input_stream(DCOPY_operation_t* op)
     }
 
     return in_ptr;
+}
+
+/* Open the input file as an fd. */
+int DCOPY_open_input_fd(DCOPY_operation_t* op)
+{
+    int in_fd = open64(op->operand, O_NOFOLLOW | O_RDWR | O_NOATIME);
+
+    if(in_fd < 0) {
+        LOG(DCOPY_LOG_DBG, "Failed to open input file `%s'. %s", \
+            op->operand, strerror(errno));
+        /* Handle operation requeue in parent function. */
+    }
+
+    return in_fd;
 }
 
 /*
