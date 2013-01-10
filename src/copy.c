@@ -13,7 +13,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <inttypes.h>
-#include <sys/sendfile.h>
+// #include <sys/sendfile.h>
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
@@ -85,7 +85,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     ssize_t num_of_bytes_written = 0;
     char io_buf[DCOPY_CHUNK_SIZE];
 
-    if(offset != lseek64(in_fd, offset, SEEK_SET)) {
+    if(lseek64(in_fd, offset, SEEK_SET) < 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
             op->operand, strerror(errno));
 
@@ -131,7 +131,6 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
             op->operand, strerror(errno));
 
 //        free(io_buf);
-        /* Handle operation requeue in parent function. */
         return -1;
     }
 
