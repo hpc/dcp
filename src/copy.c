@@ -82,9 +82,11 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
 {
     off64_t offset = DCOPY_CHUNK_SIZE * op->chunk;
 
-    ssize_t num_of_bytes_written = sendfile(out_fd, in_fd, \
-                                            &offset, \
-                                            DCOPY_CHUNK_SIZE);
+
+
+    ssize_t num_of_bytes_written = sendfile64(out_fd, in_fd, \
+                                             &offset, \
+                                             DCOPY_CHUNK_SIZE);
 
     if(num_of_bytes_written < 0 && op->file_size > 0) {
         LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. %s", \
