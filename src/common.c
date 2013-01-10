@@ -216,7 +216,7 @@ FILE* DCOPY_open_input_stream(DCOPY_operation_t* op)
 /* Open the input file as an fd. */
 int DCOPY_open_input_fd(DCOPY_operation_t* op)
 {
-    int in_fd = open64(op->operand, O_NOFOLLOW | O_RDWR | O_NOATIME);
+    int in_fd = open64(op->operand, O_RDONLY | O_NOATIME);
 
     if(in_fd < 0) {
         LOG(DCOPY_LOG_DBG, "Failed to open input file `%s'. %s", \
