@@ -84,7 +84,9 @@ void DCOPY_truncate_file(DCOPY_operation_t* op, \
      * to have a maximum file_size of 2^63, not 2^64.
      */
     if(truncate64(dest_path_recursive, op->file_size) < 0) {
+/*
         LOG(DCOPY_LOG_DBG, "Failed to truncate destination file (recursive).");
+*/
 
         if(truncate64(dest_path_file_to_file, op->file_size) < 0) {
             LOG(DCOPY_LOG_ERR, "Failed to truncate destination file.");
