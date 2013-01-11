@@ -336,16 +336,16 @@ void DCOPY_parse_path_args(char** argv, \
     /*
      * Now, lets print everything out for debugging purposes.
      */
-/*
-    char** dbg_p = DCOPY_user_opts.src_path;
+    /*
+        char** dbg_p = DCOPY_user_opts.src_path;
 
-    while(*dbg_p != NULL) {
-        LOG(DCOPY_LOG_DBG, "Found a source path with name: `%s'", *(dbg_p));
-        dbg_p++;
-    }
+        while(*dbg_p != NULL) {
+            LOG(DCOPY_LOG_DBG, "Found a source path with name: `%s'", *(dbg_p));
+            dbg_p++;
+        }
 
-    LOG(DCOPY_LOG_DBG, "Found a destination path with name: `%s'", DCOPY_user_opts.dest_path);
-*/
+        LOG(DCOPY_LOG_DBG, "Found a destination path with name: `%s'", DCOPY_user_opts.dest_path);
+    */
 }
 
 /* EOF */

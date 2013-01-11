@@ -109,7 +109,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         }
 
         num_of_bytes_written = write(out_fd, &io_buf[0], \
-                                     num_of_bytes_read);
+                                     (size_t)num_of_bytes_read);
 
         if(num_of_bytes_written != num_of_bytes_read) {
             LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. %s", \
@@ -123,12 +123,12 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     /* Increment the global counter. */
     DCOPY_statistics.total_bytes_copied += total_bytes_written;
 
-/*
-    LOG(DCOPY_LOG_DBG, "Wrote `%zu' bytes at segment `%" PRId64 \
-        "', offset `%" PRId64 "' (`%" PRId64 "' total).", \
-        num_of_bytes_written, op->chunk, DCOPY_CHUNK_SIZE * op->chunk, \
-        DCOPY_statistics.total_bytes_copied);
-*/
+    /*
+        LOG(DCOPY_LOG_DBG, "Wrote `%zu' bytes at segment `%" PRId64 \
+            "', offset `%" PRId64 "' (`%" PRId64 "' total).", \
+            num_of_bytes_written, op->chunk, DCOPY_CHUNK_SIZE * op->chunk, \
+            DCOPY_statistics.total_bytes_copied);
+    */
 
     return 1;
 }

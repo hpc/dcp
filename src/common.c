@@ -138,23 +138,23 @@ void DCOPY_add_objects(CIRCLE_handle* handle)
 void DCOPY_process_objects(CIRCLE_handle* handle)
 {
     char op[CIRCLE_MAX_STRING_LEN];
-/*
-    const char* DCOPY_op_string_table[] = {
-        "TREEWALK",
-        "COPY",
-        "CLEANUP",
-        "COMPARE"
-    };
-*/
+    /*
+        const char* DCOPY_op_string_table[] = {
+            "TREEWALK",
+            "COPY",
+            "CLEANUP",
+            "COMPARE"
+        };
+    */
 
     /* Pop an item off the queue */
     handle->dequeue(op);
     DCOPY_operation_t* opt = DCOPY_decode_operation(op);
 
-/*
-    LOG(DCOPY_LOG_DBG, "Performing operation `%s' on operand `%s' (`%d' remain on local queue).", \
-        DCOPY_op_string_table[opt->code], opt->operand, handle->local_queue_size());
-*/
+    /*
+        LOG(DCOPY_LOG_DBG, "Performing operation `%s' on operand `%s' (`%d' remain on local queue).", \
+            DCOPY_op_string_table[opt->code], opt->operand, handle->local_queue_size());
+    */
 
     DCOPY_jump_table[opt->code](opt, handle);
 
@@ -259,10 +259,10 @@ FILE* DCOPY_open_output_stream(DCOPY_operation_t* op)
                 op->dest_base_appendix);
     }
 
-/*
-    LOG(DCOPY_LOG_DBG, "Opening destination path `%s' (recursive).", \
-        dest_path_recursive);
-*/
+    /*
+        LOG(DCOPY_LOG_DBG, "Opening destination path `%s' (recursive).", \
+            dest_path_recursive);
+    */
 
     /*
      * If we're recursive, we'll be doing this again and again, so try
@@ -270,11 +270,11 @@ FILE* DCOPY_open_output_stream(DCOPY_operation_t* op)
      */
     if((out_ptr = fopen64(dest_path_recursive, "rb")) == NULL) {
 
-/*
-        LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
-            "(file-to-file fallback).", \
-            dest_path_file_to_file);
-*/
+        /*
+                LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
+                    "(file-to-file fallback).", \
+                    dest_path_file_to_file);
+        */
 
         out_ptr = fopen64(dest_path_file_to_file, "rb");
     }
@@ -321,21 +321,21 @@ int DCOPY_open_output_fd(DCOPY_operation_t* op)
                 op->dest_base_appendix);
     }
 
-/*
-    LOG(DCOPY_LOG_DBG, "Opening destination path `%s' (recursive).", \
-        dest_path_recursive);
-*/
+    /*
+        LOG(DCOPY_LOG_DBG, "Opening destination path `%s' (recursive).", \
+            dest_path_recursive);
+    */
 
     /*
      * If we're recursive, we'll be doing this again and again, so try
      * recursive first. If it fails, then do the file-to-file.
      */
     if((out_fd = open64(dest_path_recursive, O_WRONLY | O_CREAT | O_NOATIME, S_IRWXU)) < 0) {
-/*
-        LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
-            "(file-to-file fallback).", \
-            dest_path_file_to_file);
-*/
+        /*
+                LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
+                    "(file-to-file fallback).", \
+                    dest_path_file_to_file);
+        */
 
         out_fd = open64(dest_path_file_to_file, O_WRONLY | O_CREAT | O_NOATIME, S_IRWXU);
     }

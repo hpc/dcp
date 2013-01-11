@@ -21,7 +21,7 @@ extern DCOPY_statistics_t DCOPY_statistics;
 
 /* The entrance point to the compare operation. */
 void DCOPY_do_compare(DCOPY_operation_t* op, \
-                   CIRCLE_handle* handle)
+                      CIRCLE_handle* handle)
 {
     FILE* in_ptr = DCOPY_open_input_stream(op);
 
@@ -95,10 +95,10 @@ int DCOPY_perform_compare(DCOPY_operation_t* op, \
         return -1;
     }
     else {
-/*
-        LOG(DCOPY_LOG_DBG, "File `%s' (chunk `%d') compare successful.", \
-            op->operand, op->chunk);
-*/
+        /*
+                LOG(DCOPY_LOG_DBG, "File `%s' (chunk `%d') compare successful.", \
+                    op->operand, op->chunk);
+        */
 
         free(src_buf);
         free(dest_buf);
