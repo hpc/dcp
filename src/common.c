@@ -224,6 +224,7 @@ int DCOPY_open_input_fd(DCOPY_operation_t* op)
         /* Handle operation requeue in parent function. */
     }
 
+    posix_fadvise(in_fd, 0, 0, POSIX_FADV_DONTNEED);
     return in_fd;
 }
 
