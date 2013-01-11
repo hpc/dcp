@@ -46,8 +46,10 @@
 /*
  * This is the size of each chunk to be processed (in bytes).
  */
-#define DCOPY_CHUNK_SIZE (1073741824) /* 1GB chunk */
+/* #define DCOPY_CHUNK_SIZE (1073741824) 1GB chunk */
+#define DCOPY_CHUNK_SIZE (536870912) /* 512MB chunk */
 /* #define DCOPY_CHUNK_SIZE (33554432)  32MB chunk */
+/* #define DCOPY_CHUNK_SIZE (33554432) 16MB chunk */
 
 /*
  * FIXME: Is this description correct?
