@@ -17780,8 +17780,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+#include <lustre/lustre_user.h>
+#include <lustre/ll_fiemap.h>
+
+
 # Checks for headers.
-for ac_header in fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h unistd.h
+for ac_header in fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h \
+                  unistd.h lustre/lustre_user.h lustre/ll_fiemap.h \
+                  lustre/liblustreapi.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"

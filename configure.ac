@@ -32,8 +32,14 @@ PKG_CHECK_MODULES([libcircle], libcircle)
 #LT_INIT
 AC_PROG_LIBTOOL
 
+#include <lustre/lustre_user.h>
+#include <lustre/ll_fiemap.h>
+
+
 # Checks for headers.
-AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h unistd.h])
+AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h \
+                  unistd.h lustre/lustre_user.h lustre/ll_fiemap.h \
+                  lustre/liblustreapi.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
