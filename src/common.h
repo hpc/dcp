@@ -48,7 +48,14 @@
  */
 #define DCOPY_CHUNK_SIZE (33554432) /* 32MB chunk */
 
-#define FD_PAGE_CACHE_SIZE (8192)
+/*
+ * FIXME: Is this description correct?
+ *
+ * This is the size of the buffer used to copy from the fd page cache to L1
+ * cache before the buffer is coped back down into the destination fd page
+ * cache.
+ */
+#define FD_PAGE_CACHE_SIZE (32768)
 
 #ifndef PATH_MAX
 #define PATH_MAX (4096)
