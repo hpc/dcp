@@ -90,8 +90,6 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     if(lseek64(in_fd, offset, SEEK_SET) < 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
             op->operand, strerror(errno));
-
-//        free(io_buf);
         /* Handle operation requeue in parent function. */
         return -1;
     }
@@ -129,10 +127,12 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     /* Increment the global counter. */
     DCOPY_statistics.total_bytes_copied += total_bytes_written;
 
+/*
     LOG(DCOPY_LOG_DBG, "Wrote `%zu' bytes at segment `%" PRId64 \
         "', offset `%" PRId64 "' (`%" PRId64 "' total).", \
         num_of_bytes_written, op->chunk, DCOPY_CHUNK_SIZE * op->chunk, \
         DCOPY_statistics.total_bytes_copied);
+*/
 
     return 1;
 }
