@@ -100,10 +100,6 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         return -1;
     }
 
-    /*
-     * This loop is copying 8K from the in_fd page cache into the CPU L1 cache
-     * then writing it from the L1 cache into the out_fd page cache.
-     */
     while(total_bytes_written <= DCOPY_CHUNK_SIZE) {
 
         num_of_bytes_read = read(in_fd, &io_buf[0], FD_PAGE_CACHE_SIZE);
