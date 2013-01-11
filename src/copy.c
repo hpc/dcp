@@ -83,7 +83,9 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     off64_t offset = DCOPY_CHUNK_SIZE * op->chunk;
     ssize_t num_of_bytes_read = 0;
     ssize_t num_of_bytes_written = 0;
-    char io_buf[DCOPY_CHUNK_SIZE];
+    ssize_t total_bytes_written = 0;
+
+    char io_buf[FD_PAGE_CACHE_SIZE];
 
     if(lseek64(in_fd, offset, SEEK_SET) < 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
@@ -94,50 +96,41 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         return -1;
     }
 
-    num_of_bytes_read = read(in_fd, io_buf, DCOPY_CHUNK_SIZE);
-
-/*
-    LOG(DCOPY_LOG_DBG, "Number of bytes read is `%zu'.", num_of_bytes_read);
-*/
-
-    if(num_of_bytes_read <= 0 && op->file_size > 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't read from source path `%s'. %s", \
-            op->operand, strerror(errno));
-
-//        free(io_buf);
-        /* Handle operation requeue in parent function. */
-        return -1;
-    }
-
-    if(offset != lseek64(out_fd, offset, SEEK_SET)) {
+    if(lseek64(out_fd, offset, SEEK_SET) < 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path (source is `%s'). %s", \
             op->operand, strerror(errno));
-
-//        free(io_buf);
-        /* Handle operation requeue in parent function. */
         return -1;
     }
 
-    num_of_bytes_written = write(out_fd, io_buf, (size_t)num_of_bytes_read);
+    /*
+     * This loop is copying 8K from the in_fd page cache into the CPU L1 cache
+     * then writing it from the L1 cache into the out_fd page cache.
+     */
+    while(total_bytes_written <= DCOPY_CHUNK_SIZE) {
 
-/*
-    ssize_t num_of_bytes_written = sendfile64(out_fd, in_fd, \
-                                             &offset, \
-                                             DCOPY_CHUNK_SIZE);
-*/
+        num_of_bytes_read = read(in_fd, &io_buf[0], FD_PAGE_CACHE_SIZE);
 
-    if(num_of_bytes_written < 0 && op->file_size > 0) {
-        LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. %s", \
-            op->operand, strerror(errno));
+        if(!num_of_bytes_read) {
+            break;
+        }
 
-//        free(io_buf);
-        return -1;
+        num_of_bytes_written = write(out_fd, &io_buf[0], \
+                                     num_of_bytes_read);
+
+        if(num_of_bytes_written != num_of_bytes_read) {
+            LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. %s", \
+                op->operand, strerror(errno));
+            return -1;
+        }
+
+        total_bytes_written += num_of_bytes_written;
     }
 
     /* Increment the global counter. */
-    DCOPY_statistics.total_bytes_copied += num_of_bytes_written;
+    DCOPY_statistics.total_bytes_copied += total_bytes_written;
 
-    LOG(DCOPY_LOG_DBG, "Wrote `%zu' bytes at segment `%" PRId64 "', offset `%" PRId64 "' (`%" PRId64 "' total).", \
+    LOG(DCOPY_LOG_DBG, "Wrote `%zu' bytes at segment `%" PRId64 \
+        "', offset `%" PRId64 "' (`%" PRId64 "' total).", \
         num_of_bytes_written, op->chunk, DCOPY_CHUNK_SIZE * op->chunk, \
         DCOPY_statistics.total_bytes_copied);
 

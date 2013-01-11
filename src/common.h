@@ -46,11 +46,9 @@
 /*
  * This is the size of each chunk to be processed (in bytes).
  */
-/* #define DCOPY_CHUNK_SIZE ((int64_t)(536870912)) 512MB chunk */
-/* #define DCOPY_CHUNK_SIZE ((int64_t)(33554432)) 32MB chunk */
-#define DCOPY_CHUNK_SIZE ((int64_t)(8388608)) /* 8MB chunk */
-/* #define DCOPY_CHUNK_SIZE ((int64_t)(4194304)) 4MB chunk */
-/* #define DCOPY_CHUNK_SIZE ((int64_t)(1048576)) 1MB chunk */
+#define DCOPY_CHUNK_SIZE (33554432) /* 32MB chunk */
+
+#define FD_PAGE_CACHE_SIZE (8192)
 
 #ifndef PATH_MAX
 #define PATH_MAX (4096)
