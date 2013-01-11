@@ -145,7 +145,9 @@ void DCOPY_unlink_destination(DCOPY_operation_t* op);
 
 FILE* DCOPY_open_input_stream(DCOPY_operation_t* op);
 
-int DCOPY_open_input_fd(DCOPY_operation_t* op);
+int DCOPY_open_input_fd(DCOPY_operation_t* op, \
+                        off64_t offset, \
+                        off64_t len);
 
 FILE* DCOPY_open_output_stream(DCOPY_operation_t* op);
 

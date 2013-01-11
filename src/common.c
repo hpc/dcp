@@ -214,7 +214,9 @@ FILE* DCOPY_open_input_stream(DCOPY_operation_t* op)
 }
 
 /* Open the input file as an fd. */
-int DCOPY_open_input_fd(DCOPY_operation_t* op)
+int DCOPY_open_input_fd(DCOPY_operation_t* op, \
+                        off64_t offset, \
+                        off64_t len)
 {
     int in_fd = open64(op->operand, O_RDONLY | O_NOATIME);
 
@@ -224,7 +226,7 @@ int DCOPY_open_input_fd(DCOPY_operation_t* op)
         /* Handle operation requeue in parent function. */
     }
 
-    posix_fadvise(in_fd, 0, 0, POSIX_FADV_SEQUENTIAL);
+    posix_fadvise64(in_fd, offset, len, POSIX_FADV_SEQUENTIAL);
     return in_fd;
 }
 

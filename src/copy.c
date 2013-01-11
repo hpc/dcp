@@ -25,7 +25,8 @@ extern DCOPY_statistics_t DCOPY_statistics;
 void DCOPY_do_copy(DCOPY_operation_t* op, \
                    CIRCLE_handle* handle)
 {
-    int in_fd = DCOPY_open_input_fd(op);
+    off64_t offset = DCOPY_CHUNK_SIZE * op->chunk;
+    int in_fd = DCOPY_open_input_fd(op, offset, DCOPY_CHUNK_SIZE);
 
     if(in_fd < 0) {
         DCOPY_retry_failed_operation(COPY, handle, op);
@@ -54,7 +55,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
         }
     }
 
-    if(DCOPY_perform_copy(op, in_fd, out_fd) < 0) {
+    if(DCOPY_perform_copy(op, in_fd, out_fd, offset) < 0) {
         DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
@@ -78,9 +79,9 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
  */
 int DCOPY_perform_copy(DCOPY_operation_t* op, \
                        int in_fd, \
-                       int out_fd)
+                       int out_fd, \
+                       off64_t offset)
 {
-    off64_t offset = DCOPY_CHUNK_SIZE * op->chunk;
     ssize_t num_of_bytes_read = 0;
     ssize_t num_of_bytes_written = 0;
     ssize_t total_bytes_written = 0;
