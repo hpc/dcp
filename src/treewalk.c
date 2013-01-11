@@ -35,7 +35,9 @@ bool DCOPY_is_directory(char* path)
     struct stat64 statbuf;
 
     if(lstat64(path, &statbuf) < 0) {
+/*
         LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a directory. %s", path, strerror(errno));
+*/
         return false;
     }
 
@@ -50,7 +52,9 @@ bool DCOPY_is_regular_file(char* path)
     struct stat64 statbuf;
 
     if(lstat64(path, &statbuf) < 0) {
+/*
         LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a file. %s", path, strerror(errno));
+*/
         return false;
     }
 
