@@ -48,7 +48,8 @@
  */
 /* #define DCOPY_CHUNK_SIZE ((int64_t)(536870912)) 512MB chunk */
 /* #define DCOPY_CHUNK_SIZE ((int64_t)(33554432)) 32MB chunk */
-#define DCOPY_CHUNK_SIZE ((int64_t)(4194304)) /* 4MB chunk */
+/* #define DCOPY_CHUNK_SIZE ((int64_t)(4194304)) 4MB chunk */
+#define DCOPY_CHUNK_SIZE ((int64_t)(1048576)) /* 1MB chunk */
 
 #ifndef PATH_MAX
 #define PATH_MAX (4096)
