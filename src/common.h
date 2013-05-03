@@ -187,4 +187,10 @@ void DCOPY_copy_timestamps(
     const char* dest_path
 );
 
+/* called by single process upon detection of a problem */
+void DCOPY_abort(int code);
+
+/* called globally by all procs to exit */
+void DCOPY_exit(int code);
+
 #endif /* __COMMON_H_ */

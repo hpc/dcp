@@ -38,7 +38,7 @@ void DCOPY_retry_failed_operation(DCOPY_operation_code_t target, \
     if(DCOPY_user_opts.reliable_filesystem) {
         LOG(DCOPY_LOG_ERR, "Not retrying failed operation. " \
             "Reliable filesystem is specified.");
-        exit(EXIT_FAILURE);
+        DCOPY_abort(EXIT_FAILURE);
     }
     else {
         LOG(DCOPY_LOG_INFO, "Attempting to retry operation.");
@@ -84,7 +84,7 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
         LOG(DCOPY_LOG_DBG, \
             "Exceeded libcircle message size due to large file path. " \
             "This is a known bug in dcp that we intend to fix. Sorry!");
-        exit(EXIT_FAILURE);
+        DCOPY_abort(EXIT_FAILURE);
     }
 
     return op;
@@ -99,22 +99,22 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
 
     if(sscanf(strtok(op, ":"), "%" SCNd64, &(ret->file_size)) != 1) {
         LOG(DCOPY_LOG_ERR, "Could not decode file size attribute.");
-        exit(EXIT_FAILURE);
+        DCOPY_abort(EXIT_FAILURE);
     }
 
     if(sscanf(strtok(NULL, ":"), "%" SCNd64, &(ret->chunk)) != 1) {
         LOG(DCOPY_LOG_ERR, "Could not decode chunk index attribute.");
-        exit(EXIT_FAILURE);
+        DCOPY_abort(EXIT_FAILURE);
     }
 
     if(sscanf(strtok(NULL, ":"), "%" SCNu16, &(ret->source_base_offset)) != 1) {
         LOG(DCOPY_LOG_ERR, "Could not decode source base offset attribute.");
-        exit(EXIT_FAILURE);
+        DCOPY_abort(EXIT_FAILURE);
     }
 
     if(sscanf(strtok(NULL, ":"), "%d", (int*) & (ret->code)) != 1) {
         LOG(DCOPY_LOG_ERR, "Could not decode stage code attribute.");
-        exit(EXIT_FAILURE);
+        DCOPY_abort(EXIT_FAILURE);
     }
 
     ret->operand            = strtok(NULL, ":");
@@ -143,7 +143,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
     ret->dest_full_path = strdup(dest_path_recursive);
     if(ret->dest_full_path == NULL) {
         LOG(DCOPY_LOG_ERR, "Failed to allocate full destination path.");
-        exit(EXIT_FAILURE);
+        DCOPY_abort(EXIT_FAILURE);
     }
 
     return ret;
@@ -586,6 +586,20 @@ void DCOPY_copy_timestamps(
     }
 
     return;
+}
+
+/* called by single process upon detection of a problem */
+void DCOPY_abort(int code)
+{
+    // MPI_Abort(MPI_COMM_WORLD, code);
+    exit(code);
+}
+
+/* called globally by all procs to exit */
+void DCOPY_exit(int code)
+{
+    // MPI_Finalize();
+    exit(code);
 }
 
 /* EOF */

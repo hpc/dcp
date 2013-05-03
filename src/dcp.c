@@ -75,6 +75,7 @@ void DCOPY_print_usage(char** argv)
     printf("usage: %s [cCdfhpRrv] [--] source_file target_file\n" \
            "       %s [cCdfhpRrv] [--] source_file ... target_directory\n", \
            argv[0], argv[0]);
+    fflush(stdout);
 }
 
 int main(int argc, \
@@ -212,7 +213,7 @@ int main(int argc, \
                 if (CIRCLE_global_rank == 0) {
                     DCOPY_print_usage(argv);
                 }
-                exit(EXIT_SUCCESS);
+                DCOPY_exit(EXIT_SUCCESS);
                 break;
 
             case 'p':
@@ -250,7 +251,7 @@ int main(int argc, \
                 if (CIRCLE_global_rank == 0) {
                     DCOPY_print_version();
                 }
-                exit(EXIT_SUCCESS);
+                DCOPY_exit(EXIT_SUCCESS);
                 break;
 
             case '?':
@@ -273,7 +274,7 @@ int main(int argc, \
                     }
                 }
 
-                exit(EXIT_FAILURE);
+                DCOPY_exit(EXIT_FAILURE);
                 break;
         }
     }
@@ -307,7 +308,7 @@ int main(int argc, \
     /* Print the results to the user. */
     DCOPY_epilogue();
 
-    exit(EXIT_SUCCESS);
+    DCOPY_exit(EXIT_SUCCESS);
 }
 
 /* EOF */

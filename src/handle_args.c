@@ -89,7 +89,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 
     if(number_of_source_files < 1) {
         LOG(DCOPY_LOG_ERR, "At least one valid source file must be specified.");
-        exit(EXIT_FAILURE);
+        DCOPY_abort(EXIT_FAILURE);
     }
 
     if(dest_is_file) {
@@ -131,7 +131,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
                 if(DCOPY_is_directory(*(bad_src_path))) {
                     LOG(DCOPY_LOG_ERR, "Copying a directory into a file is not supported.");
 
-                    exit(EXIT_FAILURE);
+                    DCOPY_abort(EXIT_FAILURE);
                 }
 
                 bad_src_path++;
@@ -142,7 +142,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
              * copy multiple files into a single file (hopefully).
              */
             LOG(DCOPY_LOG_ERR, "Copying several files into a single file is not supported.");
-            exit(EXIT_FAILURE);
+            DCOPY_abort(EXIT_FAILURE);
         }
 
     }
@@ -185,7 +185,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
          * implemented yet.
          */
         LOG(DCOPY_LOG_ERR, "We've encountered an unsupported filetype.");
-        exit(EXIT_FAILURE);
+        DCOPY_abort(EXIT_FAILURE);
     }
 
     /* TODO: print mode we're using to DBG. */
@@ -309,7 +309,7 @@ void DCOPY_parse_dest_path(char* path)
                 LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
                     path, strerror(errno));
             }
-            exit(EXIT_FAILURE);
+            DCOPY_abort(EXIT_FAILURE);
         }
 
         /* Now, lets get the base name. */
@@ -348,7 +348,7 @@ void DCOPY_parse_src_paths(char** argv, \
                     argv[opt_index], strerror(errno));
             }
 
-            exit(EXIT_FAILURE);
+            DCOPY_abort(EXIT_FAILURE);
         }
     }
 }
@@ -369,7 +369,7 @@ void DCOPY_parse_path_args(char** argv, \
             LOG(DCOPY_LOG_ERR, "You must specify a source and destination path.");
         }
 
-        exit(EXIT_FAILURE);
+        DCOPY_exit(EXIT_FAILURE);
     }
 
     /* Grab the destination path. */
