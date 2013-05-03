@@ -17,6 +17,40 @@
 DCOPY_options_t DCOPY_user_opts;
 
 /**
+ * Determine if the specified path is a directory.
+ */
+static bool DCOPY_is_directory(char* path)
+{
+    struct stat64 statbuf;
+
+    if(lstat64(path, &statbuf) < 0) {
+        /*
+                LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a directory. %s", path, strerror(errno));
+        */
+        return false;
+    }
+
+    return (S_ISDIR(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode)));
+}
+
+/**
+ * Determine if the specified path is a regular file.
+ */
+static bool DCOPY_is_regular_file(char* path)
+{
+    struct stat64 statbuf;
+
+    if(lstat64(path, &statbuf) < 0) {
+        /*
+                LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a file. %s", path, strerror(errno));
+        */
+        return false;
+    }
+
+    return (S_ISREG(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode)));
+}
+
+/**
  * Analyze all file path inputs and place on the work queue.
  *
  * We start off with all of the following potential options in mind and prune
@@ -42,6 +76,9 @@ DCOPY_options_t DCOPY_user_opts;
  */
 void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 {
+    /* libcircle only calls this from rank 0,
+     * so no need to guard with rank */
+
     bool dest_is_dir = DCOPY_dest_is_dir();
     bool dest_is_file  = !dest_is_dir;
 
@@ -231,8 +268,10 @@ uint32_t DCOPY_source_file_count(void)
 
     while(*src_path != NULL) {
         if(access(*src_path, R_OK) < 0) {
-            LOG(DCOPY_LOG_ERR, "Could not access source file at `%s'. %s", \
-                *src_path, strerror(errno));
+            if (CIRCLE_global_rank == 0) {
+                LOG(DCOPY_LOG_ERR, "Could not access source file at `%s'. %s", \
+                    *src_path, strerror(errno));
+            }
         }
         else {
             source_file_count++;
@@ -266,8 +305,10 @@ void DCOPY_parse_dest_path(char* path)
 
         /* If realpath didn't work this time, we're really in trouble. */
         if(!DCOPY_user_opts.dest_path) {
-            LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
-                path, strerror(errno));
+            if (CIRCLE_global_rank == 0) {
+                LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
+                    path, strerror(errno));
+            }
             exit(EXIT_FAILURE);
         }
 
@@ -302,8 +343,10 @@ void DCOPY_parse_src_paths(char** argv, \
         DCOPY_user_opts.src_path[opt_index - optind_local] = realpath(argv[opt_index], NULL);
 
         if(!DCOPY_user_opts.dest_path) {
-            LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
-                argv[opt_index], strerror(errno));
+            if (CIRCLE_global_rank == 0) {
+                LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
+                    argv[opt_index], strerror(errno));
+            }
 
             exit(EXIT_FAILURE);
         }
@@ -321,8 +364,10 @@ void DCOPY_parse_path_args(char** argv, \
     int last_arg_index = num_args + optind_local - 1;
 
     if(argv == NULL || num_args < 2) {
-        DCOPY_print_usage(argv);
-        LOG(DCOPY_LOG_ERR, "You must specify a source and destination path.");
+        if (CIRCLE_global_rank == 0) {
+            DCOPY_print_usage(argv);
+            LOG(DCOPY_LOG_ERR, "You must specify a source and destination path.");
+        }
 
         exit(EXIT_FAILURE);
     }

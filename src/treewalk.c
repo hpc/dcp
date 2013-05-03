@@ -23,43 +23,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <inttypes.h>
+#include <sys/time.h>
 
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
-
-/**
- * Determine if the specified path is a directory.
- */
-bool DCOPY_is_directory(char* path)
-{
-    struct stat64 statbuf;
-
-    if(lstat64(path, &statbuf) < 0) {
-        /*
-                LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a directory. %s", path, strerror(errno));
-        */
-        return false;
-    }
-
-    return (S_ISDIR(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode)));
-}
-
-/**
- * Determine if the specified path is a regular file.
- */
-bool DCOPY_is_regular_file(char* path)
-{
-    struct stat64 statbuf;
-
-    if(lstat64(path, &statbuf) < 0) {
-        /*
-                LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a file. %s", path, strerror(errno));
-        */
-        return false;
-    }
-
-    return (S_ISREG(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode)));
-}
 
 /**
  * This is the entry point for the "file stat stage". This function is called
@@ -78,11 +45,15 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, \
 
     if(S_ISDIR(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
         /* LOG(DCOPY_LOG_DBG, "Stat operation found a directory at `%s'.", op->operand); */
-        DCOPY_stat_process_dir(op, handle);
+        DCOPY_stat_process_dir(op, &statbuf, handle);
     }
     else if(S_ISREG(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
         /* LOG(DCOPY_LOG_DBG, "Stat operation found a file at `%s'.", op->operand); */
-        DCOPY_stat_process_file(op, statbuf.st_size, handle);
+        DCOPY_stat_process_file(op, &statbuf, handle);
+    }
+    else if(S_ISLNK(statbuf.st_mode)) {
+        /* LOG(DCOPY_LOG_DBG, "Stat operation found a link at `%s'.", op->operand); */
+        DCOPY_stat_process_link(op, &statbuf, handle);
     }
     else {
         LOG(DCOPY_LOG_DBG, "Encountered an unsupported file type at `%s'.", op->operand);
@@ -92,13 +63,53 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, \
 }
 
 /**
+ * This function copies a link.
+ */
+void DCOPY_stat_process_link(DCOPY_operation_t* op, \
+                             const struct stat64* statbuf,
+                             CIRCLE_handle* handle)
+{
+    const char* src_path  = op->operand;
+    const char* dest_path = op->dest_full_path;
+
+    /* read link and terminate string with NUL character */
+    char path[PATH_MAX+1];
+    ssize_t rc = readlink(src_path, path, sizeof(path)-1);
+    if (rc < 0) {
+        LOG(DCOPY_LOG_ERR, "Failed to read link `%s' readlink() errno=%d %s",
+            src_path, errno, strerror(errno)
+        );
+        return;
+    }
+    path[rc] = '\0';
+
+    /* create new link */
+    int symrc = symlink(path, dest_path);
+    if (symrc < 0) {
+        LOG(DCOPY_LOG_ERR, "Failed to create link `%s' symlink() errno=%d %s",
+            dest_path, errno, strerror(errno)
+        );
+        return;
+    }
+
+    /* set permissions on object */
+    DCOPY_copy_xattrs(op, statbuf, dest_path);
+    DCOPY_copy_ownership(op, statbuf, dest_path);
+    DCOPY_copy_permissions(op, statbuf, dest_path);
+    DCOPY_copy_timestamps(op, statbuf, dest_path);
+
+    return;
+}
+
+/**
  * This function inputs a file and creates chunk operations that get placed
  * onto the libcircle queue for future processing by the copy stage.
  */
 void DCOPY_stat_process_file(DCOPY_operation_t* op, \
-                             int64_t file_size, \
+                             const struct stat64* statbuf,
                              CIRCLE_handle* handle)
 {
+    int64_t file_size = statbuf->st_size;
     int64_t chunk_index;
     int64_t num_chunks = file_size / DCOPY_CHUNK_SIZE;
 
@@ -106,6 +117,29 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, \
         "' with chunks `%" PRId64 "' (total `%" PRId64 "').", \
         op->operand, file_size, num_chunks, \
         num_chunks * DCOPY_CHUNK_SIZE);
+
+    const char* dest_path = op->dest_full_path;
+
+    /* since file systems like Lustre require xattrs to be set before file is opened,
+     * we first create it with mknod and then set xattrs */
+
+    /* create file with mknod
+    * for regular files, dev argument is supposed to be ignored,
+    * see makedev() to create valid dev */
+    dev_t dev;
+    memset(&dev, 0, sizeof(dev_t));
+    int mknod_rc = mknod(dest_path, S_IRWXU | S_IFREG, dev);
+    if (mknod_rc < 0) {
+        if (errno == EEXIST) {
+            /* TODO: should we unlink and mknod again in this case? */
+        }
+        LOG(DCOPY_LOG_DBG, "File `%s' mknod() errno=%d %s",
+            dest_path, errno, strerror(errno)
+        );
+    }
+
+    /* copy extended attributes */
+    DCOPY_copy_xattrs(op, statbuf, dest_path);
 
     /* Encode and enqueue each chunk of the file for processing later. */
     for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
@@ -131,7 +165,8 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, \
  * libcircle operations for every object in the directory. It then places those
  * operations on the libcircle queue and returns.
  */
-void DCOPY_stat_process_dir(DCOPY_operation_t* op, \
+void DCOPY_stat_process_dir(DCOPY_operation_t* op,
+                            const struct stat64* statbuf,
                             CIRCLE_handle* handle)
 {
     DIR* curr_dir;
@@ -139,25 +174,18 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op, \
     char* newop;
 
     struct dirent* curr_ent;
-    char cmd_buf[PATH_MAX];
     char newop_path[PATH_MAX];
 
-    if(op->dest_base_appendix != NULL) {
-        sprintf(cmd_buf, "mkdir -p %s/%s/%s", \
-                DCOPY_user_opts.dest_path, \
-                op->dest_base_appendix, \
-                op->operand + op->source_base_offset);
-    }
-    else {
-        sprintf(cmd_buf, "mkdir -p %s/%s", \
-                DCOPY_user_opts.dest_path, \
-                op->operand + op->source_base_offset);
-    }
+    const char* dest_path = op->dest_full_path;
 
+    char cmd_buf[PATH_MAX];
+    sprintf(cmd_buf, "mkdir -p %s", dest_path);
     LOG(DCOPY_LOG_DBG, "Creating directory with command `%s'.", cmd_buf);
-
     FILE* p = popen(cmd_buf, "r");
     pclose(p);
+
+    /* set permissions on directory */
+    DCOPY_copy_xattrs(op, statbuf, dest_path);
 
     curr_dir = opendir(op->operand);
 

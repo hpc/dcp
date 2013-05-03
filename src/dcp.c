@@ -61,8 +61,10 @@ void DCOPY_epilogue(void)
  */
 void DCOPY_print_version()
 {
-    fprintf(stdout, "%s-%s <%s>\n", \
-            PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_URL);
+//    fprintf(stdout, "%s-%s <%s>\n", \
+//            PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_URL);
+    fprintf(stdout, "%s-%s\n", \
+            PACKAGE_NAME, PACKAGE_VERSION);
 }
 
 /**
@@ -80,6 +82,15 @@ int main(int argc, \
 {
     int c;
     int option_index = 0;
+
+    /* Initialize our processing library and related callbacks. */
+    /* This is a bit of chicken-and-egg problem, because we'd like
+     * to have our rank to filter output messages below but we might
+     * also want to set different libcircle flags based on command line
+     * options -- for now just pass in the default flags */
+    CIRCLE_global_rank = CIRCLE_init(argc, argv, CIRCLE_DEFAULT_FLAGS);
+    CIRCLE_cb_create(&DCOPY_add_objects);
+    CIRCLE_cb_process(&DCOPY_process_objects);
 
     DCOPY_debug_stream = stdout;
 
@@ -127,114 +138,139 @@ int main(int argc, \
 
             case 'c':
                 DCOPY_user_opts.conditional = true;
-                LOG(DCOPY_LOG_INFO, "Performing a conditional copy.");
+                if (CIRCLE_global_rank == 0) {
+                    LOG(DCOPY_LOG_INFO, "Performing a conditional copy.");
+                }
                 break;
 
             case 'C':
                 DCOPY_user_opts.skip_compare = true;
-                LOG(DCOPY_LOG_INFO, "Skipping the comparison stage " \
-                    "(may result in corruption).");
+                if (CIRCLE_global_rank == 0) {
+                    LOG(DCOPY_LOG_INFO, "Skipping the comparison stage " \
+                        "(may result in corruption).");
+                }
                 break;
 
             case 'd':
-
                 if(strncmp(optarg, "fatal", 5)) {
                     CIRCLE_debug = CIRCLE_LOG_FATAL;
                     DCOPY_debug_level = DCOPY_LOG_FATAL;
-                    LOG(DCOPY_LOG_INFO, "Debug level set to: fatal");
+                    if (CIRCLE_global_rank == 0) {
+                        LOG(DCOPY_LOG_INFO, "Debug level set to: fatal");
+                    }
 
                 }
                 else if(strncmp(optarg, "err", 3)) {
                     CIRCLE_debug = CIRCLE_LOG_ERR;
                     DCOPY_debug_level = DCOPY_LOG_ERR;
-                    LOG(DCOPY_LOG_INFO, "Debug level set to: errors");
+                    if (CIRCLE_global_rank == 0) {
+                        LOG(DCOPY_LOG_INFO, "Debug level set to: errors");
+                    }
 
                 }
                 else if(strncmp(optarg, "warn", 4)) {
                     CIRCLE_debug = CIRCLE_LOG_WARN;
                     DCOPY_debug_level = DCOPY_LOG_WARN;
-                    LOG(DCOPY_LOG_INFO, "Debug level set to: warnings");
+                    if (CIRCLE_global_rank == 0) {
+                        LOG(DCOPY_LOG_INFO, "Debug level set to: warnings");
+                    }
 
                 }
                 else if(strncmp(optarg, "info", 4)) {
                     CIRCLE_debug = CIRCLE_LOG_INFO;
                     DCOPY_debug_level = DCOPY_LOG_INFO;
-                    LOG(DCOPY_LOG_INFO, "Debug level set to: info");
+                    if (CIRCLE_global_rank == 0) {
+                        LOG(DCOPY_LOG_INFO, "Debug level set to: info");
+                    }
 
                 }
                 else if(strncmp(optarg, "dbg", 4)) {
                     CIRCLE_debug = CIRCLE_LOG_DBG;
                     DCOPY_debug_level = DCOPY_LOG_DBG;
-                    LOG(DCOPY_LOG_INFO, "Debug level set to: debug");
+                    if (CIRCLE_global_rank == 0) {
+                        LOG(DCOPY_LOG_INFO, "Debug level set to: debug");
+                    }
 
                 }
                 else {
-                    LOG(DCOPY_LOG_INFO, "Debug level `%s' not recognized. " \
-                        "Defaulting to `info'.", optarg);
+                    if (CIRCLE_global_rank == 0) {
+                        LOG(DCOPY_LOG_INFO, "Debug level `%s' not recognized. " \
+                            "Defaulting to `info'.", optarg);
+                    }
                 }
 
                 break;
 
             case 'f':
-
                 DCOPY_user_opts.force = true;
-                LOG(DCOPY_LOG_INFO, "Deleting destination on errors.");
+                if (CIRCLE_global_rank == 0) {
+                    LOG(DCOPY_LOG_INFO, "Deleting destination on errors.");
+                }
                 break;
 
             case 'h':
-                DCOPY_print_usage(argv);
+                if (CIRCLE_global_rank == 0) {
+                    DCOPY_print_usage(argv);
+                }
                 exit(EXIT_SUCCESS);
                 break;
 
             case 'p':
-
                 DCOPY_user_opts.preserve = true;
-                LOG(DCOPY_LOG_INFO, "Preserving file attributes.");
+                if (CIRCLE_global_rank == 0) {
+                    LOG(DCOPY_LOG_INFO, "Preserving file attributes.");
+                }
                 break;
 
             case 'R':
-
                 DCOPY_user_opts.recursive = true;
-                LOG(DCOPY_LOG_INFO, "Performing correct recursion.");
-                LOG(DCOPY_LOG_WARN, "Warning, only files and directories are implemented.");
+                if (CIRCLE_global_rank == 0) {
+                    LOG(DCOPY_LOG_INFO, "Performing correct recursion.");
+                    LOG(DCOPY_LOG_WARN, "Warning, only files and directories are implemented.");
+                }
                 break;
 
             case 'r':
-
                 DCOPY_user_opts.recursive_unspecified = true;
-                LOG(DCOPY_LOG_INFO, "Performing recursion. " \
-                    "Ignoring special files.");
+                if (CIRCLE_global_rank == 0) {
+                    LOG(DCOPY_LOG_INFO, "Performing recursion. " \
+                        "Ignoring special files.");
+                }
                 break;
 
             case 'U':
-
                 DCOPY_user_opts.reliable_filesystem = false;
-                LOG(DCOPY_LOG_INFO, "Unreliable filesystem specified. " \
-                    "Retry mode enabled.");
+                if (CIRCLE_global_rank == 0) {
+                    LOG(DCOPY_LOG_INFO, "Unreliable filesystem specified. " \
+                        "Retry mode enabled.");
+                }
                 break;
 
             case 'v':
-                DCOPY_print_version();
+                if (CIRCLE_global_rank == 0) {
+                    DCOPY_print_version();
+                }
                 exit(EXIT_SUCCESS);
                 break;
 
             case '?':
             default:
-
-                if(optopt == 'd') {
-                    DCOPY_print_usage(argv);
-                    fprintf(stderr, "Option -%c requires an argument.\n", \
-                            optopt);
-                }
-                else if(isprint(optopt)) {
-                    DCOPY_print_usage(argv);
-                    fprintf(stderr, "Unknown option `-%c'.\n", optopt);
-                }
-                else {
-                    DCOPY_print_usage(argv);
-                    fprintf(stderr,
-                            "Unknown option character `\\x%x'.\n",
-                            optopt);
+                if (CIRCLE_global_rank == 0) {
+                    if(optopt == 'd') {
+                        DCOPY_print_usage(argv);
+                        fprintf(stderr, "Option -%c requires an argument.\n", \
+                                optopt);
+                    }
+                    else if(isprint(optopt)) {
+                        DCOPY_print_usage(argv);
+                        fprintf(stderr, "Unknown option `-%c'.\n", optopt);
+                    }
+                    else {
+                        DCOPY_print_usage(argv);
+                        fprintf(stderr,
+                                "Unknown option character `\\x%x'.\n",
+                                optopt);
+                    }
                 }
 
                 exit(EXIT_FAILURE);
@@ -246,15 +282,10 @@ int main(int argc, \
     DCOPY_parse_path_args(argv, optind, argc);
 
     /* Initialize our jump table for core operations. */
-    DCOPY_jump_table[0] = DCOPY_do_treewalk;
-    DCOPY_jump_table[1] = DCOPY_do_copy;
-    DCOPY_jump_table[2] = DCOPY_do_cleanup;
-    DCOPY_jump_table[3] = DCOPY_do_compare;
-
-    /* Initialize our processing library and related callbacks. */
-    CIRCLE_global_rank = CIRCLE_init(argc, argv, CIRCLE_DEFAULT_FLAGS);
-    CIRCLE_cb_create(&DCOPY_add_objects);
-    CIRCLE_cb_process(&DCOPY_process_objects);
+    DCOPY_jump_table[TREEWALK] = DCOPY_do_treewalk;
+    DCOPY_jump_table[COPY]     = DCOPY_do_copy;
+    DCOPY_jump_table[CLEANUP]  = DCOPY_do_cleanup;
+    DCOPY_jump_table[COMPARE]  = DCOPY_do_compare;
 
     /* Set the log level for the processing library. */
     CIRCLE_enable_logging(CIRCLE_debug);

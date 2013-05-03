@@ -5,18 +5,19 @@
 
 #include "common.h"
 
-bool DCOPY_is_directory(char* path);
-
-bool DCOPY_is_regular_file(char* path);
-
 void DCOPY_do_treewalk(DCOPY_operation_t* op, \
                        CIRCLE_handle* handle);
 
-void DCOPY_stat_process_file(DCOPY_operation_t* op, \
-                             off64_t file_size, \
+void DCOPY_stat_process_link(DCOPY_operation_t* op, \
+                             const struct stat64* statbuf,
                              CIRCLE_handle* handle);
 
-void DCOPY_stat_process_dir(DCOPY_operation_t* op, \
+void DCOPY_stat_process_file(DCOPY_operation_t* op, \
+                             const struct stat64* statbuf,
+                             CIRCLE_handle* handle);
+
+void DCOPY_stat_process_dir(DCOPY_operation_t* op,
+                            const struct stat64* statbuf,
                             CIRCLE_handle* handle);
 
 #endif /* __DCP_TREEWALK_H */

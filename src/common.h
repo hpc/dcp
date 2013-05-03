@@ -41,7 +41,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
+#include <utime.h>
+#include <attr/xattr.h>
 
 /*
  * This is the size of each chunk to be processed (in bytes).
@@ -104,6 +107,9 @@ typedef struct {
      * case).
      */
     char* dest_base_appendix;
+
+    /* the full dest path */
+    char* dest_full_path;
 } DCOPY_operation_t;
 
 typedef struct {
@@ -127,6 +133,8 @@ typedef struct {
 } DCOPY_options_t;
 
 DCOPY_operation_t* DCOPY_decode_operation(char* op);
+
+void DCOPY_opt_free(DCOPY_operation_t** opt);
 
 char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
                              int64_t chunk, \
@@ -154,5 +162,29 @@ int DCOPY_open_input_fd(DCOPY_operation_t* op, \
 FILE* DCOPY_open_output_stream(DCOPY_operation_t* op);
 
 int DCOPY_open_output_fd(DCOPY_operation_t* op);
+
+void DCOPY_copy_xattrs(
+    DCOPY_operation_t* op,
+    const struct stat64* statbuf,
+    const char* dest_path
+);
+
+void DCOPY_copy_ownership(
+    DCOPY_operation_t* op,
+    const struct stat64* statbuf,
+    const char* dest_path
+);
+
+void DCOPY_copy_permissions(
+    DCOPY_operation_t* op,
+    const struct stat64* statbuf,
+    const char* dest_path
+);
+
+void DCOPY_copy_timestamps(
+    DCOPY_operation_t* op,
+    const struct stat64* statbuf,
+    const char* dest_path
+);
 
 #endif /* __COMMON_H_ */
