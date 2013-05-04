@@ -54,6 +54,24 @@ void DCOPY_epilogue(void)
     LOG(DCOPY_LOG_INFO, "Transfer rate is `%.0lf' bytes per second " \
         "(`%.3" PRId64 "' bytes in `%.3lf' seconds).", \
         rate, DCOPY_statistics.total_bytes_copied, rel_time);
+
+    /* free each source path and array of source path pointers */
+    if (DCOPY_user_opts.src_path != NULL) {
+        int i;
+        for (i = 0; i < DCOPY_user_opts.num_src_paths; i++) {
+            free(DCOPY_user_opts.src_path[i]);
+        }
+        free(DCOPY_user_opts.src_path);
+        DCOPY_user_opts.src_path = NULL;
+    }
+
+    /* free destination path */
+    if (DCOPY_user_opts.dest_path != NULL) {
+        free(DCOPY_user_opts.dest_path);
+        DCOPY_user_opts.dest_path = NULL;
+    }
+
+    return;
 }
 
 /**
@@ -83,6 +101,8 @@ int main(int argc, \
 {
     int c;
     int option_index = 0;
+
+    MPI_Init(&argc, &argv);
 
     /* Initialize our processing library and related callbacks. */
     /* This is a bit of chicken-and-egg problem, because we'd like

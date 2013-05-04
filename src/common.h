@@ -37,6 +37,8 @@
 /* Common logging. */
 #include "log.h"
 
+#include "mpi.h"
+
 #include <libcircle.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -122,6 +124,7 @@ typedef struct {
 
 typedef struct {
     char*  dest_path;
+    int    num_src_paths;
     char** src_path;
     bool   conditional;
     bool   skip_compare;

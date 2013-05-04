@@ -24,9 +24,7 @@ static bool DCOPY_is_directory(char* path)
     struct stat64 statbuf;
 
     if(lstat64(path, &statbuf) < 0) {
-        /*
-                LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a directory. %s", path, strerror(errno));
-        */
+        /* LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a directory. %s", path, strerror(errno)); */
         return false;
     }
 
@@ -41,13 +39,95 @@ static bool DCOPY_is_regular_file(char* path)
     struct stat64 statbuf;
 
     if(lstat64(path, &statbuf) < 0) {
-        /*
-                LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a file. %s", path, strerror(errno));
-        */
+        /* LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a file. %s", path, strerror(errno)); */
         return false;
     }
 
     return (S_ISREG(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode)));
+}
+
+/**
+ * Determine if the destination path is a file or directory.
+ *
+ * It does this by first checking to see if an object is actually at the
+ * destination path. If an object isn't already at the destination path, we
+ * examine the source path(s) to determine the type of what the destination
+ * path will be.
+ *
+ * @return true if the destination should be a directory, false otherwise.
+ */
+static bool DCOPY_dest_is_dir(void)
+{
+    bool dest_path_is_dir = false;
+
+    /*
+     * First we need to determine if the last argument is a file or a directory.
+     * We first attempt to see if the last argument already exists on disk. If it
+     * doesn't, we then look at the sources to see if we can determine what the
+     * last argument should be.
+     */
+    if(DCOPY_is_directory(DCOPY_user_opts.dest_path)) {
+        dest_path_is_dir = true;
+    }
+    else if(DCOPY_is_regular_file(DCOPY_user_opts.dest_path)) {
+        dest_path_is_dir = false;
+    }
+    else {
+        /*
+         * If recursion is turned on, we can have a file or a directory as the
+         * destination.
+         */
+        if(DCOPY_user_opts.recursive || DCOPY_user_opts.recursive_unspecified) {
+            /*
+             * We can determine what the destination should be by looking at the
+             * source arguments. If the source arguments contain a single file,
+             * then the destination must be a single file. We prune out the
+             * impossible combinations later on.
+             */
+            dest_path_is_dir = true;
+
+            int i;
+            for (i = 0; i < DCOPY_user_opts.num_src_paths; i++) {
+                char* src_path = DCOPY_user_opts.src_path[i];
+                if(DCOPY_is_regular_file(src_path)) {
+                    dest_path_is_dir = false;
+                }
+            }
+        }
+        else {
+            /*
+             * Since recursion is turned off, there's only potential to create a
+             * file at the destination.
+             */
+            dest_path_is_dir = false;
+        }
+    }
+
+    return dest_path_is_dir;
+}
+
+/**
+ * Determine the count of source paths specified by the user.
+ *
+ * @return the number of source paths specified by the user.
+ */
+static uint32_t DCOPY_source_file_count(void)
+{
+    uint32_t source_file_count = 0;
+
+    int i;
+    for (i = 0; i < DCOPY_user_opts.num_src_paths; i++) {
+        char* src_path = DCOPY_user_opts.src_path[i];
+        if(access(src_path, R_OK) < 0) {
+            LOG(DCOPY_LOG_ERR, "Could not access source file at `%s'. %s", \
+                src_path, strerror(errno));
+        } else {
+            source_file_count++;
+        }
+
+    }
+
+    return source_file_count;
 }
 
 /**
@@ -100,15 +180,36 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
          * must be a file.
          */
         if(number_of_source_files == 1 && DCOPY_is_regular_file(DCOPY_user_opts.src_path[0])) {
-
             /* Make a copy of the dest path so we can run dirname on it. */
-            opts_dest_path_dirname = (char*) malloc(sizeof(char) * PATH_MAX);
-            sprintf(opts_dest_path_dirname, "%s", DCOPY_user_opts.dest_path);
+            size_t dest_size = sizeof(char) * PATH_MAX;
+            opts_dest_path_dirname = (char*) malloc(dest_size);
+            if (opts_dest_path_dirname == NULL) {
+                LOG(DCOPY_LOG_DBG, "Failed to allocate %llu bytes for dest path.", (long long unsigned) dest_size);
+                DCOPY_abort(EXIT_FAILURE);
+            }
+
+            int dest_written = snprintf(opts_dest_path_dirname, dest_size, "%s", DCOPY_user_opts.dest_path);
+            if (dest_written < 0 || (size_t)(dest_written) > dest_size-1) {
+                LOG(DCOPY_LOG_DBG, "Destination path too long.");
+                DCOPY_abort(EXIT_FAILURE);
+            }
+
             opts_dest_path_dirname = dirname(opts_dest_path_dirname);
 
             /* Make a copy of the src path so we can run dirname on it. */
+            size_t src_size = sizeof(char) * PATH_MAX;
             src_path_dirname = (char*) malloc(sizeof(char) * PATH_MAX);
-            sprintf(src_path_dirname, "%s", DCOPY_user_opts.src_path[0]);
+            if (src_path_dirname == NULL) {
+                LOG(DCOPY_LOG_DBG, "Failed to allocate %llu bytes for dest path.", (long long unsigned) src_size);
+                DCOPY_abort(EXIT_FAILURE);
+            }
+
+            int src_written = snprintf(src_path_dirname, src_size, "%s", DCOPY_user_opts.src_path[0]);
+            if (src_written < 0 || (size_t)(src_written) > src_size-1) {
+                LOG(DCOPY_LOG_DBG, "Source path too long.");
+                DCOPY_abort(EXIT_FAILURE);
+            }
+
             src_path_dirname = dirname(src_path_dirname);
 
             /* LOG(DCOPY_LOG_DBG, "Enqueueing only a single source path `%s'.", DCOPY_user_opts.src_path[0]); */
@@ -116,6 +217,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
                                               (uint16_t)strlen(src_path_dirname), NULL, 0);
 
             handle->enqueue(op);
+            free(op);
 
             free(opts_dest_path_dirname);
             free(src_path_dirname);
@@ -125,16 +227,13 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
              * Determine if we're trying to copy one or more directories into
              * a file.
              */
-            char** bad_src_path = DCOPY_user_opts.src_path;
-
-            while(*bad_src_path != NULL) {
-                if(DCOPY_is_directory(*(bad_src_path))) {
+            int i;
+            for (i = 0; i < DCOPY_user_opts.num_src_paths; i++) {
+                char* src_path = DCOPY_user_opts.src_path[i];
+                if(DCOPY_is_directory(src_path)) {
                     LOG(DCOPY_LOG_ERR, "Copying a directory into a file is not supported.");
-
                     DCOPY_abort(EXIT_FAILURE);
                 }
-
-                bad_src_path++;
             }
 
             /*
@@ -144,18 +243,23 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
             LOG(DCOPY_LOG_ERR, "Copying several files into a single file is not supported.");
             DCOPY_abort(EXIT_FAILURE);
         }
-
     }
     else if(dest_is_dir) {
         LOG(DCOPY_LOG_DBG, "Infered that the destination is a directory.");
         bool dest_already_exists = DCOPY_is_directory(DCOPY_user_opts.dest_path);
-        char** src_path = DCOPY_user_opts.src_path;
 
-        while(*src_path != NULL) {
-            LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", *(src_path));
+        int i;
+        for (i = 0; i < DCOPY_user_opts.num_src_paths; i++) {
+            char* src_path = DCOPY_user_opts.src_path[i];
+            LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", src_path);
 
-            char* src_path_basename_tmp = (char*) malloc(sizeof(char) * PATH_MAX);
             char* src_path_basename = NULL;
+            size_t src_len = strlen(src_path) + 1;
+            char* src_path_basename_tmp = (char*) malloc(src_len);
+            if (src_path_basename_tmp == NULL) {
+                LOG(DCOPY_LOG_ERR, "Failed to allocate tmp for src_path_basename.");
+                DCOPY_abort(EXIT_FAILURE);
+            }
 
             /*
              * If the destination directory already exists, we want to place
@@ -165,19 +269,16 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
              */
             if(dest_already_exists && !DCOPY_user_opts.conditional) {
                 /* Make a copy of the src path so we can run basename on it. */
-                strncpy(src_path_basename_tmp, *src_path, PATH_MAX);
+                strncpy(src_path_basename_tmp, src_path, src_len);
                 src_path_basename = basename(src_path_basename_tmp);
             }
 
-            char* op = DCOPY_encode_operation(TREEWALK, 0, *(src_path), \
-                                              (uint16_t)strlen(*(src_path)), \
+            char* op = DCOPY_encode_operation(TREEWALK, 0, src_path, \
+                                              (uint16_t)(src_len-1), \
                                               src_path_basename, 0);
             handle->enqueue(op);
             free(src_path_basename_tmp);
-
-            src_path++;
         }
-
     }
     else {
         /*
@@ -191,166 +292,123 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
     /* TODO: print mode we're using to DBG. */
 }
 
-/**
- * Determine if the destination path is a file or directory.
- *
- * It does this by first checking to see if an object is actually at the
- * destination path. If an object isn't already at the destination path, we
- * examine the source path(s) to determine the type of what the destination
- * path will be.
- *
- * @return true if the destination should be a directory, false otherwise.
- */
-bool DCOPY_dest_is_dir(void)
+/* rank 0 passes in pointer to string to be bcast,
+ * all others pass in pointer to string which will
+ * be newly allocated and filled in with copy */
+static void DCOPY_bcast_str(char* send, char** recv)
 {
-    bool dest_path_is_dir = false;
-
-    /*
-     * First we need to determine if the last argument is a file or a directory.
-     * We first attempt to see if the last argument already exists on disk. If it
-     * doesn't, we then look at the sources to see if we can determine what the
-     * last argument should be.
-     */
-    if(DCOPY_is_directory(DCOPY_user_opts.dest_path)) {
-        dest_path_is_dir = true;
-
-    }
-    else if(DCOPY_is_regular_file(DCOPY_user_opts.dest_path)) {
-        dest_path_is_dir = false;
-
-    }
-    else {
-        /*
-         * If recursion is turned on, we can have a file or a directory as the
-         * destination.
-         */
-        if(DCOPY_user_opts.recursive || DCOPY_user_opts.recursive_unspecified) {
-            /*
-             * We can determine what the destination should be by looking at the
-             * source arguments. If the source arguments contain a single file,
-             * then the destination must be a single file. We prune out the
-             * impossible combinations later on.
-             */
-            dest_path_is_dir = true;
-
-            char** src_path = DCOPY_user_opts.src_path;
-
-            while(*src_path != NULL) {
-                if(DCOPY_is_regular_file(*(src_path))) {
-                    dest_path_is_dir = false;
-                }
-
-                src_path++;
-            }
-
-        }
-        else {
-            /*
-             * Since recursion is turned off, there's only potential to create a
-             * file at the destination.
-             */
-            dest_path_is_dir = false;
+    /* broadcast number of characters in string */
+    int len = 0;
+    if (CIRCLE_global_rank == 0) {
+        if (send != NULL) {
+            len = (int) (strlen(send) + 1);
         }
     }
+    MPI_Bcast(&len, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    return dest_path_is_dir;
-}
-
-/**
- * Determine the count of source paths specified by the user.
- *
- * @return the number of source paths specified by the user.
- */
-uint32_t DCOPY_source_file_count(void)
-{
-    uint32_t source_file_count = 0;
-    char** src_path = DCOPY_user_opts.src_path;
-
-    while(*src_path != NULL) {
-        if(access(*src_path, R_OK) < 0) {
-            if (CIRCLE_global_rank == 0) {
-                LOG(DCOPY_LOG_ERR, "Could not access source file at `%s'. %s", \
-                    *src_path, strerror(errno));
-            }
+    /* if the string is non-zero bytes, allocate space and bcast it */
+    if (len > 0) {
+        /* allocate space to receive string */
+        *recv = (char*) malloc((size_t)len);
+        if (*recv == NULL) {
+            LOG(DCOPY_LOG_ERR, "Failed to allocate string of %d bytes", len);
+            DCOPY_abort(EXIT_FAILURE);
         }
-        else {
-            source_file_count++;
-            src_path++;
+
+        /* bcast the string */
+        if (CIRCLE_global_rank == 0) {
+            strcpy(*recv, send);
         }
+        MPI_Bcast(*recv, len, MPI_CHAR, 0, MPI_COMM_WORLD);
+    } else {
+        /* root passed in NULL value, so set output to NULL */
+        *recv = NULL;
     }
 
-    return source_file_count;
+    return;
 }
 
 /**
  * Convert the destination to an absolute path and check sanity.
  */
-void DCOPY_parse_dest_path(char* path)
+static void DCOPY_parse_dest_path(char* path)
 {
-    char dest_base[PATH_MAX];
-    char file_name_buf[PATH_MAX];
-    char norm_path[PATH_MAX];
-    char* file_name;
-
-    DCOPY_user_opts.dest_path = realpath(path, NULL);
-
-    /*
-     * If realpath doesn't work, we might be working with a file.
-     */
-    if(!DCOPY_user_opts.dest_path) {
-        /* Since this might be a file, lets get the absolute base path. */
-        strncpy(dest_base, path, PATH_MAX);
-        DCOPY_user_opts.dest_path = dirname(dest_base);
-        DCOPY_user_opts.dest_path = realpath(DCOPY_user_opts.dest_path, NULL);
-
-        /* If realpath didn't work this time, we're really in trouble. */
-        if(!DCOPY_user_opts.dest_path) {
-            if (CIRCLE_global_rank == 0) {
+    /* identify destination path */
+    char dest_path[PATH_MAX];
+    if (CIRCLE_global_rank == 0) {
+        if (realpath(path, dest_path) == NULL) {
+            /*
+             * If realpath doesn't work, we might be working with a file.
+             */
+            /* Since this might be a file, lets get the absolute base path. */
+            char dest_base[PATH_MAX];
+            strncpy(dest_base, path, PATH_MAX);
+            char* dir_path = dirname(dest_base);
+            if (realpath(dir_path, dest_path) == NULL) {
+                /* If realpath didn't work this time, we're really in trouble. */
                 LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
                     path, strerror(errno));
+                DCOPY_abort(EXIT_FAILURE);
             }
-            DCOPY_abort(EXIT_FAILURE);
+
+            /* Now, lets get the base name. */
+            char file_name_buf[PATH_MAX];
+            strncpy(file_name_buf, path, PATH_MAX);
+            char* file_name = basename(file_name_buf);
+
+            /* Finally, lets put everything together. */
+            char norm_path[PATH_MAX];
+            sprintf(norm_path, "%s/%s", dir_path, file_name);
+            strncpy(dest_path, norm_path, PATH_MAX);
         }
-
-        /* Now, lets get the base name. */
-        strncpy(file_name_buf, path, PATH_MAX);
-        file_name = basename(file_name_buf);
-
-        /* Finally, lets put everything together. */
-        sprintf(norm_path, "%s/%s", DCOPY_user_opts.dest_path, file_name);
-        strncpy(DCOPY_user_opts.dest_path, norm_path, PATH_MAX);
+        /* LOG(DCOPY_LOG_DBG, "Using destination path `%s'.", dest_path); */
     }
 
-    /* LOG(DCOPY_LOG_DBG, "Using destination path `%s'.", DCOPY_user_opts.dest_path); */
+    /* copy dest path to user opts structure */
+    DCOPY_bcast_str(dest_path, &DCOPY_user_opts.dest_path);
+
+    return;
 }
 
 /**
  * Grab the source paths.
  */
-void DCOPY_parse_src_paths(char** argv, \
+static void DCOPY_parse_src_paths(char** argv, \
                            int last_arg_index, \
                            int optind_local)
 {
-    int opt_index = 0;
-
-    /*
-     * Loop over each source path and check sanity.
-     */
-    DCOPY_user_opts.src_path = (char**) malloc((MAX_ARGS + 1) * sizeof(void*));
-    memset(DCOPY_user_opts.src_path, 0, (MAX_ARGS + 1) * sizeof(char));
-
-    for(opt_index = optind_local; opt_index < last_arg_index; opt_index++) {
-        DCOPY_user_opts.src_path[opt_index - optind_local] = realpath(argv[opt_index], NULL);
-
-        if(!DCOPY_user_opts.dest_path) {
-            if (CIRCLE_global_rank == 0) {
-                LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
-                    argv[opt_index], strerror(errno));
-            }
-
+    /* allocate memory to store pointers to source paths */
+    DCOPY_user_opts.src_path = NULL;
+    DCOPY_user_opts.num_src_paths = last_arg_index - optind_local;
+    if (DCOPY_user_opts.num_src_paths > 0) {
+        size_t bytes = (size_t)(DCOPY_user_opts.num_src_paths) * sizeof(char*);
+        DCOPY_user_opts.src_path = (char**) malloc(bytes);
+        if (DCOPY_user_opts.src_path == NULL) {
+            LOG(DCOPY_LOG_ERR, "Failed to %llu bytes memory for source paths", (long long unsigned)bytes);
             DCOPY_abort(EXIT_FAILURE);
         }
     }
+
+    /* Loop over each source path and check sanity. */
+    int opt_index;
+    for(opt_index = optind_local; opt_index < last_arg_index; opt_index++) {
+        /* rank 0 resolves the path */
+        char src_path[PATH_MAX];
+        if (CIRCLE_global_rank == 0) {
+            char* path = argv[opt_index];
+            if (realpath(path, src_path) == NULL) {
+                LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
+                    path, strerror(errno));
+                DCOPY_abort(EXIT_FAILURE);
+            }
+        }
+
+        /* bcast resolved path to all tasks */
+        int idx = opt_index - optind_local;
+        DCOPY_bcast_str(src_path, &(DCOPY_user_opts.src_path[idx]));
+    }
+
+    return;
 }
 
 /**

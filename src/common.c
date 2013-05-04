@@ -591,14 +591,15 @@ void DCOPY_copy_timestamps(
 /* called by single process upon detection of a problem */
 void DCOPY_abort(int code)
 {
-    // MPI_Abort(MPI_COMM_WORLD, code);
+    MPI_Abort(MPI_COMM_WORLD, code);
     exit(code);
 }
 
 /* called globally by all procs to exit */
 void DCOPY_exit(int code)
 {
-    // MPI_Finalize();
+    /* CIRCLE_finalize or will this hang? */
+    MPI_Finalize();
     exit(code);
 }
 
