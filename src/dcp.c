@@ -30,6 +30,14 @@ extern DCOPY_statistics_t DCOPY_statistics;
 extern void (*DCOPY_jump_table[5])(DCOPY_operation_t* op, \
                                    CIRCLE_handle* handle);
 
+static int64_t DCOPY_sum_int64(int64_t val)
+{
+    long long val_ull = (long long) val;
+    long long sum;
+    MPI_Allreduce(&val_ull, &sum, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+    return (int64_t) sum;
+}
+
 /**
  * Print out information on the results of the file copy.
  */
@@ -38,22 +46,30 @@ void DCOPY_epilogue(void)
     double rel_time = DCOPY_statistics.wtime_ended - \
                       DCOPY_statistics.wtime_started;
     double rate = (double)DCOPY_statistics.total_bytes_copied / rel_time;
-
-    char starttime_str[256];
-    char endtime_str[256];
-
-    struct tm* localstart = localtime(&(DCOPY_statistics.time_started));
-    struct tm* localend = localtime(&(DCOPY_statistics.time_ended));
-
-    strftime(starttime_str, 256, "%b-%d-%Y,%H:%M:%S", localstart);
-    strftime(endtime_str, 256, "%b-%d-%Y,%H:%M:%S", localend);
-
-    LOG(DCOPY_LOG_INFO, "Filecopy run started at `%s'.", starttime_str);
-    LOG(DCOPY_LOG_INFO, "Filecopy run completed at `%s'.", endtime_str);
-
-    LOG(DCOPY_LOG_INFO, "Transfer rate is `%.0lf' bytes per second " \
+    LOG(DCOPY_LOG_INFO, "Rank %d: Transfer rate is `%.0lf' bytes per second " \
         "(`%.3" PRId64 "' bytes in `%.3lf' seconds).", \
-        rate, DCOPY_statistics.total_bytes_copied, rel_time);
+        CIRCLE_global_rank, rate, DCOPY_statistics.total_bytes_copied, rel_time);
+
+    int64_t agg_copied = DCOPY_sum_int64(DCOPY_statistics.total_bytes_copied);
+    double agg_rate = (double)agg_copied / rel_time;
+
+    if (CIRCLE_global_rank == 0) {
+        char starttime_str[256];
+        char endtime_str[256];
+
+        struct tm* localstart = localtime(&(DCOPY_statistics.time_started));
+        struct tm* localend = localtime(&(DCOPY_statistics.time_ended));
+
+        strftime(starttime_str, 256, "%b-%d-%Y,%H:%M:%S", localstart);
+        strftime(endtime_str, 256, "%b-%d-%Y,%H:%M:%S", localend);
+
+        LOG(DCOPY_LOG_INFO, "Filecopy run started at `%s'.", starttime_str);
+        LOG(DCOPY_LOG_INFO, "Filecopy run completed at `%s'.", endtime_str);
+
+        LOG(DCOPY_LOG_INFO, "Aggregate transfer rate is `%.0lf' bytes per second " \
+            "(`%.3" PRId64 "' bytes in `%.3lf' seconds).", \
+            agg_rate, agg_copied, rel_time);
+    }
 
     /* free each source path and array of source path pointers */
     if (DCOPY_user_opts.src_path != NULL) {
