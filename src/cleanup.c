@@ -31,9 +31,10 @@ bool DCOPY_set_preserve_permissions(DCOPY_operation_t* op, \
                                     const struct stat64* statbuf,
                                     const char* dest_path)
 {
-    if (chmod(dest_path, statbuf->st_mode) != 0) {
+    if(chmod(dest_path, statbuf->st_mode) != 0) {
         LOG(DCOPY_LOG_ERR, "Failed to change permissions on %s chmod() errno=%d %s.", dest_path, errno, strerror(errno));
     }
+
     /* TODO: preserve permissions, requeue to cleanup if fail and unreliable. */
 
     return false;
@@ -50,9 +51,11 @@ bool DCOPY_set_preserve_timestamps(DCOPY_operation_t* op, \
     struct utimbuf times;
     times.actime  = statbuf->st_atime;
     times.modtime = statbuf->st_mtime;
-    if (utime(dest_path, &times) != 0) {
+
+    if(utime(dest_path, &times) != 0) {
         LOG(DCOPY_LOG_ERR, "Failed to change timestamps on %s utime() errno=%d %s.", dest_path, errno, strerror(errno));
     }
+
     /* TODO: preserve timestamps, requeue to cleanup if fail and unreliable. */
 
     return false;
@@ -65,9 +68,10 @@ bool DCOPY_set_preserve_ownership(DCOPY_operation_t* op, \
                                   const char* dest_path)
 {
     /* note that we use lchown to change ownership of link itself, it path happens to be a link */
-    if (lchown(dest_path, statbuf->st_uid, statbuf->st_gid) != 0) {
+    if(lchown(dest_path, statbuf->st_uid, statbuf->st_gid) != 0) {
         LOG(DCOPY_LOG_ERR, "Failed to change ownership on %s chown() errno=%d %s.", dest_path, errno, strerror(errno));
     }
+
     /* TODO: preserve ownership, requeue to cleanup if fail and unreliable. */
 
     return false;
@@ -133,6 +137,7 @@ void DCOPY_do_cleanup(DCOPY_operation_t* op, \
             /* build destination object name */
             char dest_path_recursive[PATH_MAX];
             char dest_path_file_to_file[PATH_MAX];
+
             if(op->dest_base_appendix == NULL) {
                 sprintf(dest_path_recursive, "%s/%s", \
                         DCOPY_user_opts.dest_path, \
@@ -153,11 +158,13 @@ void DCOPY_do_cleanup(DCOPY_operation_t* op, \
 
             /* get stat of source object */
             struct stat64 statbuf;
+
             if(lstat64(op->operand, &statbuf) == 0) {
                 ownership_preserved = DCOPY_set_preserve_ownership(op, handle, &statbuf, dest_path_recursive);
                 DCOPY_set_preserve_permissions(op, handle, ownership_preserved, &statbuf, dest_path_recursive);
                 DCOPY_set_preserve_timestamps(op, handle, &statbuf, dest_path_recursive);
-            } else {
+            }
+            else {
                 /*
                         LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a directory. %s", path, strerror(errno));
                 */

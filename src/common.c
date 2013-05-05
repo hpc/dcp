@@ -123,6 +123,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
     /* build destination object name */
     char dest_path_recursive[PATH_MAX];
     char dest_path_file_to_file[PATH_MAX];
+
     if(ret->dest_base_appendix == NULL) {
         sprintf(dest_path_recursive, "%s/%s", \
                 DCOPY_user_opts.dest_path, \
@@ -140,7 +141,9 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
                 DCOPY_user_opts.dest_path, \
                 ret->dest_base_appendix);
     }
+
     ret->dest_full_path = strdup(dest_path_recursive);
+
     if(ret->dest_full_path == NULL) {
         LOG(DCOPY_LOG_ERR, "Failed to allocate full destination path.");
         DCOPY_abort(EXIT_FAILURE);
@@ -153,10 +156,11 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
  * free associated memory and set pointer to NULL */
 void DCOPY_opt_free(DCOPY_operation_t** optptr)
 {
-    if (optptr != NULL) {
+    if(optptr != NULL) {
         /* get pointer to operation_t struct */
         DCOPY_operation_t* opt = (*optptr);
-        if (opt != NULL) {
+
+        if(opt != NULL) {
             /* free memory and then the object itself */
             free(opt->dest_full_path);
             free(opt);
@@ -165,6 +169,7 @@ void DCOPY_opt_free(DCOPY_operation_t** optptr)
         /* set caller's pointer to NULL to catch bugs */
         *optptr = NULL;
     }
+
     return;
 }
 
@@ -412,96 +417,115 @@ void DCOPY_copy_xattrs(
     /* get list, if list_size == ERANGE, try again */
     ssize_t list_size;
     int got_list = 0;
-    while (! got_list) {
+
+    while(! got_list) {
         list_size = llistxattr(src_path, list, list_bufsize);
-        if (list_size < 0) {
-            if (errno == ERANGE) {
+
+        if(list_size < 0) {
+            if(errno == ERANGE) {
                 /* buffer is too small, allocate size specified in list_size */
-                if (list != NULL) {
+                if(list != NULL) {
                     free(list);
                     list = NULL;
                     list_bufsize = 0;
                 }
+
                 list_bufsize = (size_t) list_size;
-                if (list_bufsize > 0) {
+
+                if(list_bufsize > 0) {
                     list = (char*) malloc(list_bufsize);
-                    if (list == NULL) {
+
+                    if(list == NULL) {
                         /* ERROR */
                     }
                 }
-            } else if (errno == ENOTSUP) {
+            }
+            else if(errno == ENOTSUP) {
                 /* this is common enough that we silently ignore it */
                 break;
-            } else {
+            }
+            else {
                 /* this is a real error */
                 LOG(DCOPY_LOG_ERR, "Failed to get list of extended attributes on %s llistxattr() errno=%d %s.",
                     src_path, errno, strerror(errno)
-                );
+                   );
                 break;
             }
-        } else if (list_size > 0) {
+        }
+        else if(list_size > 0) {
             /* got our list */
             got_list = 1;
-        } else {
+        }
+        else {
             /* list_size == 0, symlinks seem to return this */
             break;
         }
     }
 
     /* iterate over list and copy values to new object lgetxattr/lsetxattr */
-    if (got_list) {
+    if(got_list) {
         char* name = list;
-        while (name < list + list_size) {
+
+        while(name < list + list_size) {
             /* allocate a string to hold value */
             size_t val_bufsize = 0;
             void* val = NULL;
 
             /* lookup value for name */
             int got_val = 0;
-            while (! got_val) {
+
+            while(! got_val) {
                 ssize_t val_size = lgetxattr(src_path, name, val, val_bufsize);
-                if (val_size < 0) {
-                    if (errno == ERANGE) {
+
+                if(val_size < 0) {
+                    if(errno == ERANGE) {
                         /* buffer is too small, allocate a buffer for val_size */
-                        if (val != NULL) {
+                        if(val != NULL) {
                             free(val);
                             val = NULL;
                             val_bufsize = 0;
                         }
+
                         val_bufsize = (size_t) val_size;
-                        if (val_bufsize > 0) {
+
+                        if(val_bufsize > 0) {
                             val = malloc(val_bufsize);
-                            if (val == NULL) {
+
+                            if(val == NULL) {
                                 /* ERROR */
                             }
                         }
-                    } else if (errno == ENOATTR) {
+                    }
+                    else if(errno == ENOATTR) {
                         /* source object no longer has this attribute,
                          * maybe deleted out from under us */
                         break;
-                    } else {
+                    }
+                    else {
                         LOG(DCOPY_LOG_ERR, "Failed to get value for name=%s on %s llistxattr() errno=%d %s.",
-                           name, src_path, errno, strerror(errno)
-                        );
+                            name, src_path, errno, strerror(errno)
+                           );
                         break;
                     }
-                } else {
+                }
+                else {
                     got_val = 1;
                 }
             }
 
             /* set attribute on destination object */
-            if (got_val) {
+            if(got_val) {
                 int setrc = lsetxattr(dest_path, name, val, val_bufsize, 0);
-                if (setrc != 0) {
+
+                if(setrc != 0) {
                     LOG(DCOPY_LOG_ERR, "Failed to set value for name=%s on %s llistxattr() errno=%d %s.",
-                       name, dest_path, errno, strerror(errno)
-                    );
+                        name, dest_path, errno, strerror(errno)
+                       );
                 }
             }
 
             /* free value string */
-            if (val != NULL) {
+            if(val != NULL) {
                 free(val);
                 val = NULL;
                 val_bufsize = 0;
@@ -514,7 +538,7 @@ void DCOPY_copy_xattrs(
     }
 
     /* free space allocated for list */
-    if (list != NULL) {
+    if(list != NULL) {
         free(list);
         list = NULL;
         list_bufsize = 0;
@@ -529,10 +553,10 @@ void DCOPY_copy_ownership(
     const char* dest_path)
 {
     /* note that we use lchown to change ownership of link itself, it path happens to be a link */
-    if (lchown(dest_path, statbuf->st_uid, statbuf->st_gid) != 0) {
+    if(lchown(dest_path, statbuf->st_uid, statbuf->st_gid) != 0) {
         LOG(DCOPY_LOG_ERR, "Failed to change ownership on %s lchown() errno=%d %s.",
             dest_path, errno, strerror(errno)
-        );
+           );
     }
 
     return;
@@ -544,11 +568,11 @@ void DCOPY_copy_permissions(
     const char* dest_path)
 {
     /* change mode */
-    if (! S_ISLNK(statbuf->st_mode)) {
-        if (chmod(dest_path, statbuf->st_mode) != 0) {
+    if(! S_ISLNK(statbuf->st_mode)) {
+        if(chmod(dest_path, statbuf->st_mode) != 0) {
             LOG(DCOPY_LOG_ERR, "Failed to change permissions on %s chmod() errno=%d %s.",
                 dest_path, errno, strerror(errno)
-            );
+               );
         }
     }
 
@@ -563,25 +587,28 @@ void DCOPY_copy_timestamps(
     /* TODO: see stat-time.h and get_stat_atime/mtime/ctime to read sub-second times,
      * and use utimensat to set sub-second times */
     /* as last step, change timestamps */
-    if (! S_ISLNK(statbuf->st_mode)) {
+    if(! S_ISLNK(statbuf->st_mode)) {
         struct utimbuf times;
         times.actime  = statbuf->st_atime;
         times.modtime = statbuf->st_mtime;
-        if (utime(dest_path, &times) != 0) {
+
+        if(utime(dest_path, &times) != 0) {
             LOG(DCOPY_LOG_ERR, "Failed to change timestamps on %s utime() errno=%d %s.",
-              dest_path, errno, strerror(errno)
-            );
+                dest_path, errno, strerror(errno)
+               );
         }
-    } else {
+    }
+    else {
         struct timeval tv[2];
         tv[0].tv_sec  = statbuf->st_atime;
         tv[0].tv_usec = 0;
         tv[1].tv_sec  = statbuf->st_mtime;
         tv[1].tv_usec = 0;
-        if (lutimes(dest_path, tv) != 0) {
+
+        if(lutimes(dest_path, tv) != 0) {
             LOG(DCOPY_LOG_ERR, "Failed to change timestamps on %s utime() errno=%d %s.",
-              dest_path, errno, strerror(errno)
-            );
+                dest_path, errno, strerror(errno)
+               );
         }
     }
 
