@@ -60,7 +60,7 @@
  * FIXME: Is this description correct?
  *
  * This is the size of the buffer used to copy from the fd page cache to L1
- * cache before the buffer is coped back down into the destination fd page
+ * cache before the buffer is copied back down into the destination fd page
  * cache.
  */
 #define FD_PAGE_CACHE_SIZE (32768)
