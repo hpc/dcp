@@ -37,7 +37,7 @@
 /* Common logging. */
 #include "log.h"
 
-#include "mpi.h"
+#include <mpi.h>
 
 #include <libcircle.h>
 #include <stdbool.h>
