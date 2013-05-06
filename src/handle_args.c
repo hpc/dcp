@@ -1,4 +1,11 @@
-/* See the file "COPYING" for the full license governing this code. */
+/*
+ * See the file "COPYING" for the full license governing this code.
+ *
+ * For an overview of how argument handling was originally designed in dcp,
+ * please see the blog post at:
+ *
+ * <http://www.bringhurst.org/2012/12/16/file-copy-tool-argument-handling.html>
+ */
 
 #include "handle_args.h"
 #include "treewalk.h"
@@ -109,7 +116,8 @@ static bool DCOPY_dest_is_dir(void)
 }
 
 /**
- * Determine the count of source paths specified by the user.
+ * Check if the current user has access to all source paths, then determine
+ * the count of all source paths specified by the user.
  *
  * @return the number of source paths specified by the user.
  */
@@ -141,6 +149,9 @@ static uint32_t DCOPY_source_file_count(void)
  * We start off with all of the following potential options in mind and prune
  * them until we figure out what situation we have.
  *
+ * Libcircle only calls this function from rank 0, so there's no need to check
+ * the current rank here.
+ *
  * Source must overwrite destination.
  *   - Single file to single file
  *
@@ -161,9 +172,6 @@ static uint32_t DCOPY_source_file_count(void)
  */
 void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 {
-    /* libcircle only calls this from rank 0,
-     * so no need to guard with rank */
-
     bool dest_is_dir = DCOPY_dest_is_dir();
     bool dest_is_file  = !dest_is_dir;
 
@@ -305,45 +313,65 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
     /* TODO: print mode we're using to DBG. */
 }
 
-/* rank 0 passes in pointer to string to be bcast,
- * all others pass in pointer to string which will
- * be newly allocated and filled in with copy */
-static void DCOPY_bcast_str(char* send, char** recv)
+/**
+ * Rank 0 passes in pointer to string to be bcast -- all others pass in a
+ * pointer to a string which will be newly allocated and filled in with copy.
+ */
+static bool DCOPY_bcast_str(char* send, char** recv)
 {
-    /* broadcast number of characters in string */
+    /* First, we broadcast the number of characters in the send string. */
     int len = 0;
+
+    if(recv == NULL) {
+        LOG(DCOPY_LOG_ERR, "Attempted to receive a broadcast into invalid memory. " \
+                "Please report this as a bug!");
+        return false;
+    }
 
     if(CIRCLE_global_rank == 0) {
         if(send != NULL) {
             len = (int)(strlen(send) + 1);
+
+            if(len > CIRCLE_MAX_STRING_LEN) {
+                LOG(DCOPY_LOG_ERR, "Attempted to send a larger string (`%d') than what "
+                        "libcircle supports. Please report this as a bug!", len);
+                return false;
+            }
         }
     }
 
-    MPI_Bcast(&len, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if(MPI_SUCCESS != MPI_Bcast(&len, 1, MPI_INT, 0, MPI_COMM_WORLD)) {
+        LOG(DCOPY_LOG_DBG, "While preparing to copy, broadcasting the length of a string over MPI failed.");
+        return false;
+    }
 
-    /* if the string is non-zero bytes, allocate space and bcast it */
+    /* If the string is non-zero bytes, allocate space and bcast it. */
     if(len > 0) {
         /* allocate space to receive string */
         *recv = (char*) malloc((size_t)len);
 
         if(*recv == NULL) {
             LOG(DCOPY_LOG_ERR, "Failed to allocate string of %d bytes", len);
-            DCOPY_abort(EXIT_FAILURE);
+            return false;
         }
 
-        /* bcast the string */
+        /* Broadcast the string. */
         if(CIRCLE_global_rank == 0) {
-            strcpy(*recv, send);
+            strncpy(*recv, send, CIRCLE_MAX_STRING_LEN);
         }
 
-        MPI_Bcast(*recv, len, MPI_CHAR, 0, MPI_COMM_WORLD);
+        if(MPI_SUCCESS != MPI_Bcast(*recv, len, MPI_CHAR, 0, MPI_COMM_WORLD)) {
+            LOG(DCOPY_LOG_DBG, "While preparing to copy, broadcasting the length of a string over MPI failed.");
+            return false;
+        }
+
     }
     else {
-        /* root passed in NULL value, so set output to NULL */
+        /* Root passed in a NULL value, so set the output to NULL. */
         *recv = NULL;
     }
 
-    return;
+    return true;
 }
 
 /**
@@ -358,8 +386,8 @@ static void DCOPY_parse_dest_path(char* path)
         if(realpath(path, dest_path) == NULL) {
             /*
              * If realpath doesn't work, we might be working with a file.
+             * Since this might be a file, lets get the absolute base path.
              */
-            /* Since this might be a file, lets get the absolute base path. */
             char dest_base[PATH_MAX];
             strncpy(dest_base, path, PATH_MAX);
             char* dir_path = dirname(dest_base);
@@ -385,8 +413,13 @@ static void DCOPY_parse_dest_path(char* path)
         /* LOG(DCOPY_LOG_DBG, "Using destination path `%s'.", dest_path); */
     }
 
-    /* copy dest path to user opts structure */
-    DCOPY_bcast_str(dest_path, &DCOPY_user_opts.dest_path);
+    /* Copy the destination path to user opts structure on each rank. */
+    if(!DCOPY_bcast_str(dest_path, &DCOPY_user_opts.dest_path)) {
+        LOG(DCOPY_LOG_ERR, "Could not send the proper destination path to other nodes (`%s'). " \
+            "The MPI broadcast operation failed. %s", \
+            path, strerror(errno));
+        DCOPY_abort(EXIT_FAILURE);
+    }
 
     return;
 }
@@ -431,7 +464,13 @@ static void DCOPY_parse_src_paths(char** argv, \
 
         /* bcast resolved path to all tasks */
         int idx = opt_index - optind_local;
-        DCOPY_bcast_str(src_path, &(DCOPY_user_opts.src_path[idx]));
+
+        if(!DCOPY_bcast_str(src_path, &(DCOPY_user_opts.src_path[idx]))) {
+            LOG(DCOPY_LOG_ERR, "Could not send the proper source paths to other nodes (`%s'). " \
+                "The MPI broadcast operation failed. %s", \
+                src_path, strerror(errno));
+            DCOPY_abort(EXIT_FAILURE);
+        }
     }
 
     return;
