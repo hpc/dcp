@@ -97,10 +97,7 @@ void DCOPY_epilogue(void)
  */
 void DCOPY_print_version()
 {
-    //    fprintf(stdout, "%s-%s <%s>\n", \
-    //            PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_URL);
-    fprintf(stdout, "%s-%s\n", \
-            PACKAGE_NAME, PACKAGE_VERSION);
+    fprintf(stdout, "%s-%s\n", PACKAGE_NAME, PACKAGE_VERSION);
 }
 
 /**
