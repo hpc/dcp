@@ -427,7 +427,6 @@ void DCOPY_copy_xattrs(
                 if(list != NULL) {
                     free(list);
                     list = NULL;
-                    list_bufsize = 0;
                 }
 
                 list_bufsize = (size_t) list_size;
@@ -483,7 +482,6 @@ void DCOPY_copy_xattrs(
                         if(val != NULL) {
                             free(val);
                             val = NULL;
-                            val_bufsize = 0;
                         }
 
                         val_bufsize = (size_t) val_size;
@@ -528,7 +526,6 @@ void DCOPY_copy_xattrs(
             if(val != NULL) {
                 free(val);
                 val = NULL;
-                val_bufsize = 0;
             }
 
             /* jump to next name */
@@ -541,7 +538,6 @@ void DCOPY_copy_xattrs(
     if(list != NULL) {
         free(list);
         list = NULL;
-        list_bufsize = 0;
     }
 
     return;
