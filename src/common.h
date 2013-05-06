@@ -191,7 +191,7 @@ void DCOPY_copy_timestamps(
 );
 
 /* called by single process upon detection of a problem */
-void DCOPY_abort(int code);
+void DCOPY_abort(int code) __attribute__((noreturn));
 
 /* called globally by all procs to exit */
 void DCOPY_exit(int code);
