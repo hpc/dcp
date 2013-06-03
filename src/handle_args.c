@@ -357,7 +357,7 @@ static bool DCOPY_bcast_str(char* send, char** recv)
 
         /* Broadcast the string. */
         if(CIRCLE_global_rank == 0) {
-            strncpy(*recv, send, CIRCLE_MAX_STRING_LEN);
+            strncpy(*recv, send, len);
         }
 
         if(MPI_SUCCESS != MPI_Bcast(*recv, len, MPI_CHAR, 0, MPI_COMM_WORLD)) {
