@@ -28,6 +28,21 @@
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
 
+/* given path, return level within directory tree */
+static int compute_depth(const char* path)
+{
+    /* TODO: ignore trailing '/' */
+
+    char* c;
+    int depth = 0;
+    for (c = path; *c != NULL; c++) {
+        if (*c == '/') {
+            depth++;
+        }
+    }
+    return depth;
+}
+
 /**
  * This is the entry point for the "file stat stage". This function is called
  * from the jump table required for the main libcircle callbacks.
@@ -42,6 +57,23 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, \
         DCOPY_retry_failed_operation(TREEWALK, handle, op);
         return;
     }
+
+    /* create new element to record file path and stat info */
+    DCOPY_stat_elem_t* elem = (DCOPY_stat_elem_t*) malloc(sizeof(DCOPY_stat_elem_t));
+    elem->file = strdup(op->dest_full_path);
+    elem->sb = (struct stat64*) malloc(sizeof(struct stat64));
+    elem->depth = compute_depth(op->dest_full_path);
+    memcpy(elem->sb, &statbuf, sizeof(struct stat64));
+    elem->next = NULL;
+
+    /* append element to tail of linked list */
+    if (DCOPY_list_head == NULL) {
+        DCOPY_list_head = elem;
+    }
+    if (DCOPY_list_tail != NULL) {
+        DCOPY_list_tail->next = elem;
+    }
+    DCOPY_list_tail = elem;
 
     if(S_ISDIR(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
         /* LOG(DCOPY_LOG_DBG, "Stat operation found a directory at `%s'.", op->operand); */
@@ -92,11 +124,12 @@ void DCOPY_stat_process_link(DCOPY_operation_t* op, \
         return;
     }
 
-    /* set permissions on object */
-    DCOPY_copy_xattrs(op, statbuf, dest_path);
-    DCOPY_copy_ownership(op, statbuf, dest_path);
-    DCOPY_copy_permissions(op, statbuf, dest_path);
-    DCOPY_copy_timestamps(op, statbuf, dest_path);
+    /* set permissions on link */
+    if (DCOPY_user_opts.preserve) {
+        DCOPY_copy_xattrs(op, statbuf, dest_path);
+        DCOPY_copy_ownership(op, statbuf, dest_path);
+        DCOPY_copy_permissions(op, statbuf, dest_path);
+    }
 
     return;
 }
@@ -138,8 +171,12 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, \
         );
     }
 
-    /* copy extended attributes */
-    DCOPY_copy_xattrs(op, statbuf, dest_path);
+    /* copy extended attributes, important to do this first before
+     * writing data because some attributes tell file system how to
+     * stripe data, e.g., Lustre */
+    if (DCOPY_user_opts.preserve) {
+        DCOPY_copy_xattrs(op, statbuf, dest_path);
+    }
 
     /* Encode and enqueue each chunk of the file for processing later. */
     for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
@@ -184,8 +221,10 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op,
     FILE* p = popen(cmd_buf, "r");
     pclose(p);
 
-    /* set permissions on directory */
-    DCOPY_copy_xattrs(op, statbuf, dest_path);
+    /* copy extended attributes on directory */
+    if (DCOPY_user_opts.preserve) {
+        DCOPY_copy_xattrs(op, statbuf, dest_path);
+    }
 
     curr_dir = opendir(op->operand);
 

@@ -430,6 +430,11 @@ void DCOPY_parse_path_args(char** argv, \
         DCOPY_exit(EXIT_FAILURE);
     }
 
+    /* TODO: we use realpath below, which is nice since it takes out
+     * ".", "..", symlinks, and adds the absolute path, however, it
+     * fails if the file/directory does not already exist, which is
+     * often the case for dest path. */
+
     /* Grab the destination path. */
     DCOPY_parse_dest_path(argv[last_arg_index]);
 

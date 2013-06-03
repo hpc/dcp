@@ -26,6 +26,10 @@ FILE* DCOPY_debug_stream;
 /** What rank the current process is. */
 int CIRCLE_global_rank;
 
+/* variables to track linked list */
+DCOPY_stat_elem_t* DCOPY_list_head = NULL;
+DCOPY_stat_elem_t* DCOPY_list_tail = NULL;
+
 /** A table of function pointers used for core operation. */
 void (*DCOPY_jump_table[5])(DCOPY_operation_t* op, CIRCLE_handle* handle);
 
@@ -120,26 +124,30 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
     ret->operand            = strtok(NULL, ":");
     ret->dest_base_appendix = strtok(NULL, ":");
 
+    const char* last_component = ret->operand + ret->source_base_offset + 1;
+
     /* build destination object name */
     char dest_path_recursive[PATH_MAX];
-    char dest_path_file_to_file[PATH_MAX];
     if(ret->dest_base_appendix == NULL) {
-        sprintf(dest_path_recursive, "%s/%s", \
-                DCOPY_user_opts.dest_path, \
-                ret->operand + ret->source_base_offset + 1);
-
-        strncpy(dest_path_file_to_file, DCOPY_user_opts.dest_path, PATH_MAX);
+        if (*last_component == '\0') {
+            sprintf(dest_path_recursive, "%s",
+                DCOPY_user_opts.dest_path);
+        } else {
+            sprintf(dest_path_recursive, "%s/%s",
+                DCOPY_user_opts.dest_path, last_component);
+        }
     }
     else {
-        sprintf(dest_path_recursive, "%s/%s/%s", \
-                DCOPY_user_opts.dest_path, \
-                ret->dest_base_appendix, \
-                ret->operand + ret->source_base_offset + 1);
-
-        sprintf(dest_path_file_to_file, "%s/%s", \
-                DCOPY_user_opts.dest_path, \
-                ret->dest_base_appendix);
+        if (*last_component == '\0') {
+            sprintf(dest_path_recursive, "%s/%s",
+                DCOPY_user_opts.dest_path, ret->dest_base_appendix);
+        } else {
+            sprintf(dest_path_recursive, "%s/%s/%s",
+                DCOPY_user_opts.dest_path, ret->dest_base_appendix, last_component);
+        }
     }
+
+    /* record destination path in operation descriptor */
     ret->dest_full_path = strdup(dest_path_recursive);
     if(ret->dest_full_path == NULL) {
         LOG(DCOPY_LOG_ERR, "Failed to allocate full destination path.");
@@ -556,7 +564,6 @@ void DCOPY_copy_permissions(
 }
 
 void DCOPY_copy_timestamps(
-    DCOPY_operation_t* op,
     const struct stat64* statbuf,
     const char* dest_path)
 {

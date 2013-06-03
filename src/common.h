@@ -135,6 +135,17 @@ typedef struct {
     bool   reliable_filesystem;
 } DCOPY_options_t;
 
+/* struct for elements in linked list */
+typedef struct list_elem {
+  char* file;             /* file name */
+  struct stat64* sb;      /* stat info */
+  int depth;
+  struct list_elem* next; /* pointer to next item */
+} DCOPY_stat_elem_t;
+
+extern DCOPY_stat_elem_t* DCOPY_list_head;
+extern DCOPY_stat_elem_t* DCOPY_list_tail;
+
 DCOPY_operation_t* DCOPY_decode_operation(char* op);
 
 void DCOPY_opt_free(DCOPY_operation_t** opt);
@@ -185,7 +196,6 @@ void DCOPY_copy_permissions(
 );
 
 void DCOPY_copy_timestamps(
-    DCOPY_operation_t* op,
     const struct stat64* statbuf,
     const char* dest_path
 );

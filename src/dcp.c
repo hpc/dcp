@@ -30,6 +30,44 @@ extern DCOPY_statistics_t DCOPY_statistics;
 extern void (*DCOPY_jump_table[5])(DCOPY_operation_t* op, \
                                    CIRCLE_handle* handle);
 
+/* iterate through linked list of files and set timestamps,
+ * starting from deepest level and working backwards */
+static void DCOPY_set_timestamps()
+{
+    const DCOPY_stat_elem_t* elem;
+
+    /* get max depth across all procs */
+    int max_depth;
+    int depth = -1;
+    elem = DCOPY_list_head;
+    while (elem != NULL) {
+        if (elem->depth > depth) {
+            depth = elem->depth;
+        }
+        elem = elem->next;
+    }
+    MPI_Allreduce(&depth, &max_depth, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+
+    /* now set timestamps on files starting from deepest level */
+    for (depth = max_depth; depth > 0; depth--) {
+        /* cycle through our list of files and set timestamps
+         * for each one at this level */
+        elem = DCOPY_list_head;
+        while (elem != NULL) {
+            if (elem->depth == depth) {
+                DCOPY_copy_timestamps(elem->sb, elem->file);
+            }
+            elem = elem->next;
+        }
+        
+        /* wait for all procs to finish before we start
+         * with files at next level */
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    return;
+}
+
 static int64_t DCOPY_sum_int64(int64_t val)
 {
     long long val_ull = (long long) val;
@@ -318,6 +356,10 @@ int main(int argc, \
     /** Parse the source and destination paths. */
     DCOPY_parse_path_args(argv, optind, argc);
 
+    /* initialize linked list of stat objects */
+    DCOPY_list_head  = NULL;
+    DCOPY_list_tail  = NULL;
+
     /* Initialize our jump table for core operations. */
     DCOPY_jump_table[TREEWALK] = DCOPY_do_treewalk;
     DCOPY_jump_table[COPY]     = DCOPY_do_copy;
@@ -340,6 +382,21 @@ int main(int argc, \
 
     /* Let the processing library cleanup. */
     CIRCLE_finalize();
+
+    /* set timestamps if needed */
+    if (DCOPY_user_opts.preserve) {
+        DCOPY_set_timestamps();
+    }
+
+    /* free list of stat objects */
+    DCOPY_stat_elem_t* current = DCOPY_list_head;
+    while (current != NULL) {
+        DCOPY_stat_elem_t* next = current->next;
+        free(current->file);
+        free(current->sb);
+        free(current);
+        current = next;
+    }
 
     /* Print the results to the user. */
     DCOPY_epilogue();
