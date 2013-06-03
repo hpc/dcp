@@ -32,10 +32,6 @@ PKG_CHECK_MODULES([libcircle], libcircle)
 #LT_INIT
 AC_PROG_LIBTOOL
 
-#include <lustre/lustre_user.h>
-#include <lustre/ll_fiemap.h>
-
-
 # Checks for headers.
 AC_CHECK_HEADERS([fcntl.h inttypes.h limits.h stdint.h stdlib.h string.h \
                   unistd.h lustre/lustre_user.h lustre/ll_fiemap.h \
@@ -49,16 +45,38 @@ AC_TYPE_SSIZE_T
 AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT64_T
+AC_TYPE_INT64_T
+
+# Check for library functions and headers.
+AC_CHECK_FUNCS([memset realpath strerror lchown strdup utime])
+AC_CHECK_HEADERS([sys/time.h utime.h])
 
 # Check for largefile support.
 AC_SYS_LARGEFILE
 AC_FUNC_FSEEKO
 AC_FUNC_LSTAT_FOLLOWS_SLASHED_SYMLINK
 AC_FUNC_MALLOC
-AC_CHECK_FUNCS([memset realpath strerror])
 AC_CHECK_FUNC(lseek64, , AC_MSG_ERROR([This OS does not appear to support lseek64(3).]))
 AC_CHECK_FUNC(fstat64, , AC_MSG_ERROR([This OS does not appear to support fstat64(3).]))
 AC_CHECK_FUNC(stat64, , AC_MSG_ERROR([This OS does not appear to support stat64(3).]))
+
+# Check for MPI
+LX_FIND_MPI
+test "x$have_C_mpi" = xyes || \
+    AC_MSG_ERROR([You should check to see if MPI is setup properly.])
+AM_CONDITIONAL(HAVE_MPI, [test "x$have_C_mpi" = xyes])
+
+# Check for xattr support.
+X_AC_DCOPY_XATTRS
+
+echo
+echo "========================================================"
+echo "==           dcp: final build configuration           =="
+echo "========================================================"
+echo "  MPI ............................................ $have_C_mpi"
+echo "  XATTRs ......................................... $x_ac_dcopy_xattr"
+echo "========================================================"
+echo
 
 AC_CONFIG_FILES([Makefile              \
                  src/Makefile          \

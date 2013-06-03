@@ -37,7 +37,7 @@
 /* Common logging. */
 #include "log.h"
 
-#include "mpi.h"
+#include <mpi.h>
 
 #include <libcircle.h>
 #include <stdbool.h>
@@ -60,7 +60,7 @@
  * FIXME: Is this description correct?
  *
  * This is the size of the buffer used to copy from the fd page cache to L1
- * cache before the buffer is coped back down into the destination fd page
+ * cache before the buffer is copied back down into the destination fd page
  * cache.
  */
 #define FD_PAGE_CACHE_SIZE (32768)
@@ -201,7 +201,7 @@ void DCOPY_copy_timestamps(
 );
 
 /* called by single process upon detection of a problem */
-void DCOPY_abort(int code);
+void DCOPY_abort(int code) __attribute__((noreturn));
 
 /* called globally by all procs to exit */
 void DCOPY_exit(int code);

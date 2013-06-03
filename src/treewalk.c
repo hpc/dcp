@@ -105,22 +105,25 @@ void DCOPY_stat_process_link(DCOPY_operation_t* op, \
     const char* dest_path = op->dest_full_path;
 
     /* read link and terminate string with NUL character */
-    char path[PATH_MAX+1];
-    ssize_t rc = readlink(src_path, path, sizeof(path)-1);
-    if (rc < 0) {
+    char path[PATH_MAX + 1];
+    ssize_t rc = readlink(src_path, path, sizeof(path) - 1);
+
+    if(rc < 0) {
         LOG(DCOPY_LOG_ERR, "Failed to read link `%s' readlink() errno=%d %s",
             src_path, errno, strerror(errno)
-        );
+           );
         return;
     }
+
     path[rc] = '\0';
 
     /* create new link */
     int symrc = symlink(path, dest_path);
-    if (symrc < 0) {
+
+    if(symrc < 0) {
         LOG(DCOPY_LOG_ERR, "Failed to create link `%s' symlink() errno=%d %s",
             dest_path, errno, strerror(errno)
-        );
+           );
         return;
     }
 
@@ -162,13 +165,15 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, \
     dev_t dev;
     memset(&dev, 0, sizeof(dev_t));
     int mknod_rc = mknod(dest_path, S_IRWXU | S_IFREG, dev);
-    if (mknod_rc < 0) {
-        if (errno == EEXIST) {
+
+    if(mknod_rc < 0) {
+        if(errno == EEXIST) {
             /* TODO: should we unlink and mknod again in this case? */
         }
+
         LOG(DCOPY_LOG_DBG, "File `%s' mknod() errno=%d %s",
             dest_path, errno, strerror(errno)
-        );
+           );
     }
 
     /* copy extended attributes, important to do this first before
