@@ -161,17 +161,62 @@ two functions are defined, libcircle is told to begin computation.
 
 The first function callback that libcircle requires is the "create" function.
 This function creates a seed item that will be placed on the internal queue.
+
 For dcp, this seed item is the root of the directory tree which will be
-recursively copied.
+recursively copied. The seed item is placed on the queue through a "handle"
+which is passed in by libcircle to the callback defined by dcp. The handle
+defines two helper functions to modify the queue (enqueue and dequeue).
 
-The second function callback that libcircle requires is the "process" function.
+The second function, which has the same signature as the create callback (the
+handle is passed to it as well), is called the "process" callback. In dcp, the
+process callback works by using the handle to dequeue a work item. Then, the
+work item is decoded to determine what type of action (also known as a "stage")
+is performed.
 
-TODO: Keep describing.
+For example, if the command line argument specified was a directory, and the
+argument was a directory, the work item which is dequeued will contain a work
+item which holds the path to this directory (enqueued by the create function).
+The job of the process callback in this case is to queue the child paths of the
+specified directory and return.
 
-Distributed Recursive Copy Design
-=================================
-TODO: Describe how libcircle is used here.
+Libcircle will call the process callback in a loop on every node until the
+global queue (the collection of internal queues) is completely empty.
 
-Stage Design
-============
-TODO: Describe the four stages here.
+There are four basic actions that may be performed when the process callback is
+called by libcircle. The action that is performed is based on the "stage" value
+that is encoded in the work operation.
+
+The stages that a copy operation will follow is the following:
+
+````
+    treewalk -> copy -> compare -> cleanup
+````
+
+A copy operation will start by enqueueing the command line arguments into a 
+work operation (struct DCOPY_operation_t) using the create callback. Then,
+libcircle will handle calling the process callback once the queue is non-empty.
+
+The process callback will then perform the "treewalk" stage which will create
+additional work operations. It will enqueue child objects in the case where the
+work operation is a directory. In the case of a file in the work operation, it
+will chunk up the file and create work operations (with a copy stage directive)
+for each chunk of the file.
+
+The copy operation works with the same basic concepts. It will dequeue
+operations which have a copy stage flag specified in the work operation struct.
+The copy operation will seek the filesystem and perform the actual copy. Once
+the chunk is copied, a new work operation is created which is then enqueued so
+the compare operation can work on the chunk.
+
+The compare operation is very similiar to the copy operation, however it simply
+compares the chunk written to disk with the contents of the original file.
+
+During the treewalk stage, the first chunk of each file encountered also has a
+work operation for the cleanup stage placed on the queue. Only the first chunk
+of the file has a cleanup stage work operation encoded because the cleanup
+stage is only for operations which should be performed once on each file (such
+as metadata operations and truncation).
+
+Once the files have passed the cleanup and compare stages without being
+reenqueued, the global queue will empty out and libcircle will recognize this
+and terminate.
