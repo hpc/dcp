@@ -1,10 +1,20 @@
 Contributor Guidelines for dcp
 ------------------------------
+This document describes the basic design of dcp and how changes to dcp may
+be shared with the community.
+
+Continuous Integration
+======================
+If you have trouble building dcp, please check the continuous integration
+status at <https://travis-ci.org/hpc/dcp>. The build and all tests must be
+passing before comprehensive testing for a release is initiated.
 
 Submitting code
 ===============
 When submitting code to dcp, please fork the project and create a new branch
 named to reflect your changes before submitting a new pull request.
+
+The master repository for dcp is located at <http://github.com/hpc/dcp>.
 
 To produce a clean changeset, we ask that you perform an interactive rebase
 before submitting a pull request to make commits easier to understand.
@@ -12,7 +22,8 @@ before submitting a pull request to make commits easier to understand.
 Clean, documented, and understandable code is required. At a minimum, we ask
 that you follow the options listed in astyle.options in the top directory of
 the repository. New code should not generate any warnings from newer versions
-of clang or gcc.
+of clang or gcc. If possible, effort should be made to fix warnings in
+existing code.
 
 Command Line Option Handling Design
 ===================================
@@ -123,7 +134,39 @@ for dcp.
 
 Workload Distribution Core Design
 =================================
-TODO: Describe libcircle here.
+Note: Please see <http://doi.acm.org/10.1145/2388996.2389114> for a formal
+description of how dcp distributes work.
+
+Conceptually, the workload distribution in dcp can be described with two
+queues. One queue is a global queue that spans all nodes in the distributed
+system. The other queue is a queue which is local to each process (MPI rank).
+
+From this point on, we define terminology to reference these queues. The global
+queue will simply be called the "queue" and the local queue will be called the
+"internal queue". The phrase "internal queue" is used throughout the code base
+in reference to the local queue.
+
+The global queue is simply an abstraction on top of the collection of internal
+queues. It only exists as a collection of internal queues.
+
+The library known as "libcircle" is used to manage the movement of work items
+between internal queues across all nodes. It will handle balancing the number
+of work items in the internal queues across all processes (MPI ranks).
+
+Libcircle is also used to determine when the internal queues on all nodes are
+empty so the program knows when to exit.
+
+The API to libcircle requires two function callbacks to be defined. Once these
+two functions are defined, libcircle is told to begin computation.
+
+The first function callback that libcircle requires is the "create" function.
+This function creates a seed item that will be placed on the internal queue.
+For dcp, this seed item is the root of the directory tree which will be
+recursively copied.
+
+The second function callback that libcircle requires is the "process" function.
+
+TODO: Keep describing.
 
 Distributed Recursive Copy Design
 =================================
@@ -132,9 +175,3 @@ TODO: Describe how libcircle is used here.
 Stage Design
 ============
 TODO: Describe the four stages here.
-
-Continuous Integration
-======================
-If you have trouble building dcp, please check the continuous integration
-status at <https://travis-ci.org/hpc/dcp>. The build and all tests must be
-passing before comprehensive testing for a release is initiated.
