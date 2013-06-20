@@ -58,6 +58,15 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, \
         return;
     }
 
+    /* first check that we handle this file type */
+    if(! S_ISDIR(statbuf.st_mode) &&
+       ! S_ISREG(statbuf.st_mode) &&
+       ! S_ISLNK(statbuf.st_mode))
+    {
+        LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type %x at `%s'.", statbuf.st_mode, op->operand);
+        return;
+    }
+
     /* create new element to record file path and stat info */
     DCOPY_stat_elem_t* elem = (DCOPY_stat_elem_t*) malloc(sizeof(DCOPY_stat_elem_t));
     elem->file = strdup(op->dest_full_path);
@@ -75,11 +84,11 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, \
     }
     DCOPY_list_tail = elem;
 
-    if(S_ISDIR(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
+    if(S_ISDIR(statbuf.st_mode)) {
         /* LOG(DCOPY_LOG_DBG, "Stat operation found a directory at `%s'.", op->operand); */
         DCOPY_stat_process_dir(op, &statbuf, handle);
     }
-    else if(S_ISREG(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode))) {
+    else if(S_ISREG(statbuf.st_mode)) {
         /* LOG(DCOPY_LOG_DBG, "Stat operation found a file at `%s'.", op->operand); */
         DCOPY_stat_process_file(op, &statbuf, handle);
     }
@@ -88,7 +97,7 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, \
         DCOPY_stat_process_link(op, &statbuf, handle);
     }
     else {
-        LOG(DCOPY_LOG_DBG, "Encountered an unsupported file type at `%s'.", op->operand);
+        LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type %x at `%s'.", statbuf.st_mode, op->operand);
         DCOPY_retry_failed_operation(TREEWALK, handle, op);
         return;
     }
