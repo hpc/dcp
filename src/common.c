@@ -68,27 +68,57 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
                              char* dest_base_appendix, \
                              int64_t file_size)
 {
-    char* op = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
-    int op_size = 0;
-
-    op_size += sprintf(op, "%" PRId64 ":%" PRId64 ":%" PRIu16 ":%d:%s", \
-                       file_size, chunk, source_base_offset, code, operand);
-
-    if(dest_base_appendix) {
-        op_size += sprintf(op + op_size, ":%s", dest_base_appendix);
-    }
-
     /*
      * FIXME: This requires architecture changes in libcircle -- a redesign of
      * internal queue data structures to allow void* types as queue elements
      * instead of null terminated strings. Ignoring this problem by commenting
      * out this check will likely cause silent data corruption.
      */
-    if((op_size + 1) > CIRCLE_MAX_STRING_LEN) {
+
+    /* allocate memory to encode op */
+    char* op = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
+
+    /* set pointer to next byte to write to and record number of bytes left */
+    char* ptr = op;
+    size_t remaining = CIRCLE_MAX_STRING_LEN;
+
+    /* encode operation and get number of bytes required to do so */
+    size_t len = strlen(operand);
+    int written = snprintf(ptr, remaining, "%" PRId64 ":%" PRId64 ":%" PRIu16 ":%d:%d:%s", \
+                       file_size, chunk, source_base_offset, code, (int)len, operand);
+
+    /* snprintf returns number of bytes written excluding terminating NUL,
+     * so if we're equal, we'd write one byte too many */
+    if(written >= remaining) {
         LOG(DCOPY_LOG_DBG, \
             "Exceeded libcircle message size due to large file path. " \
             "This is a known bug in dcp that we intend to fix. Sorry!");
         DCOPY_abort(EXIT_FAILURE);
+    }
+
+    /* update pointer and number of bytes remaining,
+     * note that we don't include the terminating NUL in this case */
+    ptr += written;
+    remaining -= written;
+
+    /* tack on destination base appendix if we have one */
+    if(dest_base_appendix) {
+        len = strlen(dest_base_appendix);
+        written = snprintf(ptr, remaining, ":%d:%s", (int)len, dest_base_appendix);
+
+        /* snprintf returns number of bytes written excluding terminating NUL,
+         * so if we're equal, we'd write one byte too many */
+        if(written >= remaining) {
+            LOG(DCOPY_LOG_DBG, \
+                "Exceeded libcircle message size due to large file path. " \
+                "This is a known bug in dcp that we intend to fix. Sorry!");
+            DCOPY_abort(EXIT_FAILURE);
+        }
+
+        /* update pointer and number of bytes remaining,
+         * note that we don't include the terminating NUL in this case */
+        ptr += written;
+        remaining -= written;
     }
 
     return op;
@@ -116,35 +146,81 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
         DCOPY_abort(EXIT_FAILURE);
     }
 
-    if(sscanf(strtok(NULL, ":"), "%d", (int*) & (ret->code)) != 1) {
+    if(sscanf(strtok(NULL, ":"), "%d", (int*) &(ret->code)) != 1) {
         LOG(DCOPY_LOG_ERR, "Could not decode stage code attribute.");
         DCOPY_abort(EXIT_FAILURE);
     }
 
-    ret->operand            = strtok(NULL, ":");
-    ret->dest_base_appendix = strtok(NULL, ":");
+    /* get number of characters in operand string */
+    int len;
+    char* str = strtok(NULL, ":");
+    if(sscanf(str, "%d", &len) != 1) {
+        LOG(DCOPY_LOG_ERR, "Could not decode operand string length.");
+        DCOPY_abort(EXIT_FAILURE);
+    }
+
+    /* skip over digits and trailing ':' to get pointer to operand */
+    char* operand = str + strlen(str) + 1;
+    ret->operand = operand;
+
+    /* if operand ends with ':', then the dest_base_appendix is next */
+    int dest_base_exists = 0;
+    if(operand[len] == ':') {
+        dest_base_exists = 1;
+    }
+
+    /* NUL-terminate the operand string */
+    operand[len] = '\0';
+
+    ret->dest_base_appendix = NULL;
+    if(dest_base_exists) {
+        /* get pointer to first character of dest_base_len */
+        str = operand + len + 1;
+
+        /* tokenize length and scan it in */
+        str = strtok(str, ":");
+        if(sscanf(str, "%d", &len) != 1) {
+            LOG(DCOPY_LOG_ERR, "Could not decode destination base appendix string length.");
+            DCOPY_abort(EXIT_FAILURE);
+        }
+
+        /* skip over digits and trailing ':' to get pointer to
+         * destination base, and NUL-terminate the string */
+        char* base = str + strlen(str) + 1;
+        ret->dest_base_appendix = base;
+        base[len] = '\0';
+    }
 
     const char* last_component = ret->operand + ret->source_base_offset + 1;
 
+    /* TODO: ensure we don't overrun dest_path_recursive buffer */
+
     /* build destination object name */
+    int written;
     char dest_path_recursive[PATH_MAX];
     if(ret->dest_base_appendix == NULL) {
         if (*last_component == '\0') {
-            sprintf(dest_path_recursive, "%s",
-                DCOPY_user_opts.dest_path);
+            written = snprintf(dest_path_recursive, sizeof(dest_path_recursive),
+                "%s", DCOPY_user_opts.dest_path);
         } else {
-            sprintf(dest_path_recursive, "%s/%s",
-                DCOPY_user_opts.dest_path, last_component);
+            written = snprintf(dest_path_recursive, sizeof(dest_path_recursive),
+                "%s/%s", DCOPY_user_opts.dest_path, last_component);
         }
     }
     else {
         if (*last_component == '\0') {
-            sprintf(dest_path_recursive, "%s/%s",
-                DCOPY_user_opts.dest_path, ret->dest_base_appendix);
+            written = snprintf(dest_path_recursive, sizeof(dest_path_recursive),
+                "%s/%s", DCOPY_user_opts.dest_path, ret->dest_base_appendix);
         } else {
-            sprintf(dest_path_recursive, "%s/%s/%s",
-                DCOPY_user_opts.dest_path, ret->dest_base_appendix, last_component);
+            written = snprintf(dest_path_recursive, sizeof(dest_path_recursive),
+                "%s/%s/%s", DCOPY_user_opts.dest_path, ret->dest_base_appendix, last_component);
         }
+    }
+
+    /* fail if we would have overwritten the buffer */
+    if(written >= sizeof(dest_path_recursive)) {
+        LOG(DCOPY_LOG_ERR, "Destination path buffer too small.");
+        DCOPY_abort(EXIT_FAILURE);
     }
 
     /* record destination path in operation descriptor */
