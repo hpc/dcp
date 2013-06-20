@@ -14,6 +14,7 @@ typedef enum {
     DCOPY_LOG_DBG   = 5
 } DCOPY_loglevel;
 
+//                fprintf(DCOPY_debug_stream,"[%s] ", timestamp);
 #define LOG(level, ...) do {  \
         if (level <= DCOPY_debug_level) { \
             char timestamp[256]; \
@@ -26,7 +27,9 @@ typedef enum {
                         timestamp, CIRCLE_global_rank, \
                         __FILE__, __LINE__); \
             } else { \
-                fprintf(DCOPY_debug_stream,"[%s] ", timestamp); \
+                fprintf(DCOPY_debug_stream,"[%s] [%d] [%s:%d] ", \
+                        timestamp, CIRCLE_global_rank, \
+                        __FILE__, __LINE__); \
             } \
             fprintf(DCOPY_debug_stream, __VA_ARGS__); \
             fprintf(DCOPY_debug_stream, "\n"); \
