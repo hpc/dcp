@@ -220,3 +220,14 @@ as metadata operations and truncation).
 Once the files have passed the cleanup and compare stages without being
 reenqueued, the global queue will empty out and libcircle will recognize this
 and terminate.
+
+A Note on Fault Tolerance
+=========================
+Due to the completely asynchronous nature of ring termination, liveness in the
+event of node failure is impossible (FLP impossibility, see Fisher et al.). If
+you intend to introduce fault tolerance to dcp, it can only be accomplished by
+replacing the ring termination with a partially asynchronous termination
+process before replication of stage messages is attempted. Since a partially
+asynchronous algorithm will incur a high message cost, I (jonb) recommend
+using a pipelined Paxos, such as Ring Paxos, to increase throughput at the
+cost of latency.
