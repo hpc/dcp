@@ -83,22 +83,16 @@ void DCOPY_epilogue(void)
 {
     double rel_time = DCOPY_statistics.wtime_ended - \
                       DCOPY_statistics.wtime_started;
-    double rate = (double)DCOPY_statistics.total_bytes_copied / rel_time;
-    LOG(DCOPY_LOG_INFO, "Rank %d: Transfer rate is `%.0lf' bytes per second " \
-        "(`%.3" PRId64 "' bytes in `%.3lf' seconds).", \
-        CIRCLE_global_rank, rate, DCOPY_statistics.total_bytes_copied, rel_time);
-
     int64_t agg_copied = DCOPY_sum_int64(DCOPY_statistics.total_bytes_copied);
     double agg_rate = (double)agg_copied / rel_time;
 
     if(CIRCLE_global_rank == 0) {
         char starttime_str[256];
-        char endtime_str[256];
-
         struct tm* localstart = localtime(&(DCOPY_statistics.time_started));
-        struct tm* localend = localtime(&(DCOPY_statistics.time_ended));
-
         strftime(starttime_str, 256, "%b-%d-%Y,%H:%M:%S", localstart);
+
+        char endtime_str[256];
+        struct tm* localend = localtime(&(DCOPY_statistics.time_ended));
         strftime(endtime_str, 256, "%b-%d-%Y,%H:%M:%S", localend);
 
         LOG(DCOPY_LOG_INFO, "Filecopy run started at `%s'.", starttime_str);
