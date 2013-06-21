@@ -231,7 +231,7 @@ int main(int argc, \
 
             case 'd':
 
-                if(strncmp(optarg, "fatal", 5)) {
+                if(strncmp(optarg, "fatal", 5) == 0) {
                     CIRCLE_debug = CIRCLE_LOG_FATAL;
                     DCOPY_debug_level = DCOPY_LOG_FATAL;
 
@@ -240,7 +240,7 @@ int main(int argc, \
                     }
 
                 }
-                else if(strncmp(optarg, "err", 3)) {
+                else if(strncmp(optarg, "err", 3) == 0) {
                     CIRCLE_debug = CIRCLE_LOG_ERR;
                     DCOPY_debug_level = DCOPY_LOG_ERR;
 
@@ -249,7 +249,7 @@ int main(int argc, \
                     }
 
                 }
-                else if(strncmp(optarg, "warn", 4)) {
+                else if(strncmp(optarg, "warn", 4) == 0) {
                     CIRCLE_debug = CIRCLE_LOG_WARN;
                     DCOPY_debug_level = DCOPY_LOG_WARN;
 
@@ -258,7 +258,7 @@ int main(int argc, \
                     }
 
                 }
-                else if(strncmp(optarg, "info", 4)) {
+                else if(strncmp(optarg, "info", 4) == 0) {
                     CIRCLE_debug = CIRCLE_LOG_INFO;
                     DCOPY_debug_level = DCOPY_LOG_INFO;
 
@@ -267,7 +267,7 @@ int main(int argc, \
                     }
 
                 }
-                else if(strncmp(optarg, "dbg", 4)) {
+                else if(strncmp(optarg, "dbg", 3) == 0) {
                     CIRCLE_debug = CIRCLE_LOG_DBG;
                     DCOPY_debug_level = DCOPY_LOG_DBG;
 
