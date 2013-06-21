@@ -53,7 +53,7 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, \
     struct stat64 statbuf;
 
     if(lstat64(op->operand, &statbuf) < 0) {
-        LOG(DCOPY_LOG_DBG, "Could not get info for `%s'. %s", op->operand, strerror(errno));
+        LOG(DCOPY_LOG_DBG, "Could not get info for `%s'. errno=%d %s", op->operand, errno, strerror(errno));
         DCOPY_retry_failed_operation(TREEWALK, handle, op);
         return;
     }
@@ -258,8 +258,8 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op,
     curr_dir = opendir(op->operand);
 
     if(curr_dir == NULL) {
-        LOG(DCOPY_LOG_ERR, "Unable to open dir `%s'. %s", \
-            op->operand, strerror(errno));
+        LOG(DCOPY_LOG_ERR, "Unable to open dir `%s'. errno=%d %s", \
+            op->operand, errno, strerror(errno));
 
         DCOPY_retry_failed_operation(TREEWALK, handle, op);
         return;

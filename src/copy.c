@@ -61,11 +61,11 @@ void DCOPY_do_copy(DCOPY_operation_t* op, \
     }
 
     if(close(in_fd) < 0) {
-        LOG(DCOPY_LOG_DBG, "Close on source file failed. %s", strerror(errno));
+        LOG(DCOPY_LOG_DBG, "Close on source file failed. errno=%d %s", errno, strerror(errno));
     }
 
     if(close(out_fd) < 0) {
-        LOG(DCOPY_LOG_DBG, "Close on destination file failed. %s", strerror(errno));
+        LOG(DCOPY_LOG_DBG, "Close on destination file failed. errno=%d %s", errno, strerror(errno));
     }
 
     DCOPY_enqueue_cleanup_stage(op, handle);
@@ -89,15 +89,15 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     char io_buf[FD_PAGE_CACHE_SIZE];
 
     if(lseek64(in_fd, offset, SEEK_SET) < 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. %s", \
-            op->operand, strerror(errno));
+        LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. errno=%d %s", \
+            op->operand, errno, strerror(errno));
         /* Handle operation requeue in parent function. */
         return -1;
     }
 
     if(lseek64(out_fd, offset, SEEK_SET) < 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path (source is `%s'). %s", \
-            op->operand, strerror(errno));
+        LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path (source is `%s'). errno=%d %s", \
+            op->operand, errno, strerror(errno));
         return -1;
     }
 
@@ -113,8 +113,8 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
                                      (size_t)num_of_bytes_read);
 
         if(num_of_bytes_written != num_of_bytes_read) {
-            LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. %s", \
-                op->operand, strerror(errno));
+            LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. errno=%d %s", \
+                op->operand, errno, strerror(errno));
             return -1;
         }
 
