@@ -502,26 +502,19 @@ void DCOPY_copy_xattrs(
     ssize_t list_size;
     int got_list = 0;
 
+    /* get current estimate for list size */
     while(! got_list) {
         list_size = llistxattr(src_path, list, list_bufsize);
 
         if(list_size < 0) {
             if(errno == ERANGE) {
-                /* buffer is too small, allocate size specified in list_size */
+                /* buffer is too small, free our current buffer
+                 * and call it again with size==0 to get new size */
                 if(list != NULL) {
                     free(list);
                     list = NULL;
                 }
-
-                list_bufsize = (size_t) list_size;
-
-                if(list_bufsize > 0) {
-                    list = (char*) malloc(list_bufsize);
-
-                    if(list == NULL) {
-                        /* ERROR */
-                    }
-                }
+                list_bufsize = 0;
             }
             else if(errno == ENOTSUP) {
                 /* this is common enough that we silently ignore it */
@@ -535,13 +528,24 @@ void DCOPY_copy_xattrs(
                 break;
             }
         }
-        else if(list_size > 0) {
-            /* got our list */
-            got_list = 1;
-        }
         else {
-            /* list_size == 0, symlinks seem to return this */
-            break;
+            if(list_size > 0 && list_bufsize == 0) {
+                /* called llistxattr with size==0 and got back positive
+                 * number indicating size of buffer we need to allocate */
+                list_bufsize = (size_t) list_size;
+
+                if(list_bufsize > 0) {
+                    list = (char*) malloc(list_bufsize);
+
+                    if(list == NULL) {
+                        /* ERROR */
+                    }
+                }
+            }
+            else {
+                /* got our list, it's size is in list_size, which may be 0 */
+                got_list = 1;
+            }
         }
     }
 
@@ -555,19 +559,39 @@ void DCOPY_copy_xattrs(
             void* val = NULL;
 
             /* lookup value for name */
+            ssize_t val_size;
             int got_val = 0;
 
             while(! got_val) {
-                ssize_t val_size = lgetxattr(src_path, name, val, val_bufsize);
+                val_size = lgetxattr(src_path, name, val, val_bufsize);
 
                 if(val_size < 0) {
                     if(errno == ERANGE) {
-                        /* buffer is too small, allocate a buffer for val_size */
+                        /* buffer is too small, free our current buffer
+                         * and call it again with size==0 to get new size */
                         if(val != NULL) {
                             free(val);
                             val = NULL;
                         }
-
+                        val_bufsize = 0;
+                    }
+                    else if(errno == ENOATTR) {
+                        /* source object no longer has this attribute,
+                         * maybe deleted out from under us */
+                        break;
+                    }
+                    else {
+                        /* this is a real error */
+                        LOG(DCOPY_LOG_ERR, "Failed to get value for name=%s on %s llistxattr() errno=%d %s.",
+                            name, src_path, errno, strerror(errno)
+                           );
+                        break;
+                    }
+                }
+                else {
+                    if(val_size > 0 && val_bufsize == 0) {
+                        /* called lgetxattr with size==0 and got back positive
+                         * number indicating size of buffer we need to allocate */
                         val_bufsize = (size_t) val_size;
 
                         if(val_bufsize > 0) {
@@ -578,26 +602,16 @@ void DCOPY_copy_xattrs(
                             }
                         }
                     }
-                    else if(errno == ENOATTR) {
-                        /* source object no longer has this attribute,
-                         * maybe deleted out from under us */
-                        break;
-                    }
                     else {
-                        LOG(DCOPY_LOG_ERR, "Failed to get value for name=%s on %s llistxattr() errno=%d %s.",
-                            name, src_path, errno, strerror(errno)
-                           );
-                        break;
+                        /* got our value, it's size is in val_size, which may be 0 */
+                        got_val = 1;
                     }
-                }
-                else {
-                    got_val = 1;
                 }
             }
 
             /* set attribute on destination object */
             if(got_val) {
-                int setrc = lsetxattr(dest_path, name, val, val_bufsize, 0);
+                int setrc = lsetxattr(dest_path, name, val, val_size, 0);
 
                 if(setrc != 0) {
                     LOG(DCOPY_LOG_ERR, "Failed to set value for name=%s on %s llistxattr() errno=%d %s.",
@@ -611,6 +625,7 @@ void DCOPY_copy_xattrs(
                 free(val);
                 val = NULL;
             }
+            val_bufsize = 0;
 
             /* jump to next name */
             size_t namelen = strlen(name) + 1;
