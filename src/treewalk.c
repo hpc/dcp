@@ -63,7 +63,17 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op, \
        ! S_ISREG(statbuf.st_mode) &&
        ! S_ISLNK(statbuf.st_mode))
     {
-        LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type %x at `%s'.", statbuf.st_mode, op->operand);
+        if (S_ISCHR(statbuf.st_mode)) {
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISCHR at `%s'.", op->operand);
+        } else if (S_ISBLK(statbuf.st_mode)) {
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISBLK at `%s'.", op->operand);
+        } else if (S_ISFIFO(statbuf.st_mode)) {
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISFIFO at `%s'.", op->operand);
+        } else if (S_ISSOCK(statbuf.st_mode)) {
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISSOCK at `%s'.", op->operand);
+        } else {
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type %x at `%s'.", statbuf.st_mode, op->operand);
+        }
         return;
     }
 
@@ -229,17 +239,22 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op,
 
     const char* dest_path = op->dest_full_path;
 
-    char cmd_buf[PATH_MAX];
-    sprintf(cmd_buf, "mkdir -p %s", dest_path);
-    LOG(DCOPY_LOG_DBG, "Creating directory with command `%s'.", cmd_buf);
-    FILE* p = popen(cmd_buf, "r");
-    pclose(p);
+    /* first, create the destination directory */
+    LOG(DCOPY_LOG_DBG, "Creating directory: %s", dest_path);
+    mode_t mode = S_IRWXU;
+    int rc = mkdir(dest_path, mode);
+    if(rc != 0) {
+        LOG(DCOPY_LOG_ERR, "Failed to create directory: %s (errno=%d %s)", \
+            dest_path, errno, strerror(errno));
+        return;
+    }
 
     /* copy extended attributes on directory */
     if (DCOPY_user_opts.preserve) {
         DCOPY_copy_xattrs(op, statbuf, dest_path);
     }
 
+    /* iterate through source directory and add items to queue */
     curr_dir = opendir(op->operand);
 
     if(curr_dir == NULL) {
@@ -256,10 +271,10 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op,
             /* We don't care about . or .. */
             if((strncmp(curr_dir_name, ".", 2)) && (strncmp(curr_dir_name, "..", 3))) {
 
-                LOG(DCOPY_LOG_DBG, "Stat operation is enqueueing directory `%s' using base `%s'.", \
-                    op->operand, op->operand + op->source_base_offset);
-
+                /* build new object name */
                 sprintf(newop_path, "%s/%s", op->operand, curr_dir_name);
+
+                LOG(DCOPY_LOG_DBG, "Stat operation is enqueueing `%s'", newop_path);
 
                 /* Distributed recursion here. */
                 newop = DCOPY_encode_operation(TREEWALK, 0, newop_path, \
