@@ -152,9 +152,9 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
     }
 
     /* get number of characters in operand string */
-    int len;
+    int op_len;
     char* str = strtok(NULL, ":");
-    if(sscanf(str, "%d", &len) != 1) {
+    if(sscanf(str, "%d", &op_len) != 1) {
         LOG(DCOPY_LOG_ERR, "Could not decode operand string length.");
         DCOPY_abort(EXIT_FAILURE);
     }
@@ -165,21 +165,22 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
 
     /* if operand ends with ':', then the dest_base_appendix is next */
     int dest_base_exists = 0;
-    if(operand[len] == ':') {
+    if(operand[op_len] == ':') {
         dest_base_exists = 1;
     }
 
     /* NUL-terminate the operand string */
-    operand[len] = '\0';
+    operand[op_len] = '\0';
 
     ret->dest_base_appendix = NULL;
     if(dest_base_exists) {
         /* get pointer to first character of dest_base_len */
-        str = operand + len + 1;
+        str = operand + op_len + 1;
 
         /* tokenize length and scan it in */
+        int dest_len;
         str = strtok(str, ":");
-        if(sscanf(str, "%d", &len) != 1) {
+        if(sscanf(str, "%d", &dest_len) != 1) {
             LOG(DCOPY_LOG_ERR, "Could not decode destination base appendix string length.");
             DCOPY_abort(EXIT_FAILURE);
         }
@@ -188,18 +189,20 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
          * destination base, and NUL-terminate the string */
         char* base = str + strlen(str) + 1;
         ret->dest_base_appendix = base;
-        base[len] = '\0';
+        base[dest_len] = '\0';
     }
 
-    const char* last_component = ret->operand + ret->source_base_offset + 1;
-
-    /* TODO: ensure we don't overrun dest_path_recursive buffer */
+    /* get pointer to first character past source base path, if one exists */
+    const char* last_component = NULL;
+    if(ret->source_base_offset < op_len) {
+        last_component = ret->operand + ret->source_base_offset + 1;
+    }
 
     /* build destination object name */
     int written;
     char dest_path_recursive[PATH_MAX];
     if(ret->dest_base_appendix == NULL) {
-        if (*last_component == '\0') {
+        if (last_component == NULL) {
             written = snprintf(dest_path_recursive, sizeof(dest_path_recursive),
                 "%s", DCOPY_user_opts.dest_path);
         } else {
@@ -208,7 +211,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
         }
     }
     else {
-        if (*last_component == '\0') {
+        if (last_component == NULL) {
             written = snprintf(dest_path_recursive, sizeof(dest_path_recursive),
                 "%s/%s", DCOPY_user_opts.dest_path, ret->dest_base_appendix);
         } else {
