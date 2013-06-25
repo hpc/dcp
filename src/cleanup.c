@@ -130,6 +130,11 @@ void DCOPY_do_cleanup(DCOPY_operation_t* op, \
      */
     if(op->chunk == 0) {
 
+        /* truncate file to appropriate size, to do this before
+         * setting permissions in case file does not have write permission */
+        DCOPY_truncate_file(op, handle);
+
+        /* set file timestamps and permissions */
         if(DCOPY_user_opts.preserve) {
             /* build destination object name */
             char dest_path_recursive[PATH_MAX];
@@ -156,9 +161,17 @@ void DCOPY_do_cleanup(DCOPY_operation_t* op, \
             /* get stat of source object */
             struct stat64 statbuf;
 
+            /* TODO: would be nice to do this without needing another call to stat */
+            /* setting attributes in this order seems to work, but I wonder if there
+             * are systems where this order should be changed */
             if(lstat64(op->operand, &statbuf) == 0) {
+                /* set owner and group */
                 ownership_preserved = DCOPY_set_preserve_ownership(op, handle, &statbuf, dest_path_recursive);
+
+                /* set read/write/execute bits */
                 DCOPY_set_preserve_permissions(op, handle, ownership_preserved, &statbuf, dest_path_recursive);
+
+                /* set timestamps */
                 DCOPY_set_preserve_timestamps(op, handle, &statbuf, dest_path_recursive);
             }
             else {
@@ -167,8 +180,6 @@ void DCOPY_do_cleanup(DCOPY_operation_t* op, \
                 */
             }
         }
-
-        DCOPY_truncate_file(op, handle);
     }
 
     /*
