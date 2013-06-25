@@ -57,7 +57,8 @@
 /* #define DCOPY_CHUNK_SIZE (33554432) 16MB chunk */
 
 /* default mode to create new files or directories */
-#define DCOPY_DEF_PERMS (S_IRWXU | S_IRWXG | S_IRWXO)
+#define DCOPY_DEF_PERMS_FILE (S_IRUSR | S_IWUSR)
+#define DCOPY_DEF_PERMS_DIR  (S_IRWXU)
 
 /*
  * FIXME: Is this description correct?
@@ -187,13 +188,11 @@ void DCOPY_copy_xattrs(
 );
 
 void DCOPY_copy_ownership(
-    DCOPY_operation_t* op,
     const struct stat64* statbuf,
     const char* dest_path
 );
 
 void DCOPY_copy_permissions(
-    DCOPY_operation_t* op,
     const struct stat64* statbuf,
     const char* dest_path
 );

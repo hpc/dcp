@@ -466,14 +466,14 @@ int DCOPY_open_output_fd(DCOPY_operation_t* op)
      * If we're recursive, we'll be doing this again and again, so try
      * recursive first. If it fails, then do the file-to-file.
      */
-    if((out_fd = open64(dest_path_recursive, O_WRONLY | O_CREAT | O_NOATIME, DCOPY_DEF_PERMS)) < 0) {
+    if((out_fd = open64(dest_path_recursive, O_WRONLY | O_CREAT | O_NOATIME, DCOPY_DEF_PERMS_FILE)) < 0) {
         /*
                 LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
                     "(file-to-file fallback).", \
                     dest_path_file_to_file);
         */
 
-        out_fd = open64(dest_path_file_to_file, O_WRONLY | O_CREAT | O_NOATIME, DCOPY_DEF_PERMS);
+        out_fd = open64(dest_path_file_to_file, O_WRONLY | O_CREAT | O_NOATIME, DCOPY_DEF_PERMS_FILE);
     }
 
     if(out_fd < 0) {
@@ -643,7 +643,6 @@ void DCOPY_copy_xattrs(
 }
 
 void DCOPY_copy_ownership(
-    DCOPY_operation_t* op,
     const struct stat64* statbuf,
     const char* dest_path)
 {
@@ -657,8 +656,8 @@ void DCOPY_copy_ownership(
     return;
 }
 
+/* TODO: condionally set setuid and setgid bits? */
 void DCOPY_copy_permissions(
-    DCOPY_operation_t* op,
     const struct stat64* statbuf,
     const char* dest_path)
 {

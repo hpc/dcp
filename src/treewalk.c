@@ -149,8 +149,8 @@ void DCOPY_stat_process_link(DCOPY_operation_t* op, \
     /* set permissions on link */
     if (DCOPY_user_opts.preserve) {
         DCOPY_copy_xattrs(op, statbuf, dest_path);
-        DCOPY_copy_ownership(op, statbuf, dest_path);
-        DCOPY_copy_permissions(op, statbuf, dest_path);
+        DCOPY_copy_ownership(statbuf, dest_path);
+        DCOPY_copy_permissions(statbuf, dest_path);
     }
 
     return;
@@ -183,7 +183,7 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, \
     * see makedev() to create valid dev */
     dev_t dev;
     memset(&dev, 0, sizeof(dev_t));
-    int mknod_rc = mknod(dest_path, DCOPY_DEF_PERMS | S_IFREG, dev);
+    int mknod_rc = mknod(dest_path, DCOPY_DEF_PERMS_FILE | S_IFREG, dev);
 
     if(mknod_rc < 0) {
         if(errno == EEXIST) {
@@ -241,7 +241,7 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op,
 
     /* first, create the destination directory */
     LOG(DCOPY_LOG_DBG, "Creating directory: %s", dest_path);
-    int rc = mkdir(dest_path, DCOPY_DEF_PERMS);
+    int rc = mkdir(dest_path, DCOPY_DEF_PERMS_DIR);
     if(rc != 0) {
         LOG(DCOPY_LOG_ERR, "Failed to create directory: %s (errno=%d %s)", \
             dest_path, errno, strerror(errno));

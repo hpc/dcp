@@ -30,11 +30,15 @@ extern DCOPY_statistics_t DCOPY_statistics;
 extern void (*DCOPY_jump_table[5])(DCOPY_operation_t* op, \
                                    CIRCLE_handle* handle);
 
-/* iterate through linked list of files and set timestamps,
+/* iterate through linked list of files and set ownership, timestamps, and permissions
  * starting from deepest level and working backwards */
-static void DCOPY_set_timestamps()
+static void DCOPY_set_metadata()
 {
     const DCOPY_stat_elem_t* elem;
+
+    if (CIRCLE_global_rank == 0) {
+        LOG(DCOPY_LOG_INFO, "Setting ownership, permissions, and timestamps.");
+    }
 
     /* get max depth across all procs */
     int max_depth;
@@ -55,7 +59,16 @@ static void DCOPY_set_timestamps()
         elem = DCOPY_list_head;
         while (elem != NULL) {
             if (elem->depth == depth) {
-                DCOPY_copy_timestamps(elem->sb, elem->file);
+                if(DCOPY_user_opts.preserve) {
+                    DCOPY_copy_ownership(elem->sb, elem->file);
+                    DCOPY_copy_permissions(elem->sb, elem->file);
+                    DCOPY_copy_timestamps(elem->sb, elem->file);
+                }
+                else {
+                    /* TODO: set permissions based on source permissons
+                     * masked by umask */
+                    DCOPY_copy_permissions(elem->sb, elem->file);
+                }
             }
             elem = elem->next;
         }
@@ -401,10 +414,8 @@ int main(int argc, \
     /* Let the processing library cleanup. */
     CIRCLE_finalize();
 
-    /* set timestamps if needed */
-    if (DCOPY_user_opts.preserve) {
-        DCOPY_set_timestamps();
-    }
+    /* set permissions, ownership, and timestamps if needed */
+    DCOPY_set_metadata();
 
     /* free list of stat objects */
     DCOPY_stat_elem_t* current = DCOPY_list_head;
