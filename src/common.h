@@ -56,6 +56,9 @@
 /* #define DCOPY_CHUNK_SIZE (33554432)  32MB chunk */
 /* #define DCOPY_CHUNK_SIZE (33554432) 16MB chunk */
 
+/* default mode to create new files or directories */
+#define DCOPY_DEF_PERMS (S_IRWXU | S_IRWXG | S_IRWXO)
+
 /*
  * FIXME: Is this description correct?
  *

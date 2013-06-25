@@ -183,7 +183,7 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, \
     * see makedev() to create valid dev */
     dev_t dev;
     memset(&dev, 0, sizeof(dev_t));
-    int mknod_rc = mknod(dest_path, S_IRWXU | S_IFREG, dev);
+    int mknod_rc = mknod(dest_path, DCOPY_DEF_PERMS | S_IFREG, dev);
 
     if(mknod_rc < 0) {
         if(errno == EEXIST) {
@@ -241,8 +241,7 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op,
 
     /* first, create the destination directory */
     LOG(DCOPY_LOG_DBG, "Creating directory: %s", dest_path);
-    mode_t mode = S_IRWXU;
-    int rc = mkdir(dest_path, mode);
+    int rc = mkdir(dest_path, DCOPY_DEF_PERMS);
     if(rc != 0) {
         LOG(DCOPY_LOG_ERR, "Failed to create directory: %s (errno=%d %s)", \
             dest_path, errno, strerror(errno));

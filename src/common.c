@@ -466,14 +466,14 @@ int DCOPY_open_output_fd(DCOPY_operation_t* op)
      * If we're recursive, we'll be doing this again and again, so try
      * recursive first. If it fails, then do the file-to-file.
      */
-    if((out_fd = open64(dest_path_recursive, O_WRONLY | O_CREAT | O_NOATIME, S_IRWXU)) < 0) {
+    if((out_fd = open64(dest_path_recursive, O_WRONLY | O_CREAT | O_NOATIME, DCOPY_DEF_PERMS)) < 0) {
         /*
                 LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
                     "(file-to-file fallback).", \
                     dest_path_file_to_file);
         */
 
-        out_fd = open64(dest_path_file_to_file, O_WRONLY | O_CREAT | O_NOATIME, S_IRWXU);
+        out_fd = open64(dest_path_file_to_file, O_WRONLY | O_CREAT | O_NOATIME, DCOPY_DEF_PERMS);
     }
 
     if(out_fd < 0) {
