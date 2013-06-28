@@ -86,7 +86,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     ssize_t num_of_bytes_written = 0;
     ssize_t total_bytes_written = 0;
 
-    char io_buf[FD_PAGE_CACHE_SIZE];
+    char io_buf[FD_BLOCK_SIZE];
 
     if(lseek64(in_fd, offset, SEEK_SET) < 0) {
         LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. errno=%d %s", \
@@ -103,7 +103,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
 
     while(total_bytes_written <= DCOPY_CHUNK_SIZE) {
 
-        num_of_bytes_read = read(in_fd, &io_buf[0], FD_PAGE_CACHE_SIZE);
+        num_of_bytes_read = read(in_fd, &io_buf[0], sizeof(io_buf));
 
         if(!num_of_bytes_read) {
             break;

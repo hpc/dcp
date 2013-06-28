@@ -69,6 +69,12 @@
  */
 #define FD_PAGE_CACHE_SIZE (32768)
 
+/*
+ * block size to read and write file data,
+ * should evenly divide DCOPY_CHUNK_SIZE
+ * */
+#define FD_BLOCK_SIZE (1048576)
+
 #ifndef PATH_MAX
 #define PATH_MAX (4096)
 #endif
