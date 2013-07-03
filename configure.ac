@@ -1,4 +1,4 @@
-AC_INIT([dcp],[0.0.3],[github-hpc@lanl.gov],[dcp],[http://filecopy.org])
+AC_INIT([dcp],[0.1.0-rc.2],[github-hpc@lanl.gov],[dcp],[http://filecopy.org])
 
 # Keep artifacts in directories as much as possible.
 AC_CONFIG_AUX_DIR(auxdir)

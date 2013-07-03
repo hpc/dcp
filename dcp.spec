@@ -1,5 +1,5 @@
 Name: dcp
-Version: 0.0.3
+Version: 0.1.0-rc.2
 Release: 0
 Summary: distributed file copy tool
 License: LANL LA-CC
