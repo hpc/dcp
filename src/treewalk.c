@@ -33,9 +33,9 @@ static int compute_depth(const char* path)
 {
     /* TODO: ignore trailing '/' */
 
-    char* c;
+    const char* c;
     int depth = 0;
-    for (c = path; *c != NULL; c++) {
+    for (c = path; *c != '\0'; c++) {
         if (*c == '/') {
             depth++;
         }
