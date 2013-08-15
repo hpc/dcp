@@ -10,6 +10,7 @@
 #include "handle_args.h"
 #include "treewalk.h"
 #include "dcp.h"
+#include "bayer.h"
 
 #include <errno.h>
 #include <libgen.h>
@@ -382,35 +383,24 @@ static void DCOPY_parse_dest_path(char* path)
     /* identify destination path */
     char dest_path[PATH_MAX];
 
+    /* standardize destination path */
     if(CIRCLE_global_rank == 0) {
-        if(realpath(path, dest_path) == NULL) {
-            /*
-             * If realpath doesn't work, we might be working with a file.
-             * Since this might be a file, lets get the absolute base path.
-             */
-            char dest_base[PATH_MAX];
-            strncpy(dest_base, path, PATH_MAX);
-            char* dir_path = dirname(dest_base);
+        bayer_path* p = bayer_path_from_str(path);
 
-            if(realpath(dir_path, dest_path) == NULL) {
-                /* If realpath didn't work this time, we're really in trouble. */
-                LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
-                    path, strerror(errno));
-                DCOPY_abort(EXIT_FAILURE);
-            }
-
-            /* Now, lets get the base name. */
-            char file_name_buf[PATH_MAX];
-            strncpy(file_name_buf, path, PATH_MAX);
-            char* file_name = basename(file_name_buf);
-
-            /* Finally, lets put everything together. */
-            char norm_path[PATH_MAX];
-            sprintf(norm_path, "%s/%s", dir_path, file_name);
-            strncpy(dest_path, norm_path, PATH_MAX);
+        /* make sure path is absolute */
+        if (! bayer_path_is_absolute(p)) {
+            char cwd[PATH_MAX];
+            bayer_getcwd(cwd, PATH_MAX);
+            bayer_path_prepend_str(p, cwd);
         }
 
-        /* LOG(DCOPY_LOG_DBG, "Using destination path `%s'.", dest_path); */
+        /* remove ".", "..", consecutive "/", and trailing "/"
+         * characters from path */
+        bayer_path_reduce(p);
+
+        /* copy simplified path into dest_path */
+        bayer_path_strcpy(dest_path, sizeof(dest_path), p);
+        bayer_path_delete(&p);
     }
 
     /* Copy the destination path to user opts structure on each rank. */
@@ -448,6 +438,8 @@ static void DCOPY_parse_src_paths(char** argv, \
     /* Loop over each source path and check sanity. */
     int opt_index;
 
+    char cwd[PATH_MAX];
+    bayer_getcwd(cwd, PATH_MAX);
     for(opt_index = optind_local; opt_index < last_arg_index; opt_index++) {
         /* rank 0 resolves the path */
         char src_path[PATH_MAX];
@@ -455,11 +447,24 @@ static void DCOPY_parse_src_paths(char** argv, \
         if(CIRCLE_global_rank == 0) {
             char* path = argv[opt_index];
 
-            if(realpath(path, src_path) == NULL) {
+            /* ensure path is absolute and
+             * remove ".", "..", consecutive "/", and trailing "/"
+             * characters from path */
+            bayer_path* p = bayer_path_from_str(path);
+            if (! bayer_path_is_absolute(p)) {
+                bayer_path_prepend_str(p, cwd);
+            }
+            bayer_path_reduce(p);
+            bayer_path_strcpy(src_path, sizeof(src_path), p);
+            bayer_path_delete(&p);
+
+            /* TODO: verify that path exists */
+
+            /*
                 LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
                     path, strerror(errno));
                 DCOPY_abort(EXIT_FAILURE);
-            }
+            */
         }
 
         /* bcast resolved path to all tasks */
