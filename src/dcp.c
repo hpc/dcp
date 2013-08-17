@@ -163,8 +163,8 @@ int main(int argc, \
     /* By default, don't perform a conditional copy. */
     DCOPY_user_opts.conditional = false;
 
-    /* By default, don't skip the compare option. */
-    DCOPY_user_opts.skip_compare = false;
+    /* By default, skip the compare option. */
+    DCOPY_user_opts.skip_compare = true;
 
     /* By default, show info log messages. */
     CIRCLE_loglevel CIRCLE_debug = CIRCLE_LOG_INFO;
@@ -206,11 +206,11 @@ int main(int argc, \
                 break;
 
             case 'C':
-                DCOPY_user_opts.skip_compare = true;
+                DCOPY_user_opts.skip_compare = false;
 
                 if(CIRCLE_global_rank == 0) {
-                    LOG(DCOPY_LOG_INFO, "Skipping the comparison stage " \
-                        "(may result in corruption).");
+                    LOG(DCOPY_LOG_INFO, "Compare source and destination " \
+			"after copy to detect corruption.");
                 }
 
                 break;
