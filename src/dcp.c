@@ -135,8 +135,8 @@ void DCOPY_print_version()
  */
 void DCOPY_print_usage(char** argv)
 {
-    printf("usage: %s [cCdfhpv] [--] source_file target_file\n" \
-           "       %s [cCdfhpv] [--] source_file ... target_directory\n", \
+    printf("usage: %s [Cdfhpv] [--] source_file target_file\n" \
+           "       %s [Cdfhpv] [--] source_file ... target_directory\n", \
            argv[0], argv[0]);
     fflush(stdout);
 }
@@ -160,9 +160,6 @@ int main(int argc, \
 
     DCOPY_debug_stream = stdout;
 
-    /* By default, don't perform a conditional copy. */
-    DCOPY_user_opts.conditional = false;
-
     /* By default, skip the compare option. */
     DCOPY_user_opts.skip_compare = true;
 
@@ -180,7 +177,6 @@ int main(int argc, \
     DCOPY_user_opts.reliable_filesystem = true;
 
     static struct option long_options[] = {
-        {"conditional"          , no_argument      , 0, 'c'},
         {"skip-compare"         , no_argument      , 0, 'C'},
         {"debug"                , required_argument, 0, 'd'},
         {"force"                , no_argument      , 0, 'f'},
@@ -192,18 +188,9 @@ int main(int argc, \
     };
 
     /* Parse options */
-    while((c = getopt_long(argc, argv, "cCd:fhpUv", \
+    while((c = getopt_long(argc, argv, "Cd:fhpUv", \
                            long_options, &option_index)) != -1) {
         switch(c) {
-
-            case 'c':
-                DCOPY_user_opts.conditional = true;
-
-                if(CIRCLE_global_rank == 0) {
-                    LOG(DCOPY_LOG_INFO, "Performing a conditional copy.");
-                }
-
-                break;
 
             case 'C':
                 DCOPY_user_opts.skip_compare = false;
