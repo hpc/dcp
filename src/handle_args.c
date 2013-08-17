@@ -308,67 +308,6 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 }
 
 /**
- * Rank 0 passes in pointer to string to be bcast -- all others pass in a
- * pointer to a string which will be newly allocated and filled in with copy.
- */
-static bool DCOPY_bcast_str(char* send, char** recv)
-{
-    /* First, we broadcast the number of characters in the send string. */
-    int len = 0;
-
-    if(recv == NULL) {
-        LOG(DCOPY_LOG_ERR, "Attempted to receive a broadcast into invalid memory. " \
-                "Please report this as a bug!");
-        return false;
-    }
-
-    if(CIRCLE_global_rank == 0) {
-        if(send != NULL) {
-            len = (int)(strlen(send) + 1);
-
-            if(len > CIRCLE_MAX_STRING_LEN) {
-                LOG(DCOPY_LOG_ERR, "Attempted to send a larger string (`%d') than what "
-                        "libcircle supports. Please report this as a bug!", len);
-                return false;
-            }
-        }
-    }
-
-    if(MPI_SUCCESS != MPI_Bcast(&len, 1, MPI_INT, 0, MPI_COMM_WORLD)) {
-        LOG(DCOPY_LOG_DBG, "While preparing to copy, broadcasting the length of a string over MPI failed.");
-        return false;
-    }
-
-    /* If the string is non-zero bytes, allocate space and bcast it. */
-    if(len > 0) {
-        /* allocate space to receive string */
-        *recv = (char*) malloc((size_t)len);
-
-        if(*recv == NULL) {
-            LOG(DCOPY_LOG_ERR, "Failed to allocate string of %d bytes", len);
-            return false;
-        }
-
-        /* Broadcast the string. */
-        if(CIRCLE_global_rank == 0) {
-            strncpy(*recv, send, len);
-        }
-
-        if(MPI_SUCCESS != MPI_Bcast(*recv, len, MPI_CHAR, 0, MPI_COMM_WORLD)) {
-            LOG(DCOPY_LOG_DBG, "While preparing to copy, broadcasting the length of a string over MPI failed.");
-            return false;
-        }
-
-    }
-    else {
-        /* Root passed in a NULL value, so set the output to NULL. */
-        *recv = NULL;
-    }
-
-    return true;
-}
-
-/**
  * Convert the destination to an absolute path and check sanity.
  */
 static void DCOPY_parse_dest_path(char* path)
@@ -383,12 +322,9 @@ static void DCOPY_parse_dest_path(char* path)
     }
 
     /* Copy the destination path to user opts structure on each rank. */
-    if(!DCOPY_bcast_str(dest_path, &DCOPY_user_opts.dest_path)) {
-        LOG(DCOPY_LOG_ERR, "Could not send the proper destination path to other nodes (`%s'). " \
-            "The MPI broadcast operation failed. %s", \
-            path, strerror(errno));
-        DCOPY_abort(EXIT_FAILURE);
-    }
+    bayer_bcast_strdup(
+        dest_path, &DCOPY_user_opts.dest_path, 0, MPI_COMM_WORLD
+    );
 
     return;
 }
