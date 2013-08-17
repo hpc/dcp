@@ -117,51 +117,6 @@ static void DCOPY_param_free(param_file_t* param)
 }
 
 /**
- * Determine if the specified path is a directory.
- */
-static bool DCOPY_is_directory(char* path)
-{
-    struct stat64 statbuf;
-
-    if(lstat64(path, &statbuf) < 0) {
-        /* LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a directory. %s", path, strerror(errno)); */
-        return false;
-    }
-
-    return (S_ISDIR(statbuf.st_mode));
-}
-
-/**
- * Determine if the specified path is a regular file.
- */
-static bool DCOPY_is_regular_file(char* path)
-{
-    struct stat64 statbuf;
-
-    if(lstat64(path, &statbuf) < 0) {
-        /* LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a file. %s", path, strerror(errno)); */
-        return false;
-    }
-
-    return (S_ISREG(statbuf.st_mode));
-}
-
-/**
- * Determine if the specified path is a regular file.
- */
-static bool DCOPY_is_link(char* path)
-{
-    struct stat64 statbuf;
-
-    if(lstat64(path, &statbuf) < 0) {
-        /* LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a file. %s", path, strerror(errno)); */
-        return false;
-    }
-
-    return (S_ISLNK(statbuf.st_mode));
-}
-
-/**
  * Determine if the destination path is a file or directory.
  *
  * It does this by first checking to see if an object is actually at the
@@ -171,85 +126,6 @@ static bool DCOPY_is_link(char* path)
  *
  * @return true if the destination should be a directory, false otherwise.
  */
-static bool DCOPY_dest_is_dir(void)
-{
-    bool dest_path_is_dir = false;
-
-    /*
-     * First we need to determine if the last argument is a file or a directory.
-     * We first attempt to see if the last argument already exists on disk. If it
-     * doesn't, we then look at the sources to see if we can determine what the
-     * last argument should be.
-     */
-    if(DCOPY_is_directory(DCOPY_user_opts.dest_path)) {
-        dest_path_is_dir = true;
-    }
-    else if(DCOPY_is_regular_file(DCOPY_user_opts.dest_path)) {
-        dest_path_is_dir = false;
-    }
-    else {
-        /*
-         * If recursion is turned on, we can have a file or a directory as the
-         * destination.
-         */
-        if(DCOPY_user_opts.recursive || DCOPY_user_opts.recursive_unspecified) {
-            /*
-             * We can determine what the destination should be by looking at the
-             * source arguments. If the source arguments contain a single file,
-             * then the destination must be a single file. We prune out the
-             * impossible combinations later on.
-             */
-            dest_path_is_dir = true;
-
-            int i;
-
-            for(i = 0; i < num_src_params; i++) {
-                char* src_path = src_params[i].path;
-
-                if(DCOPY_is_regular_file(src_path)) {
-                    dest_path_is_dir = false;
-                }
-            }
-        }
-        else {
-            /*
-             * Since recursion is turned off, there's only potential to create a
-             * file at the destination.
-             */
-            dest_path_is_dir = false;
-        }
-    }
-
-    return dest_path_is_dir;
-}
-
-/**
- * Check if the current user has access to all source paths, then determine
- * the count of all source paths specified by the user.
- *
- * @return the number of source paths specified by the user.
- */
-static uint32_t DCOPY_source_file_count(void)
-{
-    uint32_t source_file_count = 0;
-
-    int i;
-
-    for(i = 0; i < num_src_params; i++) {
-        char* src_path = src_params[i].path;
-
-        if(access(src_path, R_OK) < 0) {
-            LOG(DCOPY_LOG_ERR, "Could not access source file at `%s'. %s", \
-                src_path, strerror(errno));
-        }
-        else {
-            source_file_count++;
-        }
-
-    }
-
-    return source_file_count;
-}
 
 /**
  * Analyze all file path inputs and place on the work queue.
@@ -280,115 +156,115 @@ static uint32_t DCOPY_source_file_count(void)
  */
 void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 {
-    bool dest_is_dir = DCOPY_dest_is_dir();
-    bool dest_is_file  = !dest_is_dir;
+    int i;
 
-    char* opts_dest_path_dirname;
-    char* src_path_dirname;
+    /* count number of readable source paths */
+    int num_readable = 0;
+    for(i = 0; i < num_src_params; i++) {
+        char* path = src_params[i].path;
+        if(access(path, R_OK) == 0) {
+            num_readable++;
+        }
+        else {
+            char* orig = src_params[i].orig;
+            LOG(DCOPY_LOG_ERR, "Could not read `%s'. %s",
+                orig, strerror(errno));
+        }
+    }
 
-    uint32_t number_of_source_files = DCOPY_source_file_count();
-
-    if(number_of_source_files < 1) {
-        LOG(DCOPY_LOG_ERR, "At least one valid source file must be specified.");
+    /* verify that we could at least one source path */
+    if(num_readable < 1) {
+        LOG(DCOPY_LOG_ERR, "At least one valid source must be specified.");
         DCOPY_abort(EXIT_FAILURE);
     }
 
-    if(dest_is_file) {
-        LOG(DCOPY_LOG_DBG, "Infered that the destination is a file.");
+    /*
+     * First we need to determine if the last argument is a file or a directory.
+     * We first attempt to see if the last argument already exists on disk. If it
+     * doesn't, we then look at the sources to see if we can determine what the
+     * last argument should be.
+     */
 
-        /*
-         * If the destination is a file, there must be only one source object, and it
-         * must be a file.
-         */
-        if(number_of_source_files == 1 && DCOPY_is_regular_file(src_params[0].path)) {
-            /* Make a copy of the dest path so we can run dirname on it. */
-            size_t dest_size = sizeof(char) * PATH_MAX;
-            opts_dest_path_dirname = (char*) malloc(dest_size);
+    bool dest_exists = false;
+    bool dest_is_dir = false;
+    bool dest_is_file = false;
+    bool dest_is_link_to_dir = false;
+    bool dest_is_link_to_file = false;
+    bool dest_required_to_be_dir = false;
 
-            if(opts_dest_path_dirname == NULL) {
-                LOG(DCOPY_LOG_DBG, "Failed to allocate %llu bytes for dest path.", (long long unsigned) dest_size);
-                DCOPY_abort(EXIT_FAILURE);
-            }
+    /* check whether dest exists and if so determine its type */
+    if(dest_param.path_stat_valid) {
+        /* we could stat dest path, so something is there */
+        dest_exists = true;
 
-            int dest_written = snprintf(opts_dest_path_dirname, dest_size, "%s", DCOPY_user_opts.dest_path);
-
-            if(dest_written < 0 || (size_t)(dest_written) > dest_size - 1) {
-                LOG(DCOPY_LOG_DBG, "Destination path too long.");
-                DCOPY_abort(EXIT_FAILURE);
-            }
-
-            opts_dest_path_dirname = dirname(opts_dest_path_dirname);
-
-            /* Make a copy of the src path so we can run dirname on it. */
-            size_t src_size = sizeof(char) * PATH_MAX;
-            src_path_dirname = (char*) malloc(sizeof(char) * PATH_MAX);
-
-            if(src_path_dirname == NULL) {
-                LOG(DCOPY_LOG_DBG, "Failed to allocate %llu bytes for dest path.", (long long unsigned) src_size);
-                DCOPY_abort(EXIT_FAILURE);
-            }
-
-            int src_written = snprintf(src_path_dirname, src_size, "%s", src_params[0].path);
-
-            if(src_written < 0 || (size_t)(src_written) > src_size - 1) {
-                LOG(DCOPY_LOG_DBG, "Source path too long.");
-                DCOPY_abort(EXIT_FAILURE);
-            }
-
-            src_path_dirname = dirname(src_path_dirname);
-
-            /* LOG(DCOPY_LOG_DBG, "Enqueueing only a single source path `%s'.", DCOPY_user_opts.src_path[0]); */
-            char* op = DCOPY_encode_operation(TREEWALK, 0, src_params[0].path, \
-                                              (uint16_t)strlen(src_path_dirname), NULL, 0);
-
-            handle->enqueue(op);
-            free(op);
-
-            free(opts_dest_path_dirname);
-            free(src_path_dirname);
+        /* now determine its type */
+        if(S_ISDIR(dest_param.path_stat.st_mode)) {
+            /* dest is a directory */
+            dest_is_dir  = true;
         }
-        else {
-            /*
-             * Determine if we're trying to copy one or more directories into
-             * a file.
-             */
-            int i;
-
-            for(i = 0; i < num_src_params; i++) {
-                char* src_path = src_params[i].path;
-
-                if(DCOPY_is_directory(src_path)) {
-                    LOG(DCOPY_LOG_ERR, "Copying a directory into a file is not supported.");
+        else if (S_ISREG(dest_param.path_stat.st_mode)) {
+            /* dest is a file */
+            dest_is_file = true;
+        }
+        else if (S_ISLNK(dest_param.path_stat.st_mode)) {
+            /* dest is a symlink, but to what? */
+            if (dest_param.target_stat_valid) {
+                /* target of the symlink exists, determine what it is */
+                if(S_ISDIR(dest_param.target_stat.st_mode)) {
+                    /* dest is link to a directory */
+                    dest_is_link_to_dir = true;
+                }
+                else if (S_ISREG(dest_param.target_stat.st_mode)) {
+                    /* dest is link to a file */
+                    dest_is_link_to_file = true;
+                }
+                else {
+                    /* unsupported type */
+                    LOG(DCOPY_LOG_ERR, "Unsupported filetype `%s' --> `%s'.",
+                        dest_param.orig, dest_param.target);
                     DCOPY_abort(EXIT_FAILURE);
                 }
             }
-
-            /*
-             * The only remaining possible condition is that the user wants to
-             * copy multiple files into a single file (hopefully).
-             */
-            LOG(DCOPY_LOG_ERR, "Copying several files into a single file is not supported.");
-            DCOPY_abort(EXIT_FAILURE);
+        }
+        else {
+            /* unsupported type */
+           LOG(DCOPY_LOG_ERR, "Unsupported filetype `%s'.",
+               dest_param.orig);
+           DCOPY_abort(EXIT_FAILURE);
         }
     }
-    else if(dest_is_dir) {
+
+    /* TODO: check that dest is writable */
+
+    /* determine whether caller *requires* copy into dir */
+
+    /* TODO: if caller specifies dest/ or dest/. */
+
+    /* if caller specifies more than one source,
+     * then dest has to be a directory */
+    if(num_src_params > 1) {
+        dest_required_to_be_dir = true;
+    }
+
+    /* if caller requires dest to be a directory, and if dest does not
+     * exist or it does it exist but it's not a directory, then abort */
+    if(dest_required_to_be_dir &&
+       (!dest_exists || (!dest_is_dir && !dest_is_link_to_dir)))
+    {
+        LOG(DCOPY_LOG_ERR, "Destination is not a directory '%s'.", dest_param.orig);
+        DCOPY_abort(EXIT_FAILURE);
+    }
+
+    if(dest_required_to_be_dir || dest_is_dir || dest_is_link_to_dir) {
+        /* copy source params into directory */
         LOG(DCOPY_LOG_DBG, "Infered that the destination is a directory.");
-        bool dest_already_exists = DCOPY_is_directory(DCOPY_user_opts.dest_path);
 
-        int i;
-
+        /* enqueue each source param */
         for(i = 0; i < num_src_params; i++) {
             char* src_path = src_params[i].path;
             LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", src_path);
 
-            char* src_path_basename = NULL;
-            size_t src_len = strlen(src_path) + 1;
-            char* src_path_basename_tmp = (char*) malloc(src_len);
-
-            if(src_path_basename_tmp == NULL) {
-                LOG(DCOPY_LOG_ERR, "Failed to allocate tmp for src_path_basename.");
-                DCOPY_abort(EXIT_FAILURE);
-            }
+            /* TODO: skip sources we can't read */
 
             /*
              * If the destination directory already exists, we want to place
@@ -396,31 +272,39 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
              * with the source path message and append it to the options dest
              * path whenever the options dest path is used.
              */
-            if(dest_already_exists && !DCOPY_user_opts.conditional) {
-                /* Make a copy of the src path so we can run basename on it. */
-                strncpy(src_path_basename_tmp, src_path, src_len);
-                src_path_basename = basename(src_path_basename_tmp);
-            }
 
-            char* op = DCOPY_encode_operation(TREEWALK, 0, src_path, \
-                                              (uint16_t)(src_len - 1), \
-                                              src_path_basename, 0);
+            /* get basename of src path. */
+            bayer_path* p = bayer_path_from_str(src_path);
+            bayer_path_basename(p);
+            char* src_path_basename = bayer_path_strdup(p);
+            bayer_path_delete(&p);
+
+            uint16_t src_len = (uint16_t)strlen(src_path);
+            char* op = DCOPY_encode_operation(TREEWALK, 0, src_path,
+                                              src_len, src_path_basename, 0);
             handle->enqueue(op);
             free(op);
 
-            free(src_path_basename_tmp);
+            bayer_free(&src_path_basename);
         }
     }
     else {
-        /*
-         * This is the catch-all for all of the object types we haven't
-         * implemented yet.
-         */
-        LOG(DCOPY_LOG_ERR, "We've encountered an unsupported filetype.");
-        DCOPY_abort(EXIT_FAILURE);
-    }
+        /* to get here, there must be one source, and if dir exists,
+         * is is not a directory or a link to a directory */
+        LOG(DCOPY_LOG_DBG, "Infered that the destination is a file.");
 
-    /* TODO: print mode we're using to DBG. */
+        /* TODO: if dest exists, check that it's a file or link */
+
+        char* src_path = src_params[0].path;
+        LOG(DCOPY_LOG_DBG, "Enqueueing single source path `%s'.", src_path);
+
+        uint16_t src_len = (uint16_t)strlen(src_path);
+        char* op = DCOPY_encode_operation(TREEWALK, 0, src_path,
+                                          src_len, NULL, 0);
+
+        handle->enqueue(op);
+        free(op);
+    }
 }
 
 /**
@@ -522,22 +406,18 @@ static void DCOPY_parse_src_paths(char** argv, \
 
     /* only rank 0 resolves the path(s) */
     if(CIRCLE_global_rank == 0) {
+        /* allocate space to record info about each source */
         if(num_src_params > 0) {
             size_t src_params_bytes = (size_t)(num_src_params) * sizeof(param_file_t);
             src_params = (param_file_t*) bayer_malloc(src_params_bytes, "sources", __FILE__, __LINE__);
         }
 
-        /* Loop over each source path and check sanity. */
+        /* record standardized paths and stat info for each source. */
         int opt_index;
         for(opt_index = optind_local; opt_index < last_arg_index; opt_index++) {
             char* path = argv[opt_index];
-
-            /* get index into source param array */
             int idx = opt_index - optind_local;
-
             DCOPY_param_set(path, &src_params[idx]);
-
-            /* TODO: verify that each source path is readable */
         }
     }
 
