@@ -135,8 +135,8 @@ void DCOPY_print_version()
  */
 void DCOPY_print_usage(char** argv)
 {
-    printf("usage: %s [Cdfhpv] [--] source_file target_file\n" \
-           "       %s [Cdfhpv] [--] source_file ... target_directory\n", \
+    printf("usage: %s [cdfhpv] [--] source target\n" \
+           "       %s [cdfhpv] [--] source ... target_directory\n", \
            argv[0], argv[0]);
     fflush(stdout);
 }
@@ -161,7 +161,7 @@ int main(int argc, \
     DCOPY_debug_stream = stdout;
 
     /* By default, skip the compare option. */
-    DCOPY_user_opts.skip_compare = true;
+    DCOPY_user_opts.compare = false;
 
     /* By default, show info log messages. */
     CIRCLE_loglevel CIRCLE_debug = CIRCLE_LOG_INFO;
@@ -177,7 +177,7 @@ int main(int argc, \
     DCOPY_user_opts.reliable_filesystem = true;
 
     static struct option long_options[] = {
-        {"skip-compare"         , no_argument      , 0, 'C'},
+        {"skip-compare"         , no_argument      , 0, 'c'},
         {"debug"                , required_argument, 0, 'd'},
         {"force"                , no_argument      , 0, 'f'},
         {"help"                 , no_argument      , 0, 'h'},
@@ -188,12 +188,12 @@ int main(int argc, \
     };
 
     /* Parse options */
-    while((c = getopt_long(argc, argv, "Cd:fhpUv", \
+    while((c = getopt_long(argc, argv, "cd:fhpUv", \
                            long_options, &option_index)) != -1) {
         switch(c) {
 
-            case 'C':
-                DCOPY_user_opts.skip_compare = false;
+            case 'c':
+                DCOPY_user_opts.compare = true;
 
                 if(CIRCLE_global_rank == 0) {
                     LOG(DCOPY_LOG_INFO, "Compare source and destination " \

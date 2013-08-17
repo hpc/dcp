@@ -81,10 +81,9 @@ void DCOPY_do_cleanup(DCOPY_operation_t* op, \
     }
 
     /*
-     * If the user is feeling brave, this is where we let them skip the
-     * comparison stage.
+     * Add work item to compare source and destination if user requested it.
      */
-    if(!DCOPY_user_opts.skip_compare) {
+    if(DCOPY_user_opts.compare) {
         newop = DCOPY_encode_operation(COMPARE, op->chunk, op->operand, \
                                        op->source_base_offset, \
                                        op->dest_base_appendix, op->file_size);

@@ -133,7 +133,7 @@ typedef struct {
 
 typedef struct {
     char*  dest_path;
-    bool   skip_compare;
+    bool   compare;
     bool   force;
     bool   preserve;
     bool   reliable_filesystem;
