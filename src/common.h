@@ -115,8 +115,7 @@ typedef struct {
     /*
      * If the destination already existed before this copy started, we want to
      * copy the files to a location inside the destination. This is to keep
-     * track of the path inside the destination (especially in the recursive
-     * case).
+     * track of the path inside the destination.
      */
     char* dest_base_appendix;
 
@@ -138,8 +137,6 @@ typedef struct {
     bool   skip_compare;
     bool   force;
     bool   preserve;
-    bool   recursive;
-    bool   recursive_unspecified;
     bool   reliable_filesystem;
 } DCOPY_options_t;
 

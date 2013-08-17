@@ -135,8 +135,8 @@ void DCOPY_print_version()
  */
 void DCOPY_print_usage(char** argv)
 {
-    printf("usage: %s [cCdfhpRrv] [--] source_file target_file\n" \
-           "       %s [cCdfhpRrv] [--] source_file ... target_directory\n", \
+    printf("usage: %s [cCdfhpv] [--] source_file target_file\n" \
+           "       %s [cCdfhpv] [--] source_file ... target_directory\n", \
            argv[0], argv[0]);
     fflush(stdout);
 }
@@ -176,10 +176,6 @@ int main(int argc, \
     /* By default, don't bother to preserve all attributes. */
     DCOPY_user_opts.preserve = false;
 
-    /* By default, don't attempt any type of recursion. */
-    DCOPY_user_opts.recursive = false;
-    DCOPY_user_opts.recursive_unspecified = false;
-
     /* By default, assume the filesystem is reliable (exit on errors). */
     DCOPY_user_opts.reliable_filesystem = true;
 
@@ -190,15 +186,13 @@ int main(int argc, \
         {"force"                , no_argument      , 0, 'f'},
         {"help"                 , no_argument      , 0, 'h'},
         {"preserve"             , no_argument      , 0, 'p'},
-        {"recursive"            , no_argument      , 0, 'R'},
-        {"recursive-unspecified", no_argument      , 0, 'r'},
         {"unreliable-filesystem", no_argument      , 0, 'U'},
         {"version"              , no_argument      , 0, 'v'},
         {0                      , 0                , 0, 0  }
     };
 
     /* Parse options */
-    while((c = getopt_long(argc, argv, "cCd:fhpRrUv", \
+    while((c = getopt_long(argc, argv, "cCd:fhpUv", \
                            long_options, &option_index)) != -1) {
         switch(c) {
 
@@ -300,26 +294,6 @@ int main(int argc, \
 
                 if(CIRCLE_global_rank == 0) {
                     LOG(DCOPY_LOG_INFO, "Preserving file attributes.");
-                }
-
-                break;
-
-            case 'R':
-                DCOPY_user_opts.recursive = true;
-
-                if(CIRCLE_global_rank == 0) {
-                    LOG(DCOPY_LOG_INFO, "Performing correct recursion.");
-                    LOG(DCOPY_LOG_WARN, "Warning, only files and directories are implemented.");
-                }
-
-                break;
-
-            case 'r':
-                DCOPY_user_opts.recursive_unspecified = true;
-
-                if(CIRCLE_global_rank == 0) {
-                    LOG(DCOPY_LOG_INFO, "Performing recursion. " \
-                        "Ignoring special files.");
                 }
 
                 break;
