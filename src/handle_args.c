@@ -406,6 +406,8 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
                                               (uint16_t)(src_len - 1), \
                                               src_path_basename, 0);
             handle->enqueue(op);
+            free(op);
+
             free(src_path_basename_tmp);
         }
     }
