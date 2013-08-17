@@ -116,23 +116,8 @@ void DCOPY_epilogue(void)
             agg_rate, agg_copied, rel_time);
     }
 
-    /* free each source path and array of source path pointers */
-    if(DCOPY_user_opts.src_path != NULL) {
-        int i;
-
-        for(i = 0; i < DCOPY_user_opts.num_src_paths; i++) {
-            free(DCOPY_user_opts.src_path[i]);
-        }
-
-        free(DCOPY_user_opts.src_path);
-        DCOPY_user_opts.src_path = NULL;
-    }
-
-    /* free destination path */
-    if(DCOPY_user_opts.dest_path != NULL) {
-        free(DCOPY_user_opts.dest_path);
-        DCOPY_user_opts.dest_path = NULL;
-    }
+    /* free memory allocated to parse user params */
+    DCOPY_free_path_args();
 
     return;
 }

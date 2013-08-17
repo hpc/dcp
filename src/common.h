@@ -134,8 +134,6 @@ typedef struct {
 
 typedef struct {
     char*  dest_path;
-    int    num_src_paths;
-    char** src_path;
     bool   conditional;
     bool   skip_compare;
     bool   force;

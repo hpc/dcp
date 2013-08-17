@@ -24,6 +24,98 @@
 /** Where we should store options specified by the user. */
 DCOPY_options_t DCOPY_user_opts;
 
+typedef struct param_file {
+    char* orig;                /* original path as specified by user */
+    char* path;                /* reduced path, but still includes symlinks */
+    int   path_stat_valid;     /* flag to indicate whether path_stat is valid */
+    struct stat64 path_stat;   /* stat of path */
+    char* target;              /* fully resolved path, no more symlinks */
+    int   target_stat_valid;   /* flag to indicate whether target_stat is valid */
+    struct stat64 target_stat; /* stat of target path */
+} param_file_t;
+
+static param_file_t  dest_param;
+static param_file_t* src_params;
+static int num_src_params;
+
+/* initialize fields in param */
+static void DCOPY_param_init(param_file_t* param)
+{
+    /* initialize all fields */
+    if(param != NULL) {
+        param->orig = NULL;
+        param->path = NULL;
+        param->path_stat_valid = 0;
+        param->target = NULL;
+        param->target_stat_valid = 0;
+    }
+
+    return;
+}
+
+/* set fields in param according to path */
+static void DCOPY_param_set(const char* path, param_file_t* param)
+{
+    /* initialize all fields */
+    DCOPY_param_init(param);
+
+    if(path != NULL) {
+        /* make a copy of original path */
+        param->orig = bayer_strdup(path, "original path", __FILE__, __LINE__);
+
+        /* get absolute path and remove ".", "..", consecutive "/",
+         * and trailing "/" characters */
+        bayer_path* p = bayer_path_from_str(path);
+        if(! bayer_path_is_absolute(p)) {
+            char cwd[PATH_MAX];
+            bayer_getcwd(cwd, PATH_MAX);
+            bayer_path_prepend_str(p, cwd);
+        }
+        bayer_path_reduce(p);
+        param->path = bayer_path_strdup(p);
+        bayer_path_delete(&p);
+
+        /* get stat info for simplified path */
+        if(lstat64(param->path, &param->path_stat) == 0) {
+            param->path_stat_valid = 1;
+        }
+
+        /* TODO: we use realpath below, which is nice since it takes out
+         * ".", "..", symlinks, and adds the absolute path, however, it
+         * fails if the file/directory does not already exist, which is
+         * often the case for dest path. */
+
+        /* resolve any symlinks */
+        char target[PATH_MAX];
+        if(realpath(path, target) != NULL) {
+            /* make a copy of resolved name */
+            param->target = bayer_strdup(target, "target path", __FILE__, __LINE__);
+
+            /* get stat info for resolved path */
+            if(lstat64(param->target, &param->target_stat) == 0) {
+                param->target_stat_valid = 1;
+            }
+        }
+    }
+
+    return;
+}
+
+/* free memory associated with param */
+static void DCOPY_param_free(param_file_t* param)
+{
+    if(param != NULL) {
+        /* free all mememory */
+        bayer_free(&param->orig);
+        bayer_free(&param->path);
+        bayer_free(&param->target);
+
+        /* initialize all fields */
+        DCOPY_param_init(param);
+    }
+    return;
+}
+
 /**
  * Determine if the specified path is a directory.
  */
@@ -36,7 +128,7 @@ static bool DCOPY_is_directory(char* path)
         return false;
     }
 
-    return (S_ISDIR(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode)));
+    return (S_ISDIR(statbuf.st_mode));
 }
 
 /**
@@ -51,7 +143,22 @@ static bool DCOPY_is_regular_file(char* path)
         return false;
     }
 
-    return (S_ISREG(statbuf.st_mode) && !(S_ISLNK(statbuf.st_mode)));
+    return (S_ISREG(statbuf.st_mode));
+}
+
+/**
+ * Determine if the specified path is a regular file.
+ */
+static bool DCOPY_is_link(char* path)
+{
+    struct stat64 statbuf;
+
+    if(lstat64(path, &statbuf) < 0) {
+        /* LOG(DCOPY_LOG_ERR, "Could not determine if `%s' is a file. %s", path, strerror(errno)); */
+        return false;
+    }
+
+    return (S_ISLNK(statbuf.st_mode));
 }
 
 /**
@@ -96,8 +203,8 @@ static bool DCOPY_dest_is_dir(void)
 
             int i;
 
-            for(i = 0; i < DCOPY_user_opts.num_src_paths; i++) {
-                char* src_path = DCOPY_user_opts.src_path[i];
+            for(i = 0; i < num_src_params; i++) {
+                char* src_path = src_params[i].path;
 
                 if(DCOPY_is_regular_file(src_path)) {
                     dest_path_is_dir = false;
@@ -128,8 +235,8 @@ static uint32_t DCOPY_source_file_count(void)
 
     int i;
 
-    for(i = 0; i < DCOPY_user_opts.num_src_paths; i++) {
-        char* src_path = DCOPY_user_opts.src_path[i];
+    for(i = 0; i < num_src_params; i++) {
+        char* src_path = src_params[i].path;
 
         if(access(src_path, R_OK) < 0) {
             LOG(DCOPY_LOG_ERR, "Could not access source file at `%s'. %s", \
@@ -193,7 +300,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
          * If the destination is a file, there must be only one source object, and it
          * must be a file.
          */
-        if(number_of_source_files == 1 && DCOPY_is_regular_file(DCOPY_user_opts.src_path[0])) {
+        if(number_of_source_files == 1 && DCOPY_is_regular_file(src_params[0].path)) {
             /* Make a copy of the dest path so we can run dirname on it. */
             size_t dest_size = sizeof(char) * PATH_MAX;
             opts_dest_path_dirname = (char*) malloc(dest_size);
@@ -221,7 +328,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
                 DCOPY_abort(EXIT_FAILURE);
             }
 
-            int src_written = snprintf(src_path_dirname, src_size, "%s", DCOPY_user_opts.src_path[0]);
+            int src_written = snprintf(src_path_dirname, src_size, "%s", src_params[0].path);
 
             if(src_written < 0 || (size_t)(src_written) > src_size - 1) {
                 LOG(DCOPY_LOG_DBG, "Source path too long.");
@@ -231,7 +338,7 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
             src_path_dirname = dirname(src_path_dirname);
 
             /* LOG(DCOPY_LOG_DBG, "Enqueueing only a single source path `%s'.", DCOPY_user_opts.src_path[0]); */
-            char* op = DCOPY_encode_operation(TREEWALK, 0, DCOPY_user_opts.src_path[0], \
+            char* op = DCOPY_encode_operation(TREEWALK, 0, src_params[0].path, \
                                               (uint16_t)strlen(src_path_dirname), NULL, 0);
 
             handle->enqueue(op);
@@ -247,8 +354,8 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
              */
             int i;
 
-            for(i = 0; i < DCOPY_user_opts.num_src_paths; i++) {
-                char* src_path = DCOPY_user_opts.src_path[i];
+            for(i = 0; i < num_src_params; i++) {
+                char* src_path = src_params[i].path;
 
                 if(DCOPY_is_directory(src_path)) {
                     LOG(DCOPY_LOG_ERR, "Copying a directory into a file is not supported.");
@@ -270,8 +377,8 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 
         int i;
 
-        for(i = 0; i < DCOPY_user_opts.num_src_paths; i++) {
-            char* src_path = DCOPY_user_opts.src_path[i];
+        for(i = 0; i < num_src_params; i++) {
+            char* src_path = src_params[i].path;
             LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", src_path);
 
             char* src_path_basename = NULL;
@@ -385,22 +492,8 @@ static void DCOPY_parse_dest_path(char* path)
 
     /* standardize destination path */
     if(CIRCLE_global_rank == 0) {
-        bayer_path* p = bayer_path_from_str(path);
-
-        /* make sure path is absolute */
-        if (! bayer_path_is_absolute(p)) {
-            char cwd[PATH_MAX];
-            bayer_getcwd(cwd, PATH_MAX);
-            bayer_path_prepend_str(p, cwd);
-        }
-
-        /* remove ".", "..", consecutive "/", and trailing "/"
-         * characters from path */
-        bayer_path_reduce(p);
-
-        /* copy simplified path into dest_path */
-        bayer_path_strcpy(dest_path, sizeof(dest_path), p);
-        bayer_path_delete(&p);
+        DCOPY_param_set(path, &dest_param);
+        strncpy(dest_path, dest_param.path, sizeof(dest_path));
     }
 
     /* Copy the destination path to user opts structure on each rank. */
@@ -421,60 +514,28 @@ static void DCOPY_parse_src_paths(char** argv, \
                                   int last_arg_index, \
                                   int optind_local)
 {
-    /* allocate memory to store pointers to source paths */
-    DCOPY_user_opts.src_path = NULL;
-    DCOPY_user_opts.num_src_paths = last_arg_index - optind_local;
+    /* allocate memory to store pointers to source path info */
+    src_params = NULL;
+    num_src_params = last_arg_index - optind_local;
 
-    if(DCOPY_user_opts.num_src_paths > 0) {
-        size_t bytes = (size_t)(DCOPY_user_opts.num_src_paths) * sizeof(char*);
-        DCOPY_user_opts.src_path = (char**) malloc(bytes);
-
-        if(DCOPY_user_opts.src_path == NULL) {
-            LOG(DCOPY_LOG_ERR, "Failed to %llu bytes memory for source paths", (long long unsigned)bytes);
-            DCOPY_abort(EXIT_FAILURE);
+    /* only rank 0 resolves the path(s) */
+    if(CIRCLE_global_rank == 0) {
+        if(num_src_params > 0) {
+            size_t src_params_bytes = (size_t)(num_src_params) * sizeof(param_file_t);
+            src_params = (param_file_t*) bayer_malloc(src_params_bytes, "sources", __FILE__, __LINE__);
         }
-    }
 
-    /* Loop over each source path and check sanity. */
-    int opt_index;
-
-    char cwd[PATH_MAX];
-    bayer_getcwd(cwd, PATH_MAX);
-    for(opt_index = optind_local; opt_index < last_arg_index; opt_index++) {
-        /* rank 0 resolves the path */
-        char src_path[PATH_MAX];
-
-        if(CIRCLE_global_rank == 0) {
+        /* Loop over each source path and check sanity. */
+        int opt_index;
+        for(opt_index = optind_local; opt_index < last_arg_index; opt_index++) {
             char* path = argv[opt_index];
 
-            /* ensure path is absolute and
-             * remove ".", "..", consecutive "/", and trailing "/"
-             * characters from path */
-            bayer_path* p = bayer_path_from_str(path);
-            if (! bayer_path_is_absolute(p)) {
-                bayer_path_prepend_str(p, cwd);
-            }
-            bayer_path_reduce(p);
-            bayer_path_strcpy(src_path, sizeof(src_path), p);
-            bayer_path_delete(&p);
+            /* get index into source param array */
+            int idx = opt_index - optind_local;
 
-            /* TODO: verify that path exists */
+            DCOPY_param_set(path, &src_params[idx]);
 
-            /*
-                LOG(DCOPY_LOG_ERR, "Could not determine the path for `%s'. %s", \
-                    path, strerror(errno));
-                DCOPY_abort(EXIT_FAILURE);
-            */
-        }
-
-        /* bcast resolved path to all tasks */
-        int idx = opt_index - optind_local;
-
-        if(!DCOPY_bcast_str(src_path, &(DCOPY_user_opts.src_path[idx]))) {
-            LOG(DCOPY_LOG_ERR, "Could not send the proper source paths to other nodes (`%s'). " \
-                "The MPI broadcast operation failed. %s", \
-                src_path, strerror(errno));
-            DCOPY_abort(EXIT_FAILURE);
+            /* TODO: verify that each source path is readable */
         }
     }
 
@@ -500,30 +561,29 @@ void DCOPY_parse_path_args(char** argv, \
         DCOPY_exit(EXIT_FAILURE);
     }
 
-    /* TODO: we use realpath below, which is nice since it takes out
-     * ".", "..", symlinks, and adds the absolute path, however, it
-     * fails if the file/directory does not already exist, which is
-     * often the case for dest path. */
-
     /* Grab the destination path. */
     DCOPY_parse_dest_path(argv[last_arg_index]);
 
     /* Grab the source paths. */
     DCOPY_parse_src_paths(argv, last_arg_index, optind_local);
+}
 
-    /*
-     * Now, lets print everything out for debugging purposes.
-     */
-    /*
-        char** dbg_p = DCOPY_user_opts.src_path;
+/* frees resources allocated in call to parse_path_args() */
+void DCOPY_free_path_args()
+{
+    /* only rank 0 allocated memory */
+    if(CIRCLE_global_rank == 0) {
+        /* free memory associated with destination path */
+        DCOPY_param_free(&dest_param);
 
-        while(*dbg_p != NULL) {
-            LOG(DCOPY_LOG_DBG, "Found a source path with name: `%s'", *(dbg_p));
-            dbg_p++;
+        /* free memory associated with source paths */
+        int i;
+        for(i = 0; i < num_src_params; i++) {
+            DCOPY_param_free(&src_params[i]);
         }
-
-        LOG(DCOPY_LOG_DBG, "Found a destination path with name: `%s'", DCOPY_user_opts.dest_path);
-    */
+        num_src_params = 0;
+        bayer_free(&src_params);
+    }
 }
 
 /* EOF */
