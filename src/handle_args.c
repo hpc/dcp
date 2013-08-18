@@ -65,15 +65,7 @@ static void DCOPY_param_set(const char* path, param_file_t* param)
 
         /* get absolute path and remove ".", "..", consecutive "/",
          * and trailing "/" characters */
-        bayer_path* p = bayer_path_from_str(path);
-        if(! bayer_path_is_absolute(p)) {
-            char cwd[PATH_MAX];
-            bayer_getcwd(cwd, PATH_MAX);
-            bayer_path_prepend_str(p, cwd);
-        }
-        bayer_path_reduce(p);
-        param->path = bayer_path_strdup(p);
-        bayer_path_delete(&p);
+        param->path = bayer_path_strdup_abs_reduce_str(path);
 
         /* get stat info for simplified path */
         if(lstat64(param->path, &param->path_stat) == 0) {
