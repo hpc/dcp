@@ -99,6 +99,16 @@ void DCOPY_epilogue(void)
     int64_t agg_copied = DCOPY_sum_int64(DCOPY_statistics.total_bytes_copied);
     double agg_rate = (double)agg_copied / rel_time;
 
+    char units[6][5] = {"B/s", "KB/s", "MB/s", "GB/s", "TB/s", "PB/s"};
+    int unit_idx = 0;
+    while(agg_rate / 1024.0 > 1.0) {
+        agg_rate /= 1024.0;
+        unit_idx++;
+        if(unit_idx == 5) {
+            break;
+        }
+    }
+
     if(CIRCLE_global_rank == 0) {
         char starttime_str[256];
         struct tm* localstart = localtime(&(DCOPY_statistics.time_started));
@@ -111,9 +121,9 @@ void DCOPY_epilogue(void)
         LOG(DCOPY_LOG_INFO, "Filecopy run started at `%s'.", starttime_str);
         LOG(DCOPY_LOG_INFO, "Filecopy run completed at `%s'.", endtime_str);
 
-        LOG(DCOPY_LOG_INFO, "Aggregate transfer rate is `%.0lf' bytes per second " \
+        LOG(DCOPY_LOG_INFO, "Aggregate transfer rate is `%.3lf' %s " \
             "(`%.3" PRId64 "' bytes in `%.3lf' seconds).", \
-            agg_rate, agg_copied, rel_time);
+            agg_rate, units[unit_idx], agg_copied, rel_time);
     }
 
     /* free memory allocated to parse user params */
