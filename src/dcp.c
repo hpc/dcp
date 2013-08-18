@@ -190,8 +190,11 @@ int main(int argc, \
     /* By default, assume the filesystem is reliable (exit on errors). */
     DCOPY_user_opts.reliable_filesystem = true;
 
-    /* Use default chunk size */
+    /* Set default chunk size */
     DCOPY_user_opts.chunk_size = DCOPY_CHUNK_SIZE;
+
+    /* Set default block size */
+    DCOPY_user_opts.block_size = FD_BLOCK_SIZE;
 
     static struct option long_options[] = {
         {"skip-compare"         , no_argument      , 0, 'c'},

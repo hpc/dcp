@@ -37,7 +37,9 @@
 /* Common logging. */
 #include "log.h"
 
-#include <mpi.h>
+#include "mpi.h"
+
+#include "bayer.h"
 
 #include <libcircle.h>
 #include <stdbool.h>
@@ -55,7 +57,10 @@
 /*
  * This is the size of each chunk to be processed (in bytes).
  */
-#define DCOPY_CHUNK_SIZE (16*1024*1024) /* 32MB chunk */
+#define DCOPY_CHUNK_SIZE (1*1024*1024)
+
+/* buffer size to read/write data to file system */
+#define FD_BLOCK_SIZE (1*1024*1024)
 
 /*
  * FIXME: Is this description correct?
@@ -65,12 +70,6 @@
  * cache.
  */
 #define FD_PAGE_CACHE_SIZE (32768)
-
-/*
- * block size to read and write file data,
- * should evenly divide DCOPY_CHUNK_SIZE
- * */
-#define FD_BLOCK_SIZE (1*1024*1024)
 
 #ifndef PATH_MAX
 #define PATH_MAX (4096)
@@ -135,7 +134,8 @@ typedef struct {
     bool   force;
     bool   preserve;
     bool   reliable_filesystem;
-    size_t chunk_size;
+    size_t chunk_size; /* size to chunk files by */
+    size_t block_size; /* block size to read/write to file system */
 } DCOPY_options_t;
 
 /* struct for elements in linked list */
