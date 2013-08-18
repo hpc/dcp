@@ -97,6 +97,7 @@ void DCOPY_epilogue(void)
     double rel_time = DCOPY_statistics.wtime_ended - \
                       DCOPY_statistics.wtime_started;
     int64_t agg_copied = DCOPY_sum_int64(DCOPY_statistics.total_bytes_copied);
+    int64_t agg_size   = DCOPY_sum_int64(DCOPY_statistics.total_size);
     double agg_rate = (double)agg_copied / rel_time;
 
     char units[6][5] = {"B/s", "KB/s", "MB/s", "GB/s", "TB/s", "PB/s"};
@@ -124,6 +125,9 @@ void DCOPY_epilogue(void)
         LOG(DCOPY_LOG_INFO, "Aggregate transfer rate is `%.3lf' %s " \
             "(`%.3" PRId64 "' bytes in `%.3lf' seconds).", \
             agg_rate, units[unit_idx], agg_copied, rel_time);
+        /*
+        LOG(DCOPY_LOG_INFO, "Aggregate bytes `%.3" PRId64 ".", agg_size);
+        */
     }
 
     /* free memory allocated to parse user params */
@@ -185,6 +189,9 @@ int main(int argc, \
 
     /* By default, assume the filesystem is reliable (exit on errors). */
     DCOPY_user_opts.reliable_filesystem = true;
+
+    /* Use default chunk size */
+    DCOPY_user_opts.chunk_size = DCOPY_CHUNK_SIZE;
 
     static struct option long_options[] = {
         {"skip-compare"         , no_argument      , 0, 'c'},

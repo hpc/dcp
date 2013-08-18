@@ -25,8 +25,8 @@ extern DCOPY_statistics_t DCOPY_statistics;
 void DCOPY_do_copy(DCOPY_operation_t* op, \
                    CIRCLE_handle* handle)
 {
-    off64_t offset = DCOPY_CHUNK_SIZE * op->chunk;
-    int in_fd = DCOPY_open_input_fd(op, offset, DCOPY_CHUNK_SIZE);
+    off64_t offset = DCOPY_user_opts.chunk_size * op->chunk;
+    int in_fd = DCOPY_open_input_fd(op, offset, DCOPY_user_opts.chunk_size);
 
     if(in_fd < 0) {
         DCOPY_retry_failed_operation(COPY, handle, op);
@@ -101,9 +101,13 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         return -1;
     }
 
-    while(total_bytes_written <= DCOPY_CHUNK_SIZE) {
+    while(total_bytes_written <= DCOPY_user_opts.chunk_size) {
+        size_t left_to_read = DCOPY_user_opts.chunk_size - total_bytes_written;
+        if (left_to_read > sizeof(io_buf)) {
+            left_to_read = sizeof(io_buf);
+        }
 
-        num_of_bytes_read = read(in_fd, &io_buf[0], sizeof(io_buf));
+        num_of_bytes_read = read(in_fd, &io_buf[0], left_to_read);
 
         if(!num_of_bytes_read) {
             break;
@@ -124,12 +128,10 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
     /* Increment the global counter. */
     DCOPY_statistics.total_bytes_copied += total_bytes_written;
 
-    /*
         LOG(DCOPY_LOG_DBG, "Wrote `%zu' bytes at segment `%" PRId64 \
             "', offset `%" PRId64 "' (`%" PRId64 "' total).", \
-            num_of_bytes_written, op->chunk, DCOPY_CHUNK_SIZE * op->chunk, \
+            total_bytes_written, op->chunk, DCOPY_user_opts.chunk_size * op->chunk, \
             DCOPY_statistics.total_bytes_copied);
-    */
 
     return 1;
 }

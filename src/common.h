@@ -48,17 +48,14 @@
 #include <utime.h>
 #include <attr/xattr.h>
 
-/*
- * This is the size of each chunk to be processed (in bytes).
- */
-/* #define DCOPY_CHUNK_SIZE (1073741824) 1GB chunk */
-#define DCOPY_CHUNK_SIZE (536870912) /* 512MB chunk */
-/* #define DCOPY_CHUNK_SIZE (33554432)  32MB chunk */
-/* #define DCOPY_CHUNK_SIZE (33554432) 16MB chunk */
-
 /* default mode to create new files or directories */
 #define DCOPY_DEF_PERMS_FILE (S_IRUSR | S_IWUSR)
 #define DCOPY_DEF_PERMS_DIR  (S_IRWXU)
+
+/*
+ * This is the size of each chunk to be processed (in bytes).
+ */
+#define DCOPY_CHUNK_SIZE (16*1024*1024) /* 32MB chunk */
 
 /*
  * FIXME: Is this description correct?
@@ -73,7 +70,7 @@
  * block size to read and write file data,
  * should evenly divide DCOPY_CHUNK_SIZE
  * */
-#define FD_BLOCK_SIZE (1048576)
+#define FD_BLOCK_SIZE (1*1024*1024)
 
 #ifndef PATH_MAX
 #define PATH_MAX (4096)
@@ -124,7 +121,8 @@ typedef struct {
 } DCOPY_operation_t;
 
 typedef struct {
-    int64_t  total_bytes_copied;
+    int64_t  total_size;         /* sum of all file sizes */
+    int64_t  total_bytes_copied; /* total bytes written */
     time_t   time_started;
     time_t   time_ended;
     double   wtime_started;
@@ -137,6 +135,7 @@ typedef struct {
     bool   force;
     bool   preserve;
     bool   reliable_filesystem;
+    size_t chunk_size;
 } DCOPY_options_t;
 
 /* struct for elements in linked list */

@@ -28,6 +28,9 @@
 /** Options specified by the user. */
 extern DCOPY_options_t DCOPY_user_opts;
 
+/** Statistics to gather for summary output. */
+extern DCOPY_statistics_t DCOPY_statistics;
+
 /* given path, return level within directory tree */
 static int compute_depth(const char* path)
 {
@@ -164,14 +167,14 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, \
                              const struct stat64* statbuf,
                              CIRCLE_handle* handle)
 {
-    int64_t file_size = statbuf->st_size;
-    int64_t chunk_index;
-    int64_t num_chunks = file_size / DCOPY_CHUNK_SIZE;
+    int64_t file_size = (int64_t)statbuf->st_size;
+    DCOPY_statistics.total_size += file_size;
+    int64_t num_chunks = file_size / (int64_t)DCOPY_user_opts.chunk_size;
 
     LOG(DCOPY_LOG_DBG, "File `%s' size is `%" PRId64 \
         "' with chunks `%" PRId64 "' (total `%" PRId64 "').", \
         op->operand, file_size, num_chunks, \
-        num_chunks * DCOPY_CHUNK_SIZE);
+        num_chunks * DCOPY_user_opts.chunk_size);
 
     const char* dest_path = op->dest_full_path;
 
@@ -203,16 +206,18 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, \
     }
 
     /* Encode and enqueue each chunk of the file for processing later. */
-    for(chunk_index = 0; chunk_index < num_chunks; chunk_index++) {
+    int64_t chunk_index = 0;
+    while(chunk_index < num_chunks) {
         char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, \
                                              op->source_base_offset, \
                                              op->dest_base_appendix, file_size);
         handle->enqueue(newop);
         free(newop);
+        chunk_index++;
     }
 
     /* Encode and enqueue the last partial chunk. */
-    if((num_chunks * DCOPY_CHUNK_SIZE) < file_size || num_chunks == 0) {
+    if((num_chunks * DCOPY_user_opts.chunk_size) < file_size || num_chunks == 0) {
         char* newop = DCOPY_encode_operation(COPY, chunk_index, op->operand, \
                                              op->source_base_offset, \
                                              op->dest_base_appendix, file_size);

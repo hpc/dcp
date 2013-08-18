@@ -65,14 +65,14 @@ int DCOPY_perform_compare(DCOPY_operation_t* op, \
     size_t num_of_in_bytes = 0;
     size_t num_of_out_bytes = 0;
 
-    void* src_buf = (void*) malloc(sizeof(char) * DCOPY_CHUNK_SIZE);
-    void* dest_buf = (void*) malloc(sizeof(char) * DCOPY_CHUNK_SIZE);
+    void* src_buf = (void*) malloc(sizeof(char) * DCOPY_user_opts.chunk_size);
+    void* dest_buf = (void*) malloc(sizeof(char) * DCOPY_user_opts.chunk_size);
 
-    fseeko64(in_ptr, (int64_t)DCOPY_CHUNK_SIZE * (int64_t)op->chunk, SEEK_SET);
-    fseeko64(out_ptr, DCOPY_CHUNK_SIZE * op->chunk, SEEK_SET);
+    fseeko64(in_ptr, (int64_t)DCOPY_user_opts.chunk_size * (int64_t)op->chunk, SEEK_SET);
+    fseeko64(out_ptr, DCOPY_user_opts.chunk_size * op->chunk, SEEK_SET);
 
-    num_of_in_bytes = fread(src_buf, 1, DCOPY_CHUNK_SIZE, in_ptr);
-    num_of_out_bytes = fread(dest_buf, 1, DCOPY_CHUNK_SIZE, out_ptr);
+    num_of_in_bytes = fread(src_buf, 1, DCOPY_user_opts.chunk_size, in_ptr);
+    num_of_out_bytes = fread(dest_buf, 1, DCOPY_user_opts.chunk_size, out_ptr);
 
     if(num_of_in_bytes != num_of_out_bytes) {
         LOG(DCOPY_LOG_DBG, "Source byte count `%zu' does not match " \
