@@ -120,6 +120,9 @@ typedef struct {
 } DCOPY_operation_t;
 
 typedef struct {
+    int64_t  total_dirs;         /* sum of all directories */
+    int64_t  total_files;        /* sum of all files */
+    int64_t  total_links;        /* sum of all symlinks */
     int64_t  total_size;         /* sum of all file sizes */
     int64_t  total_bytes_copied; /* total bytes written */
     time_t   time_started;

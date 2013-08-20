@@ -123,6 +123,9 @@ void DCOPY_stat_process_link(DCOPY_operation_t* op, \
                              const struct stat64* statbuf,
                              CIRCLE_handle* handle)
 {
+    /* increment our link count by one */
+    DCOPY_statistics.total_links++;
+
     const char* src_path  = op->operand;
     const char* dest_path = op->dest_full_path;
 
@@ -167,8 +170,14 @@ void DCOPY_stat_process_file(DCOPY_operation_t* op, \
                              const struct stat64* statbuf,
                              CIRCLE_handle* handle)
 {
+    /* increment our file count by one */
+    DCOPY_statistics.total_files++;
+
+    /* get file size, and increment total bytes */
     int64_t file_size = (int64_t)statbuf->st_size;
     DCOPY_statistics.total_size += file_size;
+
+    /* compute number of chunks */
     int64_t num_chunks = file_size / (int64_t)DCOPY_user_opts.chunk_size;
 
     LOG(DCOPY_LOG_DBG, "File `%s' size is `%" PRId64 \
@@ -241,6 +250,9 @@ void DCOPY_stat_process_dir(DCOPY_operation_t* op,
 
     struct dirent* curr_ent;
     char newop_path[PATH_MAX];
+
+    /* increment our directory count by one */
+    DCOPY_statistics.total_dirs++;
 
     const char* dest_path = op->dest_full_path;
 
