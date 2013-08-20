@@ -97,8 +97,6 @@ static int64_t DCOPY_sum_int64(int64_t val)
 /**
  * Print out information on the results of the file copy.
  */
-#define SZ_UNITS (7)
-#define BW_UNITS (6)
 void DCOPY_epilogue(void)
 {
     double rel_time = DCOPY_statistics.wtime_ended - \
@@ -110,28 +108,6 @@ void DCOPY_epilogue(void)
     int64_t agg_copied = DCOPY_sum_int64(DCOPY_statistics.total_bytes_copied);
     double agg_rate = (double)agg_copied / rel_time;
 
-    /* convert size to units */
-    char units_sz[SZ_UNITS][3] = {"B", "KB", "MB", "GB", "TB", "PB", "EB"};
-    int unit_sz_idx = 0;
-    double agg_size_tmp = (double)agg_size;
-    while(agg_size_tmp / 1024.0 > 1.0) {
-        agg_size_tmp /= 1024.0;
-        unit_sz_idx++;
-        if(unit_sz_idx == SZ_UNITS-1) {
-            break;
-        }
-    }
-
-    char units_bw[BW_UNITS][5] = {"B/s", "KB/s", "MB/s", "GB/s", "TB/s", "PB/s"};
-    int unit_bw_idx = 0;
-    while(agg_rate / 1024.0 > 1.0) {
-        agg_rate /= 1024.0;
-        unit_bw_idx++;
-        if(unit_bw_idx == BW_UNITS-1) {
-            break;
-        }
-    }
-
     if(CIRCLE_global_rank == 0) {
         char starttime_str[256];
         struct tm* localstart = localtime(&(DCOPY_statistics.time_started));
@@ -141,18 +117,31 @@ void DCOPY_epilogue(void)
         struct tm* localend = localtime(&(DCOPY_statistics.time_ended));
         strftime(endtime_str, 256, "%b-%d-%Y,%H:%M:%S", localend);
 
+        int64_t agg_items = agg_dirs + agg_files + agg_links;
+
+        /* convert size to units */
+        double agg_size_tmp;
+        const char* agg_size_units;
+        bayer_format_bytes((uint64_t)agg_size, &agg_size_tmp, &agg_size_units);
+
+        /* convert bandwidth to units */
+        double agg_rate_tmp;
+        const char* agg_rate_units;
+        bayer_format_bw(agg_rate, &agg_rate_tmp, &agg_rate_units);
+
         LOG(DCOPY_LOG_INFO, "Started: %s", starttime_str);
         LOG(DCOPY_LOG_INFO, "Completed: %s", endtime_str);
         LOG(DCOPY_LOG_INFO, "Seconds: %.3lf", rel_time);
+        LOG(DCOPY_LOG_INFO, "Items: %" PRId64, agg_items);
         LOG(DCOPY_LOG_INFO, "Directories: %" PRId64, agg_dirs);
         LOG(DCOPY_LOG_INFO, "Files: %" PRId64, agg_files);
         LOG(DCOPY_LOG_INFO, "Links: %" PRId64, agg_links);
         LOG(DCOPY_LOG_INFO, "Data: %.3lf %s (%" PRId64 " bytes)",
-            agg_size_tmp, units_sz[unit_sz_idx], agg_size);
+            agg_size_tmp, agg_size_units, agg_size);
 
         LOG(DCOPY_LOG_INFO, "Rate: %.3lf %s " \
             "(%.3" PRId64 " bytes in %.3lf seconds)", \
-            agg_rate, units_bw[unit_bw_idx], agg_copied, rel_time);
+            agg_rate_tmp, agg_rate_units, agg_copied, rel_time);
     }
 
     /* free memory allocated to parse user params */

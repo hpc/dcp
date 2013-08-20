@@ -148,110 +148,12 @@ static void DCOPY_param_free(param_file_t* param)
  */
 void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 {
-    int i;
-
-    /* count number of readable source paths */
-    int num_readable = 0;
-    for(i = 0; i < num_src_params; i++) {
-        char* path = src_params[i].path;
-        if(access(path, R_OK) == 0) {
-            num_readable++;
-        }
-        else {
-            char* orig = src_params[i].orig;
-            LOG(DCOPY_LOG_ERR, "Could not read `%s'. %s",
-                orig, strerror(errno));
-        }
-    }
-
-    /* verify that we could at least one source path */
-    if(num_readable < 1) {
-        LOG(DCOPY_LOG_ERR, "At least one valid source must be specified.");
-        DCOPY_abort(EXIT_FAILURE);
-    }
-
-    /*
-     * First we need to determine if the last argument is a file or a directory.
-     * We first attempt to see if the last argument already exists on disk. If it
-     * doesn't, we then look at the sources to see if we can determine what the
-     * last argument should be.
-     */
-
-    bool dest_exists = false;
-    bool dest_is_dir = false;
-    bool dest_is_file = false;
-    bool dest_is_link_to_dir = false;
-    bool dest_is_link_to_file = false;
-    bool dest_required_to_be_dir = false;
-
-    /* check whether dest exists and if so determine its type */
-    if(dest_param.path_stat_valid) {
-        /* we could stat dest path, so something is there */
-        dest_exists = true;
-
-        /* now determine its type */
-        if(S_ISDIR(dest_param.path_stat.st_mode)) {
-            /* dest is a directory */
-            dest_is_dir  = true;
-        }
-        else if (S_ISREG(dest_param.path_stat.st_mode)) {
-            /* dest is a file */
-            dest_is_file = true;
-        }
-        else if (S_ISLNK(dest_param.path_stat.st_mode)) {
-            /* dest is a symlink, but to what? */
-            if (dest_param.target_stat_valid) {
-                /* target of the symlink exists, determine what it is */
-                if(S_ISDIR(dest_param.target_stat.st_mode)) {
-                    /* dest is link to a directory */
-                    dest_is_link_to_dir = true;
-                }
-                else if (S_ISREG(dest_param.target_stat.st_mode)) {
-                    /* dest is link to a file */
-                    dest_is_link_to_file = true;
-                }
-                else {
-                    /* unsupported type */
-                    LOG(DCOPY_LOG_ERR, "Unsupported filetype `%s' --> `%s'.",
-                        dest_param.orig, dest_param.target);
-                    DCOPY_abort(EXIT_FAILURE);
-                }
-            }
-        }
-        else {
-            /* unsupported type */
-           LOG(DCOPY_LOG_ERR, "Unsupported filetype `%s'.",
-               dest_param.orig);
-           DCOPY_abort(EXIT_FAILURE);
-        }
-    }
-
-    /* TODO: check that dest is writable */
-
-    /* determine whether caller *requires* copy into dir */
-
-    /* TODO: if caller specifies dest/ or dest/. */
-
-    /* if caller specifies more than one source,
-     * then dest has to be a directory */
-    if(num_src_params > 1) {
-        dest_required_to_be_dir = true;
-    }
-
-    /* if caller requires dest to be a directory, and if dest does not
-     * exist or it does it exist but it's not a directory, then abort */
-    if(dest_required_to_be_dir &&
-       (!dest_exists || (!dest_is_dir && !dest_is_link_to_dir)))
-    {
-        LOG(DCOPY_LOG_ERR, "Destination is not a directory '%s'.", dest_param.orig);
-        DCOPY_abort(EXIT_FAILURE);
-    }
-
-    if(dest_required_to_be_dir || dest_is_dir || dest_is_link_to_dir) {
+    if(DCOPY_user_opts.copy_into_dir) {
         /* copy source params into directory */
         LOG(DCOPY_LOG_DBG, "Infered that the destination is a directory.");
 
         /* enqueue each source param */
+        int i;
         for(i = 0; i < num_src_params; i++) {
             char* src_path = src_params[i].path;
             LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", src_path);
@@ -352,6 +254,140 @@ static void DCOPY_parse_src_paths(char** argv, \
     return;
 }
 
+/* check that source and destination paths are valid */
+static void DCOPY_check_paths()
+{
+    /* assume path parameters are valid */
+    int valid = 1;
+
+    /* just have rank 0 check */
+    if(CIRCLE_global_rank == 0) {
+        /* count number of readable source paths */
+        int i;
+        int num_readable = 0;
+        for(i = 0; i < num_src_params; i++) {
+            char* path = src_params[i].path;
+            if(access(path, R_OK) == 0) {
+                num_readable++;
+            }
+            else {
+                /* found a source path that we can't read, not fatal,
+                 * but print an error to notify user */
+                char* orig = src_params[i].orig;
+                LOG(DCOPY_LOG_ERR, "Could not read `%s'. %s",
+                    orig, strerror(errno));
+            }
+        }
+
+        /* verify that we have at least one source path */
+        if(num_readable < 1) {
+            LOG(DCOPY_LOG_ERR, "At least one valid source must be specified.");
+            valid = 0;
+            goto bcast;
+        }
+
+        /*
+         * First we need to determine if the last argument is a file or a directory.
+         * We first attempt to see if the last argument already exists on disk. If it
+         * doesn't, we then look at the sources to see if we can determine what the
+         * last argument should be.
+         */
+
+        bool dest_exists = false;
+        bool dest_is_dir = false;
+        bool dest_is_file = false;
+        bool dest_is_link_to_dir = false;
+        bool dest_is_link_to_file = false;
+        bool dest_required_to_be_dir = false;
+
+        /* check whether dest exists and if so determine its type */
+        if(dest_param.path_stat_valid) {
+            /* we could stat dest path, so something is there */
+            dest_exists = true;
+
+            /* now determine its type */
+            if(S_ISDIR(dest_param.path_stat.st_mode)) {
+                /* dest is a directory */
+                dest_is_dir  = true;
+            }
+            else if(S_ISREG(dest_param.path_stat.st_mode)) {
+                /* dest is a file */
+                dest_is_file = true;
+            }
+            else if(S_ISLNK(dest_param.path_stat.st_mode)) {
+                /* dest is a symlink, but to what? */
+                if (dest_param.target_stat_valid) {
+                    /* target of the symlink exists, determine what it is */
+                    if(S_ISDIR(dest_param.target_stat.st_mode)) {
+                        /* dest is link to a directory */
+                        dest_is_link_to_dir = true;
+                    }
+                    else if(S_ISREG(dest_param.target_stat.st_mode)) {
+                        /* dest is link to a file */
+                        dest_is_link_to_file = true;
+                    }
+                    else {
+                        /* unsupported type */
+                        LOG(DCOPY_LOG_ERR, "Unsupported filetype `%s' --> `%s'.",
+                            dest_param.orig, dest_param.target);
+                        valid = 0;
+                        goto bcast;
+                    }
+                }
+            }
+            else {
+                /* unsupported type */
+                LOG(DCOPY_LOG_ERR, "Unsupported filetype `%s'.",
+                    dest_param.orig);
+                valid = 0;
+                goto bcast;
+            }
+        }
+
+        /* TODO: check that dest is writable */
+
+        /* determine whether caller *requires* copy into dir */
+
+        /* TODO: if caller specifies dest/ or dest/. */
+
+        /* if caller specifies more than one source,
+         * then dest has to be a directory */
+        if(num_src_params > 1) {
+            dest_required_to_be_dir = true;
+        }
+
+        /* if caller requires dest to be a directory, and if dest does not
+         * exist or it does it exist but it's not a directory, then abort */
+        if(dest_required_to_be_dir &&
+           (!dest_exists || (!dest_is_dir && !dest_is_link_to_dir)))
+        {
+            LOG(DCOPY_LOG_ERR, "Destination is not a directory '%s'.", dest_param.orig);
+            valid = 0;
+            goto bcast;
+        }
+
+        /* we copy into a directory if any of the following:
+         *   1) user specified more than one source
+         *   2) destination already exists and is a directory
+         *   3) destination already exists and is a link to a directory */
+        bool copy_into_dir = (dest_required_to_be_dir || dest_is_dir || dest_is_link_to_dir);
+        DCOPY_user_opts.copy_into_dir = copy_into_dir;
+    }
+
+    /* get status from rank 0 */
+bcast:
+    MPI_Bcast(&valid, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    /* exit job if we found a problem */
+    if(! valid) {
+        if(CIRCLE_global_rank == 0) {
+            LOG(DCOPY_LOG_ERR, "Exiting run.");
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+        DCOPY_exit(EXIT_FAILURE);
+    }
+}
+
 /**
  * Parse the source and destination paths that the user has provided.
  */
@@ -368,6 +404,7 @@ void DCOPY_parse_path_args(char** argv, \
             LOG(DCOPY_LOG_ERR, "You must specify a source and destination path.");
         }
 
+        MPI_Barrier(MPI_COMM_WORLD);
         DCOPY_exit(EXIT_FAILURE);
     }
 
@@ -376,6 +413,9 @@ void DCOPY_parse_path_args(char** argv, \
 
     /* Grab the source paths. */
     DCOPY_parse_src_paths(argv, last_arg_index, optind_local);
+
+    /* check that source and destinations are ok */
+    DCOPY_check_paths();
 }
 
 /* frees resources allocated in call to parse_path_args() */
