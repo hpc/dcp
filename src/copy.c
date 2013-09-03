@@ -97,7 +97,7 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
 
     /* get buffer info */
     size_t buf_size = DCOPY_user_opts.block_size;
-    char* io_buf = DCOPY_user_opts.block_buf;
+    char* io_buf = DCOPY_user_opts.block_buf1;
 
     ssize_t num_of_bytes_read = 0;
     ssize_t num_of_bytes_written = 0;
@@ -122,7 +122,6 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         if(num_of_bytes_written != num_of_bytes_read) {
             LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. errno=%d %s", \
                 op->operand, errno, strerror(errno));
-            bayer_free(&io_buf);
             return -1;
         }
 

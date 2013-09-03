@@ -19,92 +19,104 @@ extern DCOPY_options_t DCOPY_user_opts;
 /** Statistics to gather for summary output. */
 extern DCOPY_statistics_t DCOPY_statistics;
 
-/* The entrance point to the compare operation. */
-void DCOPY_do_compare(DCOPY_operation_t* op, \
-                      CIRCLE_handle* handle)
-{
-    FILE* in_ptr = DCOPY_open_input_stream(op);
-
-    if(in_ptr == NULL) {
-        LOG(DCOPY_LOG_DBG, "Failed to open input stream. %s", strerror(errno));
-        DCOPY_retry_failed_operation(COPY, handle, op);
-        return;
-    }
-
-    FILE* out_ptr = DCOPY_open_output_stream(op);
-
-    if(out_ptr == NULL) {
-        LOG(DCOPY_LOG_DBG, "Failed to open output stream. %s", strerror(errno));
-        DCOPY_retry_failed_operation(COPY, handle, op);
-        return;
-    }
-
-    if(DCOPY_perform_compare(op, in_ptr, out_ptr) < 0) {
-        DCOPY_retry_failed_operation(COPY, handle, op);
-        return;
-    }
-
-    if(fclose(in_ptr) < 0) {
-        LOG(DCOPY_LOG_DBG, "Close on source file failed. %s", strerror(errno));
-    }
-
-    if(fclose(out_ptr) < 0) {
-        LOG(DCOPY_LOG_DBG, "Close on destination file failed. %s", strerror(errno));
-    }
-
-    return;
-}
-
 /*
  * Perform the compare on this chunk.
  */
-int DCOPY_perform_compare(DCOPY_operation_t* op, \
-                          FILE* in_ptr, \
-                          FILE* out_ptr)
+static int DCOPY_perform_compare(DCOPY_operation_t* op,
+                          int in_fd,
+                          int out_fd,
+                          off64_t offset)
 {
+    if(lseek64(in_fd, offset, SEEK_SET) < 0) {
+        LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. errno=%d %s", \
+            op->operand, errno, strerror(errno));
+        /* Handle operation requeue in parent function. */
+        return -1;
+    }
+
+    if(lseek64(out_fd, offset, SEEK_SET) < 0) {
+        LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path (source is `%s'). errno=%d %s", \
+            op->operand, errno, strerror(errno));
+        return -1;
+    }
+
+    /* get buffer info */
+    size_t buf_size = DCOPY_user_opts.block_size;
+    void* src_buf = DCOPY_user_opts.block_buf1;
+    void* dest_buf = DCOPY_user_opts.block_buf2;
+
     size_t num_of_in_bytes = 0;
     size_t num_of_out_bytes = 0;
+    size_t total_bytes = 0;
 
-    void* src_buf = (void*) malloc(sizeof(char) * DCOPY_user_opts.chunk_size);
-    void* dest_buf = (void*) malloc(sizeof(char) * DCOPY_user_opts.chunk_size);
+    size_t chunk_size = DCOPY_user_opts.chunk_size;
+    while(total_bytes <= chunk_size) {
+        size_t left_to_read = chunk_size - total_bytes;
+        if (left_to_read > buf_size) {
+            left_to_read = buf_size;
+        }
 
-    fseeko64(in_ptr, (int64_t)DCOPY_user_opts.chunk_size * (int64_t)op->chunk, SEEK_SET);
-    fseeko64(out_ptr, DCOPY_user_opts.chunk_size * op->chunk, SEEK_SET);
+        num_of_in_bytes = read(in_fd, src_buf, left_to_read);
+        num_of_out_bytes = read(out_fd, dest_buf, left_to_read);
 
-    num_of_in_bytes = fread(src_buf, 1, DCOPY_user_opts.chunk_size, in_ptr);
-    num_of_out_bytes = fread(dest_buf, 1, DCOPY_user_opts.chunk_size, out_ptr);
+        if(num_of_in_bytes != num_of_out_bytes) {
+            LOG(DCOPY_LOG_DBG, "Source byte count `%zu' does not match " \
+                "destination byte count '%zu' of total file size `%zu'.", \
+                num_of_in_bytes, num_of_out_bytes, op->file_size);
 
-    if(num_of_in_bytes != num_of_out_bytes) {
-        LOG(DCOPY_LOG_DBG, "Source byte count `%zu' does not match " \
-            "destination byte count '%zu' of total file size `%zu'.", \
-            num_of_in_bytes, num_of_out_bytes, op->file_size);
+            return -1;
+        }
 
-        free(src_buf);
-        free(dest_buf);
+        if(!num_of_in_bytes) {
+            break;
+        }
 
-        return -1;
+        if(memcmp(src_buf, dest_buf, num_of_in_bytes) != 0) {
+            LOG(DCOPY_LOG_ERR, "Compare mismatch when copying from file `%s'.", \
+                op->operand);
+
+            return -1;
+        }
+
+        total_bytes += num_of_in_bytes;
     }
 
-    if(memcmp(src_buf, dest_buf, num_of_in_bytes) != 0) {
-        LOG(DCOPY_LOG_ERR, "Compare mismatch when copying from file `%s'.", \
-            op->operand);
+    return 1;
+}
 
-        free(src_buf);
-        free(dest_buf);
+/* The entrance point to the compare operation. */
+void DCOPY_do_compare(DCOPY_operation_t* op,
+                      CIRCLE_handle* handle)
+{
+    off64_t offset = DCOPY_user_opts.chunk_size * op->chunk;
+    int in_fd = DCOPY_open_input_fd(op, offset, DCOPY_user_opts.chunk_size);
 
-        return -1;
+    if(in_fd < 0) {
+        DCOPY_retry_failed_operation(COMPARE, handle, op);
+        return;
     }
-    else {
-        /*
-                LOG(DCOPY_LOG_DBG, "File `%s' (chunk `%d') compare successful.", \
-                    op->operand, op->chunk);
-        */
 
-        free(src_buf);
-        free(dest_buf);
+    int out_fd = DCOPY_open_output_for_read_fd(op, offset, DCOPY_user_opts.chunk_size);
 
-        return 1;
+    if(out_fd < 0) {
+        DCOPY_retry_failed_operation(COMPARE, handle, op);
+        return;
     }
+
+    if(DCOPY_perform_compare(op, in_fd, out_fd, offset) < 0) {
+        DCOPY_retry_failed_operation(COMPARE, handle, op);
+        return;
+    }
+
+    if(close(in_fd) < 0) {
+        LOG(DCOPY_LOG_DBG, "Close on source file failed. errno=%d %s", errno, strerror(errno));
+    }
+
+    if(close(out_fd) < 0) {
+        LOG(DCOPY_LOG_DBG, "Close on destination file failed. errno=%d %s", errno, strerror(errno));
+    }
+
+    return;
 }
 
 /* EOF */

@@ -140,7 +140,8 @@ typedef struct {
     bool   reliable_filesystem;
     size_t chunk_size; /* size to chunk files by */
     size_t block_size; /* block size to read/write to file system */
-    char*  block_buf;
+    char*  block_buf1;
+    char*  block_buf2;
 } DCOPY_options_t;
 
 /* struct for elements in linked list */
@@ -175,13 +176,13 @@ void DCOPY_process_objects(CIRCLE_handle* handle);
 
 void DCOPY_unlink_destination(DCOPY_operation_t* op);
 
-FILE* DCOPY_open_input_stream(DCOPY_operation_t* op);
-
-int DCOPY_open_input_fd(DCOPY_operation_t* op, \
-                        off64_t offset, \
+int DCOPY_open_input_fd(DCOPY_operation_t* op,
+                        off64_t offset,
                         off64_t len);
 
-FILE* DCOPY_open_output_stream(DCOPY_operation_t* op);
+int DCOPY_open_output_for_read_fd(DCOPY_operation_t* op,
+                        off64_t offset,
+                        off64_t len);
 
 int DCOPY_open_output_fd(DCOPY_operation_t* op);
 

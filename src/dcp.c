@@ -148,7 +148,8 @@ void DCOPY_epilogue(void)
     DCOPY_free_path_args();
 
     /* free file I/O buffer */
-    bayer_free(&DCOPY_user_opts.block_buf);
+    bayer_free(&DCOPY_user_opts.block_buf2);
+    bayer_free(&DCOPY_user_opts.block_buf1);
 
     return;
 }
@@ -389,7 +390,8 @@ int main(int argc, \
 
     /* TODO: align buffer to page size */
     /* allocate buffer to read/write files */
-    DCOPY_user_opts.block_buf = bayer_malloc(DCOPY_user_opts.block_size, "Block for File I/O", __FILE__, __LINE__);
+    DCOPY_user_opts.block_buf1 = bayer_malloc(DCOPY_user_opts.block_size, "Block for file I/O", __FILE__, __LINE__);
+    DCOPY_user_opts.block_buf2 = bayer_malloc(DCOPY_user_opts.block_size, "Block for file I/O (2)", __FILE__, __LINE__);
 
     /* Set the log level for the processing library. */
     CIRCLE_enable_logging(CIRCLE_debug);

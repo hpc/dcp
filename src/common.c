@@ -333,20 +333,6 @@ void DCOPY_unlink_destination(DCOPY_operation_t* op)
     return;
 }
 
-/* Open the input file as a stream. */
-FILE* DCOPY_open_input_stream(DCOPY_operation_t* op)
-{
-    FILE* in_ptr = fopen64(op->operand, "rb");
-
-    if(in_ptr == NULL) {
-        LOG(DCOPY_LOG_DBG, "Failed to open input file `%s'. %s", \
-            op->operand, strerror(errno));
-        /* Handle operation requeue in parent function. */
-    }
-
-    return in_ptr;
-}
-
 /* Open the input file as an fd. */
 int DCOPY_open_input_fd(DCOPY_operation_t* op, \
                         off64_t offset, \
@@ -364,18 +350,15 @@ int DCOPY_open_input_fd(DCOPY_operation_t* op, \
     return in_fd;
 }
 
-/*
- * Open the output file and return a stream.
- *
- * This function needs figure out if this is a file-to-file copy or a
- * recursive copy, then return a FILE* based on the result.
- */
-FILE* DCOPY_open_output_stream(DCOPY_operation_t* op)
+/* Open the output file fd for read in compare. */
+int DCOPY_open_output_for_read_fd(DCOPY_operation_t* op, \
+                        off64_t offset, \
+                        off64_t len)
 {
     char dest_path_recursive[PATH_MAX];
     char dest_path_file_to_file[PATH_MAX];
 
-    FILE* out_ptr = NULL;
+    int out_fd = -1;
 
     if(op->dest_base_appendix == NULL) {
         sprintf(dest_path_recursive, "%s/%s", \
@@ -396,33 +379,28 @@ FILE* DCOPY_open_output_stream(DCOPY_operation_t* op)
     }
 
     /*
-        LOG(DCOPY_LOG_DBG, "Opening destination path `%s' (recursive).", \
-            dest_path_recursive);
-    */
-
-    /*
      * If we're recursive, we'll be doing this again and again, so try
      * recursive first. If it fails, then do the file-to-file.
      */
-    if((out_ptr = fopen64(dest_path_recursive, "rb")) == NULL) {
-
+    if((out_fd = open64(dest_path_recursive, O_RDONLY | O_NOATIME)) < 0) {
         /*
                 LOG(DCOPY_LOG_DBG, "Opening destination path `%s' " \
                     "(file-to-file fallback).", \
                     dest_path_file_to_file);
         */
 
-        out_ptr = fopen64(dest_path_file_to_file, "rb");
+        out_fd = open64(dest_path_file_to_file, O_RDONLY | O_NOATIME);
     }
 
-    if(out_ptr == NULL) {
-        LOG(DCOPY_LOG_DBG, "Failed to open destination path when comparing " \
+    if(out_fd < 0) {
+        LOG(DCOPY_LOG_DBG, "Failed to open destination path for compare " \
             "from source `%s'. %s", op->operand, strerror(errno));
 
         /* Handle operation requeue in parent function. */
     }
 
-    return out_ptr;
+    posix_fadvise64(out_fd, offset, len, POSIX_FADV_SEQUENTIAL);
+    return out_fd;
 }
 
 /*
