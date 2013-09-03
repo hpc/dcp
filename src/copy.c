@@ -95,9 +95,9 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         return -1;
     }
 
-    /* TODO: align to page size */
+    /* get buffer info */
     size_t buf_size = DCOPY_user_opts.block_size;
-    char* io_buf = (char*) bayer_malloc(buf_size, "block size", __FILE__, __LINE__);
+    char* io_buf = DCOPY_user_opts.block_buf;
 
     ssize_t num_of_bytes_read = 0;
     ssize_t num_of_bytes_written = 0;
@@ -136,9 +136,6 @@ int DCOPY_perform_copy(DCOPY_operation_t* op, \
         "', offset `%" PRId64 "' (`%" PRId64 "' total).", \
         total_bytes_written, op->chunk, DCOPY_user_opts.chunk_size * op->chunk, \
         DCOPY_statistics.total_bytes_copied);
-
-    /* free buffer */
-    bayer_free(&io_buf);
 
     return 1;
 }

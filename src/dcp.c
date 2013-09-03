@@ -147,6 +147,9 @@ void DCOPY_epilogue(void)
     /* free memory allocated to parse user params */
     DCOPY_free_path_args();
 
+    /* free file I/O buffer */
+    bayer_free(&DCOPY_user_opts.block_buf);
+
     return;
 }
 
@@ -383,6 +386,10 @@ int main(int argc, \
     DCOPY_jump_table[COPY]     = DCOPY_do_copy;
     DCOPY_jump_table[CLEANUP]  = DCOPY_do_cleanup;
     DCOPY_jump_table[COMPARE]  = DCOPY_do_compare;
+
+    /* TODO: align buffer to page size */
+    /* allocate buffer to read/write files */
+    DCOPY_user_opts.block_buf = bayer_malloc(DCOPY_user_opts.block_size, "Block for File I/O", __FILE__, __LINE__);
 
     /* Set the log level for the processing library. */
     CIRCLE_enable_logging(CIRCLE_debug);

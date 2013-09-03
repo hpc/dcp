@@ -140,6 +140,7 @@ typedef struct {
     bool   reliable_filesystem;
     size_t chunk_size; /* size to chunk files by */
     size_t block_size; /* block size to read/write to file system */
+    char*  block_buf;
 } DCOPY_options_t;
 
 /* struct for elements in linked list */
