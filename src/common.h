@@ -132,7 +132,7 @@ typedef struct {
 } DCOPY_statistics_t;
 
 typedef struct {
-    bool   copy_into_dir;
+    int    copy_into_dir;
     char*  dest_path;
     bool   compare;
     bool   force;
@@ -175,16 +175,6 @@ void DCOPY_add_objects(CIRCLE_handle* handle);
 void DCOPY_process_objects(CIRCLE_handle* handle);
 
 void DCOPY_unlink_destination(DCOPY_operation_t* op);
-
-int DCOPY_open_input_fd(DCOPY_operation_t* op,
-                        off64_t offset,
-                        off64_t len);
-
-int DCOPY_open_output_for_read_fd(DCOPY_operation_t* op,
-                        off64_t offset,
-                        off64_t len);
-
-int DCOPY_open_output_fd(DCOPY_operation_t* op);
 
 void DCOPY_copy_xattrs(
     DCOPY_operation_t* op,

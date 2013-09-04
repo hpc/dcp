@@ -371,7 +371,7 @@ static void DCOPY_check_paths()
          *   2) destination already exists and is a directory
          *   3) destination already exists and is a link to a directory */
         bool copy_into_dir = (dest_required_to_be_dir || dest_is_dir || dest_is_link_to_dir);
-        DCOPY_user_opts.copy_into_dir = copy_into_dir;
+        DCOPY_user_opts.copy_into_dir = copy_into_dir ? 1 : 0;
     }
 
     /* get status from rank 0 */
@@ -386,6 +386,9 @@ bcast:
         MPI_Barrier(MPI_COMM_WORLD);
         DCOPY_exit(EXIT_FAILURE);
     }
+
+    /* rank 0 broadcasts whether we're copying into a directory */
+    MPI_Bcast(&DCOPY_user_opts.copy_into_dir, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
 /**

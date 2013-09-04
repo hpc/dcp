@@ -25,18 +25,20 @@ extern DCOPY_statistics_t DCOPY_statistics;
 static int DCOPY_perform_compare(DCOPY_operation_t* op,
                           int in_fd,
                           int out_fd,
-                          off64_t offset)
+                          off_t offset)
 {
-    if(lseek64(in_fd, offset, SEEK_SET) < 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. errno=%d %s", \
+    /* seek to offset in source file */
+    if(bayer_lseek(op->operand, in_fd, offset, SEEK_SET) < 0) {
+        LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. errno=%d %s",
             op->operand, errno, strerror(errno));
         /* Handle operation requeue in parent function. */
         return -1;
     }
 
-    if(lseek64(out_fd, offset, SEEK_SET) < 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path (source is `%s'). errno=%d %s", \
-            op->operand, errno, strerror(errno));
+    /* seek to offset in destination file */
+    if(bayer_lseek(op->dest_full_path, out_fd, offset, SEEK_SET) < 0) {
+        LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path `%s'. errno=%d %s",
+            op->dest_full_path, errno, strerror(errno));
         return -1;
     }
 
@@ -45,39 +47,43 @@ static int DCOPY_perform_compare(DCOPY_operation_t* op,
     void* src_buf = DCOPY_user_opts.block_buf1;
     void* dest_buf = DCOPY_user_opts.block_buf2;
 
-    size_t num_of_in_bytes = 0;
-    size_t num_of_out_bytes = 0;
+    /* compare bytes */
     size_t total_bytes = 0;
-
     size_t chunk_size = DCOPY_user_opts.chunk_size;
     while(total_bytes <= chunk_size) {
+        /* determine number of bytes that we can read = max(buf size, remaining chunk) */
         size_t left_to_read = chunk_size - total_bytes;
         if (left_to_read > buf_size) {
             left_to_read = buf_size;
         }
 
-        num_of_in_bytes = read(in_fd, src_buf, left_to_read);
-        num_of_out_bytes = read(out_fd, dest_buf, left_to_read);
+        /* read data from source and destination */
+        size_t num_of_in_bytes = bayer_read(op->operand, in_fd, src_buf, left_to_read);
+        size_t num_of_out_bytes = bayer_read(op->dest_full_path, out_fd, dest_buf, left_to_read);
 
+        /* check that we got the same number of bytes from each */
         if(num_of_in_bytes != num_of_out_bytes) {
             LOG(DCOPY_LOG_DBG, "Source byte count `%zu' does not match " \
-                "destination byte count '%zu' of total file size `%zu'.", \
+                "destination byte count '%zu' of total file size `%zu'.",
                 num_of_in_bytes, num_of_out_bytes, op->file_size);
 
             return -1;
         }
 
+        /* check for EOF */
         if(!num_of_in_bytes) {
             break;
         }
 
+        /* check that buffers are the same */
         if(memcmp(src_buf, dest_buf, num_of_in_bytes) != 0) {
-            LOG(DCOPY_LOG_ERR, "Compare mismatch when copying from file `%s'.", \
+            LOG(DCOPY_LOG_ERR, "Compare mismatch when copying from file `%s'.",
                 op->operand);
 
             return -1;
         }
 
+        /* add bytes to our total */
         total_bytes += num_of_in_bytes;
     }
 
@@ -88,32 +94,50 @@ static int DCOPY_perform_compare(DCOPY_operation_t* op,
 void DCOPY_do_compare(DCOPY_operation_t* op,
                       CIRCLE_handle* handle)
 {
-    off64_t offset = DCOPY_user_opts.chunk_size * op->chunk;
-    int in_fd = DCOPY_open_input_fd(op, offset, DCOPY_user_opts.chunk_size);
-
+    /* open source file */
+    int in_fd = bayer_open(op->operand, O_RDONLY | O_NOATIME);
     if(in_fd < 0) {
+        LOG(DCOPY_LOG_DBG, "Failed to open input file `%s'. errno=%d %s",
+            op->operand, errno, strerror(errno));
         DCOPY_retry_failed_operation(COMPARE, handle, op);
         return;
     }
 
-    int out_fd = DCOPY_open_output_for_read_fd(op, offset, DCOPY_user_opts.chunk_size);
+    /* compute starting byte offset */
+    off_t chunk_size = DCOPY_user_opts.chunk_size;
+    off_t offset = chunk_size * op->chunk;
 
+    /* hint that we'll read from file sequentially */
+    posix_fadvise(in_fd, offset, chunk_size, POSIX_FADV_SEQUENTIAL);
+
+    /* open destination file */
+    int out_fd = bayer_open(op->dest_full_path, O_RDONLY | O_NOATIME);
     if(out_fd < 0) {
+        LOG(DCOPY_LOG_DBG, "Failed to open destination path for compare " \
+            "from source `%s'. %s", op->operand, strerror(errno));
         DCOPY_retry_failed_operation(COMPARE, handle, op);
         return;
     }
 
+    /* hint that we'll read from file sequentially */
+    posix_fadvise(out_fd, offset, chunk_size, POSIX_FADV_SEQUENTIAL);
+
+    /* compare bytes */
     if(DCOPY_perform_compare(op, in_fd, out_fd, offset) < 0) {
         DCOPY_retry_failed_operation(COMPARE, handle, op);
         return;
     }
 
-    if(close(in_fd) < 0) {
-        LOG(DCOPY_LOG_DBG, "Close on source file failed. errno=%d %s", errno, strerror(errno));
+    /* close destination file */
+    if(bayer_close(op->dest_full_path, out_fd) < 0) {
+        LOG(DCOPY_LOG_DBG, "Close on destination file failed `%s'. errno=%d %s",
+            op->dest_full_path, errno, strerror(errno));
     }
 
-    if(close(out_fd) < 0) {
-        LOG(DCOPY_LOG_DBG, "Close on destination file failed. errno=%d %s", errno, strerror(errno));
+    /* close source file */
+    if(bayer_close(op->operand, in_fd) < 0) {
+        LOG(DCOPY_LOG_DBG, "Close on source file failed `%s'. errno=%d %s",
+            op->operand, errno, strerror(errno));
     }
 
     return;
