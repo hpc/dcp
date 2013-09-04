@@ -399,12 +399,12 @@ int main(int argc, \
     DCOPY_jump_table[CLEANUP]  = DCOPY_do_cleanup;
     DCOPY_jump_table[COMPARE]  = DCOPY_do_compare;
 
-    /* TODO: align buffer to page size */
-    /* allocate buffer to read/write files */
-    DCOPY_user_opts.block_buf1 = bayer_malloc(
-        DCOPY_user_opts.block_size, "Block for file I/O", __FILE__, __LINE__);
-    DCOPY_user_opts.block_buf2 = bayer_malloc(
-        DCOPY_user_opts.block_size, "Block for file I/O (2)", __FILE__, __LINE__);
+    /* allocate buffer to read/write files, aligned on 1MB boundaraies */
+    size_t alignment = 1024*1024;
+    DCOPY_user_opts.block_buf1 = bayer_memalign(
+        DCOPY_user_opts.block_size, alignment, "Block for file I/O", __FILE__, __LINE__);
+    DCOPY_user_opts.block_buf2 = bayer_memalign(
+        DCOPY_user_opts.block_size, alignment, "Block for file I/O (2)", __FILE__, __LINE__);
 
     /* Set the log level for the processing library. */
     CIRCLE_enable_logging(CIRCLE_debug);
