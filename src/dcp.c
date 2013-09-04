@@ -167,9 +167,20 @@ void DCOPY_print_version()
  */
 void DCOPY_print_usage(char** argv)
 {
-    printf("usage: %s [cdfhpv] [--] source target\n" \
-           "       %s [cdfhpv] [--] source ... target_directory\n", \
-           argv[0], argv[0]);
+    printf("\n");
+    printf("Usage: dcp [options] source target\n");
+    printf("       dcp [options] source ... target_dir\n");
+    printf("\n");
+    printf("Options:\n");
+    printf("  -c, --compare       - read data back after writing to compare\n");
+    printf("  -d, --debug <level> - specify debug verbosity level (default info)\n");
+    printf("  -f, --force         - delete destination file if error on open\n");
+    printf("  -p, --preserve      - preserve permissions, ownership, timestamps, extended attributes\n");
+    printf("  -v, --version       - print version info\n");
+    printf("  -h, --help          - print usage\n");
+    printf("\n");
+    printf("Level: dbg,info,warn,err,fatal\n");
+    printf("\n");
     fflush(stdout);
 }
 
@@ -222,7 +233,7 @@ int main(int argc, \
     DCOPY_user_opts.block_size = FD_BLOCK_SIZE;
 
     static struct option long_options[] = {
-        {"skip-compare"         , no_argument      , 0, 'c'},
+        {"compare"              , no_argument      , 0, 'c'},
         {"debug"                , required_argument, 0, 'd'},
         {"force"                , no_argument      , 0, 'f'},
         {"help"                 , no_argument      , 0, 'h'},
@@ -390,8 +401,10 @@ int main(int argc, \
 
     /* TODO: align buffer to page size */
     /* allocate buffer to read/write files */
-    DCOPY_user_opts.block_buf1 = bayer_malloc(DCOPY_user_opts.block_size, "Block for file I/O", __FILE__, __LINE__);
-    DCOPY_user_opts.block_buf2 = bayer_malloc(DCOPY_user_opts.block_size, "Block for file I/O (2)", __FILE__, __LINE__);
+    DCOPY_user_opts.block_buf1 = bayer_malloc(
+        DCOPY_user_opts.block_size, "Block for file I/O", __FILE__, __LINE__);
+    DCOPY_user_opts.block_buf2 = bayer_malloc(
+        DCOPY_user_opts.block_size, "Block for file I/O (2)", __FILE__, __LINE__);
 
     /* Set the log level for the processing library. */
     CIRCLE_enable_logging(CIRCLE_debug);
