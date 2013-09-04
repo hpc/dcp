@@ -182,7 +182,7 @@ static void DCOPY_stat_process_dir(DCOPY_operation_t* op,
 
     /* first, create the destination directory */
     LOG(DCOPY_LOG_DBG, "Creating directory: %s", dest_path);
-    int rc = mkdir(dest_path, DCOPY_DEF_PERMS_DIR);
+    int rc = bayer_mkdir(dest_path, DCOPY_DEF_PERMS_DIR);
     if(rc != 0) {
         LOG(DCOPY_LOG_ERR, "Failed to create directory: %s (errno=%d %s)", \
             dest_path, errno, strerror(errno));
