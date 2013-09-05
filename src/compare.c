@@ -97,9 +97,10 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
     /* open source file */
     int in_fd = bayer_open(op->operand, O_RDONLY | O_NOATIME);
     if(in_fd < 0) {
+        /* seems like we should retry the COMPARE here, may be overkill to COPY */
         LOG(DCOPY_LOG_DBG, "Failed to open input file `%s'. errno=%d %s",
             op->operand, errno, strerror(errno));
-        DCOPY_retry_failed_operation(COMPARE, handle, op);
+        DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
 
@@ -113,9 +114,10 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
     /* open destination file */
     int out_fd = bayer_open(op->dest_full_path, O_RDONLY | O_NOATIME);
     if(out_fd < 0) {
+        /* assume destination file does not exist, try copy again */
         LOG(DCOPY_LOG_DBG, "Failed to open destination path for compare " \
             "from source `%s'. %s", op->operand, strerror(errno));
-        DCOPY_retry_failed_operation(COMPARE, handle, op);
+        DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
 
@@ -124,7 +126,8 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
 
     /* compare bytes */
     if(DCOPY_perform_compare(op, in_fd, out_fd, offset) < 0) {
-        DCOPY_retry_failed_operation(COMPARE, handle, op);
+        /* found incorrect data, try copy again */
+        DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
 
