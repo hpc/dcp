@@ -133,9 +133,9 @@ void DCOPY_epilogue(void)
         LOG(DCOPY_LOG_INFO, "Completed: %s", endtime_str);
         LOG(DCOPY_LOG_INFO, "Seconds: %.3lf", rel_time);
         LOG(DCOPY_LOG_INFO, "Items: %" PRId64, agg_items);
-        LOG(DCOPY_LOG_INFO, "Directories: %" PRId64, agg_dirs);
-        LOG(DCOPY_LOG_INFO, "Files: %" PRId64, agg_files);
-        LOG(DCOPY_LOG_INFO, "Links: %" PRId64, agg_links);
+        LOG(DCOPY_LOG_INFO, "  Directories: %" PRId64, agg_dirs);
+        LOG(DCOPY_LOG_INFO, "  Files: %" PRId64, agg_files);
+        LOG(DCOPY_LOG_INFO, "  Links: %" PRId64, agg_links);
         LOG(DCOPY_LOG_INFO, "Data: %.3lf %s (%" PRId64 " bytes)",
             agg_size_tmp, agg_size_units, agg_size);
 
@@ -425,6 +425,12 @@ int main(int argc, \
 
     /* set permissions, ownership, and timestamps if needed */
     DCOPY_set_metadata();
+
+    /* force updates to disk */
+    if (CIRCLE_global_rank == 0) {
+        LOG(DCOPY_LOG_INFO, "Syncing updates to disk.");
+    }
+    sync();
 
     /* free list of stat objects */
     DCOPY_stat_elem_t* current = DCOPY_list_head;
