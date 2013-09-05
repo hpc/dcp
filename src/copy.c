@@ -98,10 +98,12 @@ static int DCOPY_perform_copy(DCOPY_operation_t* op,
         total_bytes += num_of_bytes_written;
     }
 
+#if 0
     /* force data to file system */
     if(total_bytes > 0) {
         bayer_fsync(op->dest_full_path, out_fd);
     }
+#endif
 
     /* Increment the global counter. */
     DCOPY_statistics.total_bytes_copied += total_bytes;
