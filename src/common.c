@@ -257,45 +257,6 @@ void DCOPY_opt_free(DCOPY_operation_t** optptr)
     return;
 }
 
-/**
- * The initial seeding callback for items to process on the distributed queue
- * structure. We send all of our source items to the queue here.
- */
-void DCOPY_add_objects(CIRCLE_handle* handle)
-{
-    DCOPY_enqueue_work_objects(handle);
-}
-
-/**
- * The process callback for items found on the distributed queue structure.
- */
-void DCOPY_process_objects(CIRCLE_handle* handle)
-{
-    char op[CIRCLE_MAX_STRING_LEN];
-    /*
-        const char* DCOPY_op_string_table[] = {
-            "TREEWALK",
-            "COPY",
-            "CLEANUP",
-            "COMPARE"
-        };
-    */
-
-    /* Pop an item off the queue */
-    handle->dequeue(op);
-    DCOPY_operation_t* opt = DCOPY_decode_operation(op);
-
-    /*
-        LOG(DCOPY_LOG_DBG, "Performing operation `%s' on operand `%s' (`%d' remain on local queue).", \
-            DCOPY_op_string_table[opt->code], opt->operand, handle->local_queue_size());
-    */
-
-    DCOPY_jump_table[opt->code](opt, handle);
-
-    DCOPY_opt_free(&opt);
-    return;
-}
-
 void DCOPY_copy_xattrs(
     DCOPY_operation_t* op,
     const struct stat64* statbuf,

@@ -172,12 +172,6 @@ void DCOPY_retry_failed_operation(DCOPY_operation_code_t target, \
                                   CIRCLE_handle* handle, \
                                   DCOPY_operation_t* op);
 
-void DCOPY_add_objects(CIRCLE_handle* handle);
-
-void DCOPY_process_objects(CIRCLE_handle* handle);
-
-void DCOPY_unlink_destination(DCOPY_operation_t* op);
-
 void DCOPY_copy_xattrs(
     DCOPY_operation_t* op,
     const struct stat64* statbuf,
@@ -200,9 +194,13 @@ void DCOPY_copy_timestamps(
 );
 
 /* called by single process upon detection of a problem */
-void DCOPY_abort(int code) __attribute__((noreturn));
+void DCOPY_abort(
+    int code
+) __attribute__((noreturn));
 
 /* called globally by all procs to exit */
-void DCOPY_exit(int code);
+void DCOPY_exit(
+    int code
+);
 
 #endif /* __COMMON_H_ */

@@ -5,8 +5,6 @@
 
 #include "common.h"
 
-void DCOPY_epilogue(void);
-void DCOPY_print_version(void);
 void DCOPY_print_usage(char** argv);
 
 #endif /* __DCP_H_ */

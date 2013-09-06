@@ -30,6 +30,45 @@ extern DCOPY_statistics_t DCOPY_statistics;
 extern void (*DCOPY_jump_table[5])(DCOPY_operation_t* op, \
                                    CIRCLE_handle* handle);
 
+/**
+ * The initial seeding callback for items to process on the distributed queue
+ * structure. We send all of our source items to the queue here.
+ */
+static void DCOPY_add_objects(CIRCLE_handle* handle)
+{
+    DCOPY_enqueue_work_objects(handle);
+}
+
+/**
+ * The process callback for items found on the distributed queue structure.
+ */
+static void DCOPY_process_objects(CIRCLE_handle* handle)
+{
+    char op[CIRCLE_MAX_STRING_LEN];
+    /*
+        const char* DCOPY_op_string_table[] = {
+            "TREEWALK",
+            "COPY",
+            "CLEANUP",
+            "COMPARE"
+        };
+    */
+
+    /* Pop an item off the queue */
+    handle->dequeue(op);
+    DCOPY_operation_t* opt = DCOPY_decode_operation(op);
+
+    /*
+        LOG(DCOPY_LOG_DBG, "Performing operation `%s' on operand `%s' (`%d' remain on local queue).", \
+            DCOPY_op_string_table[opt->code], opt->operand, handle->local_queue_size());
+    */
+
+    DCOPY_jump_table[opt->code](opt, handle);
+
+    DCOPY_opt_free(&opt);
+    return;
+}
+
 /* iterate through linked list of files and set ownership, timestamps, and permissions
  * starting from deepest level and working backwards */
 static void DCOPY_set_metadata()
@@ -97,7 +136,7 @@ static int64_t DCOPY_sum_int64(int64_t val)
 /**
  * Print out information on the results of the file copy.
  */
-void DCOPY_epilogue(void)
+static void DCOPY_epilogue(void)
 {
     double rel_time = DCOPY_statistics.wtime_ended - \
                       DCOPY_statistics.wtime_started;
@@ -157,7 +196,7 @@ void DCOPY_epilogue(void)
 /**
  * Print the current version.
  */
-void DCOPY_print_version()
+static void DCOPY_print_version()
 {
     fprintf(stdout, "%s-%s\n", PACKAGE_NAME, PACKAGE_VERSION);
 }
@@ -411,13 +450,13 @@ int main(int argc, \
 
     /* Grab a relative and actual start time for the epilogue. */
     time(&(DCOPY_statistics.time_started));
-    DCOPY_statistics.wtime_started = CIRCLE_wtime();
+    DCOPY_statistics.wtime_started = MPI_Wtime();
 
     /* Perform the actual file copy. */
     CIRCLE_begin();
 
     /* Determine the actual and relative end time for the epilogue. */
-    DCOPY_statistics.wtime_ended = CIRCLE_wtime();
+    DCOPY_statistics.wtime_ended = MPI_Wtime();
     time(&(DCOPY_statistics.time_ended));
 
     /* Let the processing library cleanup. */
