@@ -20,6 +20,9 @@ DCOPY_statistics_t DCOPY_statistics;
 /** Where we should store options specified by the user. */
 DCOPY_options_t DCOPY_user_opts;
 
+/** Cache most recent open file descriptor to avoid opening / closing the same file */
+DCOPY_file_cache_t DCOPY_file_cache;
+
 /** Where debug output should go. */
 FILE* DCOPY_debug_stream;
 

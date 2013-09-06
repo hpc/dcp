@@ -20,6 +20,9 @@ extern DCOPY_options_t DCOPY_user_opts;
 /** Statistics to gather for summary output. */
 extern DCOPY_statistics_t DCOPY_statistics;
 
+/** Cache most recent open file descriptors. */
+extern DCOPY_file_cache_t DCOPY_file_cache;
+
 /*
  * Encode and enqueue the cleanup stage for this chunk so the file is
  * truncated and (if specified via getopt) permissions are preserved.

@@ -20,6 +20,9 @@ extern DCOPY_options_t DCOPY_user_opts;
 /** Statistics to gather for summary output. */
 extern DCOPY_statistics_t DCOPY_statistics;
 
+/** Cache most recent open file descriptors. */
+extern DCOPY_file_cache_t DCOPY_file_cache;
+
 /*
  * A table of function pointers used for core operation. These functions
  * perform each stage of the file copy operation: "treewalk", "copy",
@@ -209,6 +212,10 @@ int main(int argc, \
     DCOPY_statistics.total_links = 0;
     DCOPY_statistics.total_size  = 0;
     DCOPY_statistics.total_bytes_copied = 0;
+
+    /* Initialize file cache */
+    DCOPY_file_cache.src_name  = NULL;
+    DCOPY_file_cache.dest_name = NULL;
 
     /* By default, skip the compare option. */
     DCOPY_user_opts.compare = false;

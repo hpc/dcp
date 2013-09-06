@@ -144,6 +144,17 @@ typedef struct {
     char*  block_buf2;
 } DCOPY_options_t;
 
+/* cache open file descriptor to avoid
+ * opening / closing the same file */
+typedef struct {
+    char* src_name;
+    int   src_for_read;
+    int   src_fd;
+    char* dest_name;
+    int   dest_for_read;
+    int   dest_fd;
+} DCOPY_file_cache_t;
+
 /* struct for elements in linked list */
 typedef struct list_elem {
   char* file;             /* file name */
@@ -176,6 +187,14 @@ void DCOPY_process_objects(CIRCLE_handle* handle);
 
 void DCOPY_unlink_destination(DCOPY_operation_t* op);
 
+int DCOPY_open_source(
+    const char* src
+);
+
+int DCOPY_open_dest_for_read(
+    const char* dst
+);
+    
 void DCOPY_copy_xattrs(
     DCOPY_operation_t* op,
     const struct stat64* statbuf,
