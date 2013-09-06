@@ -210,7 +210,7 @@ static void DCOPY_parse_dest_path(char* path)
     char dest_path[PATH_MAX];
 
     /* standardize destination path */
-    if(CIRCLE_global_rank == 0) {
+    if(DCOPY_global_rank == 0) {
         DCOPY_param_set(path, &dest_param);
         strncpy(dest_path, dest_param.path, sizeof(dest_path));
     }
@@ -235,7 +235,7 @@ static void DCOPY_parse_src_paths(char** argv, \
     num_src_params = last_arg_index - optind_local;
 
     /* only rank 0 resolves the path(s) */
-    if(CIRCLE_global_rank == 0) {
+    if(DCOPY_global_rank == 0) {
         /* allocate space to record info about each source */
         if(num_src_params > 0) {
             size_t src_params_bytes = (size_t)(num_src_params) * sizeof(param_file_t);
@@ -261,7 +261,7 @@ static void DCOPY_check_paths()
     int valid = 1;
 
     /* just have rank 0 check */
-    if(CIRCLE_global_rank == 0) {
+    if(DCOPY_global_rank == 0) {
         /* count number of readable source paths */
         int i;
         int num_readable = 0;
@@ -380,7 +380,7 @@ bcast:
 
     /* exit job if we found a problem */
     if(! valid) {
-        if(CIRCLE_global_rank == 0) {
+        if(DCOPY_global_rank == 0) {
             LOG(DCOPY_LOG_ERR, "Exiting run.");
         }
         MPI_Barrier(MPI_COMM_WORLD);
@@ -402,7 +402,7 @@ void DCOPY_parse_path_args(char** argv, \
     int last_arg_index = num_args + optind_local - 1;
 
     if(argv == NULL || num_args < 2) {
-        if(CIRCLE_global_rank == 0) {
+        if(DCOPY_global_rank == 0) {
             DCOPY_print_usage(argv);
             LOG(DCOPY_LOG_ERR, "You must specify a source and destination path.");
         }
@@ -425,7 +425,7 @@ void DCOPY_parse_path_args(char** argv, \
 void DCOPY_free_path_args()
 {
     /* only rank 0 allocated memory */
-    if(CIRCLE_global_rank == 0) {
+    if(DCOPY_global_rank == 0) {
         /* free memory associated with destination path */
         DCOPY_param_free(&dest_param);
 

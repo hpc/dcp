@@ -36,7 +36,7 @@ static void DCOPY_set_metadata()
 {
     const DCOPY_stat_elem_t* elem;
 
-    if (CIRCLE_global_rank == 0) {
+    if (DCOPY_global_rank == 0) {
         if(DCOPY_user_opts.preserve) {
             LOG(DCOPY_LOG_INFO, "Setting ownership, permissions, and timestamps.");
         }
@@ -108,7 +108,7 @@ void DCOPY_epilogue(void)
     int64_t agg_copied = DCOPY_sum_int64(DCOPY_statistics.total_bytes_copied);
     double agg_rate = (double)agg_copied / rel_time;
 
-    if(CIRCLE_global_rank == 0) {
+    if(DCOPY_global_rank == 0) {
         char starttime_str[256];
         struct tm* localstart = localtime(&(DCOPY_statistics.time_started));
         strftime(starttime_str, 256, "%b-%d-%Y,%H:%M:%S", localstart);
@@ -197,7 +197,7 @@ int main(int argc, \
      * to have our rank to filter output messages below but we might
      * also want to set different libcircle flags based on command line
      * options -- for now just pass in the default flags */
-    CIRCLE_global_rank = CIRCLE_init(argc, argv, CIRCLE_DEFAULT_FLAGS);
+    DCOPY_global_rank = CIRCLE_init(argc, argv, CIRCLE_DEFAULT_FLAGS);
     CIRCLE_cb_create(&DCOPY_add_objects);
     CIRCLE_cb_process(&DCOPY_process_objects);
 
@@ -251,7 +251,7 @@ int main(int argc, \
             case 'c':
                 DCOPY_user_opts.compare = true;
 
-                if(CIRCLE_global_rank == 0) {
+                if(DCOPY_global_rank == 0) {
                     LOG(DCOPY_LOG_INFO, "Compare source and destination " \
 			"after copy to detect corruption.");
                 }
@@ -264,7 +264,7 @@ int main(int argc, \
                     CIRCLE_debug = CIRCLE_LOG_FATAL;
                     DCOPY_debug_level = DCOPY_LOG_FATAL;
 
-                    if(CIRCLE_global_rank == 0) {
+                    if(DCOPY_global_rank == 0) {
                         LOG(DCOPY_LOG_INFO, "Debug level set to: fatal");
                     }
 
@@ -273,7 +273,7 @@ int main(int argc, \
                     CIRCLE_debug = CIRCLE_LOG_ERR;
                     DCOPY_debug_level = DCOPY_LOG_ERR;
 
-                    if(CIRCLE_global_rank == 0) {
+                    if(DCOPY_global_rank == 0) {
                         LOG(DCOPY_LOG_INFO, "Debug level set to: errors");
                     }
 
@@ -282,7 +282,7 @@ int main(int argc, \
                     CIRCLE_debug = CIRCLE_LOG_WARN;
                     DCOPY_debug_level = DCOPY_LOG_WARN;
 
-                    if(CIRCLE_global_rank == 0) {
+                    if(DCOPY_global_rank == 0) {
                         LOG(DCOPY_LOG_INFO, "Debug level set to: warnings");
                     }
 
@@ -291,7 +291,7 @@ int main(int argc, \
                     CIRCLE_debug = CIRCLE_LOG_INFO;
                     DCOPY_debug_level = DCOPY_LOG_INFO;
 
-                    if(CIRCLE_global_rank == 0) {
+                    if(DCOPY_global_rank == 0) {
                         LOG(DCOPY_LOG_INFO, "Debug level set to: info");
                     }
 
@@ -300,13 +300,13 @@ int main(int argc, \
                     CIRCLE_debug = CIRCLE_LOG_DBG;
                     DCOPY_debug_level = DCOPY_LOG_DBG;
 
-                    if(CIRCLE_global_rank == 0) {
+                    if(DCOPY_global_rank == 0) {
                         LOG(DCOPY_LOG_INFO, "Debug level set to: debug");
                     }
 
                 }
                 else {
-                    if(CIRCLE_global_rank == 0) {
+                    if(DCOPY_global_rank == 0) {
                         LOG(DCOPY_LOG_INFO, "Debug level `%s' not recognized. " \
                             "Defaulting to `info'.", optarg);
                     }
@@ -317,7 +317,7 @@ int main(int argc, \
             case 'f':
                 DCOPY_user_opts.force = true;
 
-                if(CIRCLE_global_rank == 0) {
+                if(DCOPY_global_rank == 0) {
                     LOG(DCOPY_LOG_INFO, "Deleting destination on errors.");
                 }
 
@@ -325,7 +325,7 @@ int main(int argc, \
 
             case 'h':
 
-                if(CIRCLE_global_rank == 0) {
+                if(DCOPY_global_rank == 0) {
                     DCOPY_print_usage(argv);
                 }
 
@@ -335,7 +335,7 @@ int main(int argc, \
             case 'p':
                 DCOPY_user_opts.preserve = true;
 
-                if(CIRCLE_global_rank == 0) {
+                if(DCOPY_global_rank == 0) {
                     LOG(DCOPY_LOG_INFO, "Preserving file attributes.");
                 }
 
@@ -344,7 +344,7 @@ int main(int argc, \
             case 'U':
                 DCOPY_user_opts.reliable_filesystem = false;
 
-                if(CIRCLE_global_rank == 0) {
+                if(DCOPY_global_rank == 0) {
                     LOG(DCOPY_LOG_INFO, "Unreliable filesystem specified. " \
                         "Retry mode enabled.");
                 }
@@ -353,7 +353,7 @@ int main(int argc, \
 
             case 'v':
 
-                if(CIRCLE_global_rank == 0) {
+                if(DCOPY_global_rank == 0) {
                     DCOPY_print_version();
                 }
 
@@ -363,7 +363,7 @@ int main(int argc, \
             case '?':
             default:
 
-                if(CIRCLE_global_rank == 0) {
+                if(DCOPY_global_rank == 0) {
                     if(optopt == 'd') {
                         DCOPY_print_usage(argv);
                         fprintf(stderr, "Option -%c requires an argument.\n", \
@@ -427,7 +427,7 @@ int main(int argc, \
     DCOPY_set_metadata();
 
     /* force updates to disk */
-    if (CIRCLE_global_rank == 0) {
+    if (DCOPY_global_rank == 0) {
         LOG(DCOPY_LOG_INFO, "Syncing updates to disk.");
     }
     sync();

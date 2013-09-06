@@ -24,11 +24,11 @@ typedef enum {
                      "%Y-%m-%dT%H:%M:%S", ttime); \
             if(level == DCOPY_LOG_DBG) { \
                 fprintf(DCOPY_debug_stream,"[%s] [%d] [%s:%d] ", \
-                        timestamp, CIRCLE_global_rank, \
+                        timestamp, DCOPY_global_rank, \
                         __FILE__, __LINE__); \
             } else { \
                 fprintf(DCOPY_debug_stream,"[%s] [%d] [%s:%d] ", \
-                        timestamp, CIRCLE_global_rank, \
+                        timestamp, DCOPY_global_rank, \
                         __FILE__, __LINE__); \
             } \
             fprintf(DCOPY_debug_stream, __VA_ARGS__); \
@@ -37,7 +37,6 @@ typedef enum {
         } \
     } while (0)
 
-extern int CIRCLE_global_rank;
 extern FILE* DCOPY_debug_stream;
 extern DCOPY_loglevel DCOPY_debug_level;
 

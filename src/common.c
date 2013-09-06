@@ -24,7 +24,7 @@ DCOPY_options_t DCOPY_user_opts;
 FILE* DCOPY_debug_stream;
 
 /** What rank the current process is. */
-int CIRCLE_global_rank;
+int DCOPY_global_rank;
 
 /* variables to track linked list */
 DCOPY_stat_elem_t* DCOPY_list_head = NULL;

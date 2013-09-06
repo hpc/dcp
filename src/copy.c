@@ -134,7 +134,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op,
     off_t offset = chunk_size * op->chunk;
 
     /* hint that we'll read from file sequentially */
-    posix_fadvise(in_fd, offset, chunk_size, POSIX_FADV_SEQUENTIAL);
+//    posix_fadvise(in_fd, offset, chunk_size, POSIX_FADV_SEQUENTIAL);
 
     /* open the output file */
     int out_fd = bayer_open(op->dest_full_path, O_WRONLY | O_CREAT | O_NOATIME, DCOPY_DEF_PERMS_FILE);
