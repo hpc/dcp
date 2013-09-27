@@ -21,7 +21,8 @@ DCOPY_statistics_t DCOPY_statistics;
 DCOPY_options_t DCOPY_user_opts;
 
 /** Cache most recent open file descriptor to avoid opening / closing the same file */
-DCOPY_file_cache_t DCOPY_file_cache;
+DCOPY_file_cache_t DCOPY_src_cache;
+DCOPY_file_cache_t DCOPY_dst_cache;
 
 /** Where debug output should go. */
 FILE* DCOPY_debug_stream;
@@ -297,6 +298,60 @@ void DCOPY_process_objects(CIRCLE_handle* handle)
 
     DCOPY_opt_free(&opt);
     return;
+}
+
+int DCOPY_open_file(const char* file, int read, DCOPY_file_cache_t* cache)
+{
+    int newfd = -1;
+
+    /* see if we have a cached file descriptor */
+    char* name = cache->name;
+    if (name != NULL) {
+        /* we have a cached file descriptor */
+        int fd = cache->fd;
+        if (strcmp(name, file) == 0 && cache->read == read) {
+            /* the file we're trying to open matches name and read/write mode,
+             * so just return the cached descriptor */
+            return fd;
+        } else {
+            /* the file we're trying to open is different,
+             * close the old file and delete the name */
+            bayer_close(name, fd);
+            bayer_free(&cache->name);
+        }
+    }
+
+    /* open the new file */
+    if (read) {
+        newfd = bayer_open(file, O_RDONLY | O_NOATIME);
+    } else {
+        newfd = bayer_open(file, O_WRONLY | O_CREAT | O_NOATIME, DCOPY_DEF_PERMS_FILE);
+    }
+
+    /* cache the file descriptor */
+    if (newfd != -1) {
+        cache->name = bayer_strdup(file, "file name", __FILE__, __LINE__);
+        cache->fd   = newfd;
+        cache->read = read;
+    }
+
+    return newfd;
+}
+
+int DCOPY_close_file(DCOPY_file_cache_t* cache)
+{
+    int rc = 0;
+
+    /* close file if we have one */
+    char* name = cache->name;
+    if (name != NULL) {
+        /* TODO: if open for write, fsync? */
+        int fd = cache->fd;
+        rc = bayer_close(name, fd);
+        bayer_free(&cache->name);
+    }
+
+    return rc;
 }
 
 void DCOPY_copy_xattrs(

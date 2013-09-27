@@ -214,8 +214,8 @@ int main(int argc, \
     DCOPY_statistics.total_bytes_copied = 0;
 
     /* Initialize file cache */
-    DCOPY_file_cache.src_name  = NULL;
-    DCOPY_file_cache.dest_name = NULL;
+    DCOPY_src_cache.name  = NULL;
+    DCOPY_dst_cache.name = NULL;
 
     /* By default, skip the compare option. */
     DCOPY_user_opts.compare = false;
@@ -429,6 +429,10 @@ int main(int argc, \
 
     /* Let the processing library cleanup. */
     CIRCLE_finalize();
+
+    /* close files */
+    DCOPY_close_file(&DCOPY_src_cache);
+    DCOPY_close_file(&DCOPY_dst_cache);
 
     /* set permissions, ownership, and timestamps if needed */
     DCOPY_set_metadata();

@@ -57,7 +57,7 @@
 /*
  * This is the size of each chunk to be processed (in bytes).
  */
-#define DCOPY_CHUNK_SIZE (32*1024*1024)
+#define DCOPY_CHUNK_SIZE (1*1024*1024)
 
 /* buffer size to read/write data to file system */
 #define FD_BLOCK_SIZE (1*1024*1024)
@@ -147,13 +147,14 @@ typedef struct {
 /* cache open file descriptor to avoid
  * opening / closing the same file */
 typedef struct {
-    char* src_name;
-    int   src_for_read;
-    int   src_fd;
-    char* dest_name;
-    int   dest_for_read;
-    int   dest_fd;
+    char* name;
+    int   read;
+    int   fd;
 } DCOPY_file_cache_t;
+
+/** Cache most recent open file descriptor to avoid opening / closing the same file */
+extern DCOPY_file_cache_t DCOPY_src_cache;
+extern DCOPY_file_cache_t DCOPY_dst_cache;
 
 /* struct for elements in linked list */
 typedef struct list_elem {
@@ -188,13 +189,19 @@ void DCOPY_process_objects(CIRCLE_handle* handle);
 void DCOPY_unlink_destination(DCOPY_operation_t* op);
 
 int DCOPY_open_source(
-    const char* src
+    const char* file
 );
 
-int DCOPY_open_dest_for_read(
-    const char* dst
+int DCOPY_open_file(
+    const char* file,
+    int read,
+    DCOPY_file_cache_t* cache
 );
-    
+
+int DCOPY_close_file(
+    DCOPY_file_cache_t* cache
+);
+
 void DCOPY_copy_xattrs(
     DCOPY_operation_t* op,
     const struct stat64* statbuf,

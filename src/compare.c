@@ -95,7 +95,8 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
                       CIRCLE_handle* handle)
 {
     /* open source file */
-    int in_fd = bayer_open(op->operand, O_RDONLY | O_NOATIME);
+    //int in_fd = bayer_open(op->operand, O_RDONLY | O_NOATIME);
+    int in_fd = DCOPY_open_file(op->operand, 1, &DCOPY_src_cache);
     if(in_fd < 0) {
         /* seems like we should retry the COMPARE here, may be overkill to COPY */
         LOG(DCOPY_LOG_DBG, "Failed to open input file `%s'. errno=%d %s",
@@ -112,7 +113,8 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
     posix_fadvise(in_fd, offset, chunk_size, POSIX_FADV_SEQUENTIAL);
 
     /* open destination file */
-    int out_fd = bayer_open(op->dest_full_path, O_RDONLY | O_NOATIME);
+    //int out_fd = bayer_open(op->dest_full_path, O_RDONLY | O_NOATIME);
+    int out_fd = DCOPY_open_file(op->dest_full_path, 1, &DCOPY_dst_cache);
     if(out_fd < 0) {
         /* assume destination file does not exist, try copy again */
         LOG(DCOPY_LOG_DBG, "Failed to open destination path for compare " \
@@ -131,6 +133,7 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
         return;
     }
 
+#if 0
     /* close destination file */
     if(bayer_close(op->dest_full_path, out_fd) < 0) {
         LOG(DCOPY_LOG_DBG, "Close on destination file failed `%s'. errno=%d %s",
@@ -142,6 +145,7 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
         LOG(DCOPY_LOG_DBG, "Close on source file failed `%s'. errno=%d %s",
             op->operand, errno, strerror(errno));
     }
+#endif
 
     return;
 }
