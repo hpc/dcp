@@ -20,6 +20,9 @@ extern DCOPY_options_t DCOPY_user_opts;
 /** Statistics to gather for summary output. */
 extern DCOPY_statistics_t DCOPY_statistics;
 
+/** Cache most recent open file descriptors. */
+extern DCOPY_file_cache_t DCOPY_file_cache;
+
 /*
  * Encode and enqueue the cleanup stage for this chunk so the file is
  * truncated and (if specified via getopt) permissions are preserved.
@@ -121,7 +124,8 @@ void DCOPY_do_copy(DCOPY_operation_t* op,
                    CIRCLE_handle* handle)
 {
     /* open the input file */
-    int in_fd = bayer_open(op->operand, O_RDONLY | O_NOATIME);
+    //int in_fd = bayer_open(op->operand, O_RDONLY | O_NOATIME);
+    int in_fd = DCOPY_open_file(op->operand, 1, &DCOPY_src_cache);
     if(in_fd < 0) {
         LOG(DCOPY_LOG_DBG, "Failed to open input file `%s'. errno=%d %s",
             op->operand, errno, strerror(errno));
@@ -137,13 +141,15 @@ void DCOPY_do_copy(DCOPY_operation_t* op,
 //    posix_fadvise(in_fd, offset, chunk_size, POSIX_FADV_SEQUENTIAL);
 
     /* open the output file */
-    int out_fd = bayer_open(op->dest_full_path, O_WRONLY | O_CREAT | O_NOATIME, DCOPY_DEF_PERMS_FILE);
+    //int out_fd = bayer_open(op->dest_full_path, O_WRONLY | O_CREAT | O_NOATIME, DCOPY_DEF_PERMS_FILE);
+    int out_fd = DCOPY_open_file(op->dest_full_path, 0, &DCOPY_dst_cache);
     if(out_fd < 0) {
         /* If the force option is specified, try to unlink the destination and
          * reopen before doing the optional requeue. */
         if(DCOPY_user_opts.force) {
             bayer_unlink(op->dest_full_path);
-            out_fd = bayer_open(op->dest_full_path, O_WRONLY | O_CREAT | O_NOATIME, DCOPY_DEF_PERMS_FILE);
+            //out_fd = bayer_open(op->dest_full_path, O_WRONLY | O_CREAT | O_NOATIME, DCOPY_DEF_PERMS_FILE);
+            out_fd = DCOPY_open_file(op->dest_full_path, 0, &DCOPY_dst_cache);
         }
 
         /* requeue operation */
@@ -159,6 +165,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op,
         return;
     }
 
+#if 0
     /* close destination file */
     if(bayer_close(op->dest_full_path, out_fd) < 0) {
         LOG(DCOPY_LOG_DBG, "Close on destination file failed `%s'. errno=%d %s",
@@ -170,6 +177,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op,
         LOG(DCOPY_LOG_DBG, "Close on source file failed `%s'. errno=%d %s",
             op->operand, errno, strerror(errno));
     }
+#endif
 
     DCOPY_enqueue_cleanup_stage(op, handle);
 

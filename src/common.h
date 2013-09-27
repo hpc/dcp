@@ -57,7 +57,7 @@
 /*
  * This is the size of each chunk to be processed (in bytes).
  */
-#define DCOPY_CHUNK_SIZE (32*1024*1024)
+#define DCOPY_CHUNK_SIZE (1*1024*1024)
 
 /* buffer size to read/write data to file system */
 #define FD_BLOCK_SIZE (1*1024*1024)
@@ -144,6 +144,18 @@ typedef struct {
     char*  block_buf2;
 } DCOPY_options_t;
 
+/* cache open file descriptor to avoid
+ * opening / closing the same file */
+typedef struct {
+    char* name;
+    int   read;
+    int   fd;
+} DCOPY_file_cache_t;
+
+/** Cache most recent open file descriptor to avoid opening / closing the same file */
+extern DCOPY_file_cache_t DCOPY_src_cache;
+extern DCOPY_file_cache_t DCOPY_dst_cache;
+
 /* struct for elements in linked list */
 typedef struct list_elem {
   char* file;             /* file name */
@@ -171,6 +183,20 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
 void DCOPY_retry_failed_operation(DCOPY_operation_code_t target, \
                                   CIRCLE_handle* handle, \
                                   DCOPY_operation_t* op);
+
+int DCOPY_open_source(
+    const char* file
+);
+
+int DCOPY_open_file(
+    const char* file,
+    int read,
+    DCOPY_file_cache_t* cache
+);
+
+int DCOPY_close_file(
+    DCOPY_file_cache_t* cache
+);
 
 void DCOPY_copy_xattrs(
     DCOPY_operation_t* op,
