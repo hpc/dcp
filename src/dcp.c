@@ -272,6 +272,9 @@ int main(int argc, \
     /* By default, assume the filesystem is reliable (exit on errors). */
     DCOPY_user_opts.reliable_filesystem = true;
 
+    /* By default, don't use O_DIRECT. */
+    DCOPY_user_opts.synchronous = false;
+
     /* Set default chunk size */
     DCOPY_user_opts.chunk_size = DCOPY_CHUNK_SIZE;
 
@@ -284,13 +287,14 @@ int main(int argc, \
         {"force"                , no_argument      , 0, 'f'},
         {"help"                 , no_argument      , 0, 'h'},
         {"preserve"             , no_argument      , 0, 'p'},
-        {"unreliable-filesystem", no_argument      , 0, 'U'},
+        {"unreliable-filesystem", no_argument      , 0, 'u'},
+        {"synchronous"          , no_argument      , 0, 's'},
         {"version"              , no_argument      , 0, 'v'},
         {0                      , 0                , 0, 0  }
     };
 
     /* Parse options */
-    while((c = getopt_long(argc, argv, "cd:fhpUv", \
+    while((c = getopt_long(argc, argv, "cd:fhpusv", \
                            long_options, &option_index)) != -1) {
         switch(c) {
 
@@ -387,12 +391,21 @@ int main(int argc, \
 
                 break;
 
-            case 'U':
+            case 'u':
                 DCOPY_user_opts.reliable_filesystem = false;
 
                 if(DCOPY_global_rank == 0) {
                     LOG(DCOPY_LOG_INFO, "Unreliable filesystem specified. " \
                         "Retry mode enabled.");
+                }
+
+                break;
+
+            case 's':
+                DCOPY_user_opts.synchronous = true;
+
+                if(DCOPY_global_rank == 0) {
+                    LOG(DCOPY_LOG_INFO, "Using synchronous read/write (O_DIRECT)");
                 }
 
                 break;

@@ -138,6 +138,7 @@ typedef struct {
     bool   force;
     bool   preserve;
     bool   reliable_filesystem;
+    bool   synchronous;
     size_t chunk_size; /* size to chunk files by */
     size_t block_size; /* block size to read/write to file system */
     char*  block_buf1;

@@ -74,7 +74,7 @@ static int DCOPY_perform_copy(DCOPY_operation_t* op,
     while(total_bytes <= chunk_size) {
         /* determine number of bytes that we can read = max(buf size, remaining chunk) */
         size_t left_to_read = chunk_size - total_bytes;
-        if (left_to_read > buf_size) {
+        if(left_to_read > buf_size) {
             left_to_read = buf_size;
         }
 
@@ -86,19 +86,39 @@ static int DCOPY_perform_copy(DCOPY_operation_t* op,
             break;
         }
 
+        /* compute number of bytes to write */
+        size_t bytes_to_write = num_of_bytes_read;
+        if(DCOPY_user_opts.synchronous) {
+            /* O_DIRECT requires particular write sizes,
+             * ok to write beyond end of file so long as
+             * we truncate in cleanup step */
+            size_t remainder = buf_size - num_of_bytes_read;
+            if(remainder > 0) {
+                /* zero out the end of the buffer for security,
+                 * don't want to leave data from another file at end of
+                 * current file if we fail before truncating */
+                char* bufzero = ((char*)buf + num_of_bytes_read);
+                memset(bufzero, 0, remainder);
+            }
+
+            /* assumes buf_size is magic size for O_DIRECT */
+            bytes_to_write = buf_size;
+        }
+
         /* write data to destination file */
         ssize_t num_of_bytes_written = bayer_write(op->dest_full_path, out_fd, buf,
-                                     (size_t)num_of_bytes_read);
+                                     bytes_to_write);
 
         /* check that we wrote the same number of bytes that we read */
-        if(num_of_bytes_written != num_of_bytes_read) {
+        if(num_of_bytes_written != bytes_to_write) {
             LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. errno=%d %s",
                 op->operand, errno, strerror(errno));
             return -1;
         }
 
-        /* add bytes to our total */
-        total_bytes += num_of_bytes_written;
+        /* add bytes to our total (use bytes read,
+         * which may be less than number written) */
+        total_bytes += num_of_bytes_read;
     }
 
 #if 0
