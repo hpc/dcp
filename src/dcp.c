@@ -218,6 +218,7 @@ void DCOPY_print_usage(char** argv)
     printf("  -d, --debug <level> - specify debug verbosity level (default info)\n");
     printf("  -f, --force         - delete destination file if error on open\n");
     printf("  -p, --preserve      - preserve permissions, ownership, timestamps, extended attributes\n");
+    printf("  -s, --synchronous   - use synchronous read/write calls (O_DIRECT)\n");
     printf("  -v, --version       - print version info\n");
     printf("  -h, --help          - print usage\n");
     printf("\n");

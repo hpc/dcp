@@ -68,10 +68,10 @@ void DCOPY_do_cleanup(DCOPY_operation_t* op, \
     char* newop;
 
     /*
-     * Only bother truncating on the first chunk of
-     * the file.
+     * Truncate file on last chunk (synchronous mode can write past end of file)
      */
-    if(op->chunk == 0) {
+    int64_t bytes_written = (op->chunk + 1) * DCOPY_user_opts.chunk_size;
+    if(bytes_written >= op->file_size) {
         /* truncate file to appropriate size, to do this before
          * setting permissions in case file does not have write permission */
         DCOPY_truncate_file(op, handle);
