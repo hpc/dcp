@@ -231,7 +231,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
     }
 
     /* record destination path in operation descriptor */
-    ret->dest_full_path = strdup(dest_path_recursive);
+    ret->dest_full_path = BAYER_STRDUP(dest_path_recursive);
     if(ret->dest_full_path == NULL) {
         LOG(DCOPY_LOG_ERR, "Failed to allocate full destination path.");
         DCOPY_abort(EXIT_FAILURE);
@@ -299,7 +299,7 @@ int DCOPY_open_file(const char* file, int read, DCOPY_file_cache_t* cache)
 
     /* cache the file descriptor */
     if (newfd != -1) {
-        cache->name = bayer_strdup(file, "file name", __FILE__, __LINE__);
+        cache->name = BAYER_STRDUP(file);
         cache->fd   = newfd;
         cache->read = read;
     }

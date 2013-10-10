@@ -61,7 +61,7 @@ static void DCOPY_param_set(const char* path, param_file_t* param)
 
     if(path != NULL) {
         /* make a copy of original path */
-        param->orig = bayer_strdup(path, "original path", __FILE__, __LINE__);
+        param->orig = BAYER_STRDUP(path);
 
         /* get absolute path and remove ".", "..", consecutive "/",
          * and trailing "/" characters */
@@ -81,7 +81,7 @@ static void DCOPY_param_set(const char* path, param_file_t* param)
         char target[PATH_MAX];
         if(realpath(path, target) != NULL) {
             /* make a copy of resolved name */
-            param->target = bayer_strdup(target, "target path", __FILE__, __LINE__);
+            param->target = BAYER_STRDUP(target);
 
             /* get stat info for resolved path */
             if(lstat64(param->target, &param->target_stat) == 0) {
