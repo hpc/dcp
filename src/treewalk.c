@@ -270,11 +270,9 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op,
     }
 
     /* create new element to record file path and stat info */
-    DCOPY_stat_elem_t* elem = (DCOPY_stat_elem_t*) bayer_malloc(
-        sizeof(DCOPY_stat_elem_t), "Linked list element", __FILE__, __LINE__);
+    DCOPY_stat_elem_t* elem = (DCOPY_stat_elem_t*) BAYER_MALLOC(sizeof(DCOPY_stat_elem_t));
     elem->file = strdup(op->dest_full_path);
-    elem->sb = (struct stat64*) bayer_malloc(
-        sizeof(struct stat64), "Stat buffer", __FILE__, __LINE__);
+    elem->sb = (struct stat64*) BAYER_MALLOC(sizeof(struct stat64));
     elem->depth = compute_depth(op->dest_full_path);
     memcpy(elem->sb, &statbuf, sizeof(struct stat64));
     elem->next = NULL;

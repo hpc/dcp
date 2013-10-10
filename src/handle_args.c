@@ -239,7 +239,7 @@ static void DCOPY_parse_src_paths(char** argv, \
         /* allocate space to record info about each source */
         if(num_src_params > 0) {
             size_t src_params_bytes = (size_t)(num_src_params) * sizeof(param_file_t);
-            src_params = (param_file_t*) bayer_malloc(src_params_bytes, "sources", __FILE__, __LINE__);
+            src_params = (param_file_t*) BAYER_MALLOC(src_params_bytes);
         }
 
         /* record standardized paths and stat info for each source. */
