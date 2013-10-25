@@ -150,13 +150,13 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
 {
     if(DCOPY_user_opts.copy_into_dir) {
         /* copy source params into directory */
-        LOG(DCOPY_LOG_DBG, "Infered that the destination is a directory.");
+        LOG(DCOPY_LOG_DBG, "Infered that the destination is a directory");
 
         /* enqueue each source param */
         int i;
         for(i = 0; i < num_src_params; i++) {
             char* src_path = src_params[i].path;
-            LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'.", src_path);
+            LOG(DCOPY_LOG_DBG, "Enqueueing source path `%s'", src_path);
 
             /* TODO: skip sources we can't read */
 
@@ -185,12 +185,12 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
     else {
         /* to get here, there must be one source, and if dir exists,
          * is is not a directory or a link to a directory */
-        LOG(DCOPY_LOG_DBG, "Infered that the destination is a file.");
+        LOG(DCOPY_LOG_DBG, "Infered that the destination is a file");
 
         /* TODO: if dest exists, check that it's a file or link */
 
         char* src_path = src_params[0].path;
-        LOG(DCOPY_LOG_DBG, "Enqueueing single source path `%s'.", src_path);
+        LOG(DCOPY_LOG_DBG, "Enqueueing single source path `%s'", src_path);
 
         uint16_t src_len = (uint16_t)strlen(src_path);
         char* op = DCOPY_encode_operation(TREEWALK, 0, src_path,
@@ -274,14 +274,14 @@ static void DCOPY_check_paths()
                 /* found a source path that we can't read, not fatal,
                  * but print an error to notify user */
                 char* orig = src_params[i].orig;
-                LOG(DCOPY_LOG_ERR, "Could not read `%s'. %s",
-                    orig, strerror(errno));
+                LOG(DCOPY_LOG_ERR, "Could not read `%s' errno=%d %s",
+                    orig, errno, strerror(errno));
             }
         }
 
         /* verify that we have at least one source path */
         if(num_readable < 1) {
-            LOG(DCOPY_LOG_ERR, "At least one valid source must be specified.");
+            LOG(DCOPY_LOG_ERR, "At least one valid source must be specified");
             valid = 0;
             goto bcast;
         }
@@ -300,7 +300,7 @@ static void DCOPY_check_paths()
         bool dest_is_link_to_file = false;
         bool dest_required_to_be_dir = false;
 
-        /* check whether dest exists and if so determine its type */
+        /* check whether dest exists, its type, and whether it's writable */
         if(dest_param.path_stat_valid) {
             /* we could stat dest path, so something is there */
             dest_exists = true;
@@ -328,23 +328,57 @@ static void DCOPY_check_paths()
                     }
                     else {
                         /* unsupported type */
-                        LOG(DCOPY_LOG_ERR, "Unsupported filetype `%s' --> `%s'.",
+                        LOG(DCOPY_LOG_ERR, "Unsupported filetype `%s' --> `%s'",
                             dest_param.orig, dest_param.target);
                         valid = 0;
                         goto bcast;
                     }
                 }
+                else {
+                    /* dest is a link, but its target does not exist,
+                     * consider this an error */
+                    LOG(DCOPY_LOG_ERR, "Destination is broken symlink `%s'",
+                        dest_param.orig);
+                    valid = 0;
+                    goto bcast;
+                }
             }
             else {
                 /* unsupported type */
-                LOG(DCOPY_LOG_ERR, "Unsupported filetype `%s'.",
+                LOG(DCOPY_LOG_ERR, "Unsupported filetype `%s'",
                     dest_param.orig);
                 valid = 0;
                 goto bcast;
             }
-        }
 
-        /* TODO: check that dest is writable */
+            /* check that dest is writable */
+            if(bayer_access(dest_param.path, W_OK) < 0) {
+                LOG(DCOPY_LOG_ERR, "Destination is not writable `%s'",
+                    dest_param.path);
+                valid = 0;
+                goto bcast;
+            }
+        }
+        else {
+            /* destination does not exist, so we'll be creating it,
+             * check that its parent is writable */
+
+            /* compute parent path */
+            bayer_path* parent = bayer_path_from_str(dest_param.path);
+            bayer_path_dirname(parent);
+            char* parent_str = bayer_path_strdup(parent);
+            bayer_path_delete(&parent);
+
+            /* check that parent is writable */
+            if(bayer_access(parent_str, W_OK) < 0) {
+                LOG(DCOPY_LOG_ERR, "Destination parent directory is not writable `%s'",
+                    parent_str);
+                valid = 0;
+                bayer_free(&parent_str);
+                goto bcast;
+            }
+            bayer_free(&parent_str);
+        }
 
         /* determine whether caller *requires* copy into dir */
 
@@ -361,7 +395,8 @@ static void DCOPY_check_paths()
         if(dest_required_to_be_dir &&
            (!dest_exists || (!dest_is_dir && !dest_is_link_to_dir)))
         {
-            LOG(DCOPY_LOG_ERR, "Destination is not a directory '%s'.", dest_param.orig);
+            LOG(DCOPY_LOG_ERR, "Destination is not a directory `%s'",
+                dest_param.orig);
             valid = 0;
             goto bcast;
         }
@@ -381,7 +416,7 @@ bcast:
     /* exit job if we found a problem */
     if(! valid) {
         if(DCOPY_global_rank == 0) {
-            LOG(DCOPY_LOG_ERR, "Exiting run.");
+            LOG(DCOPY_LOG_ERR, "Exiting run");
         }
         MPI_Barrier(MPI_COMM_WORLD);
         DCOPY_exit(EXIT_FAILURE);
@@ -404,7 +439,7 @@ void DCOPY_parse_path_args(char** argv, \
     if(argv == NULL || num_args < 2) {
         if(DCOPY_global_rank == 0) {
             DCOPY_print_usage(argv);
-            LOG(DCOPY_LOG_ERR, "You must specify a source and destination path.");
+            LOG(DCOPY_LOG_ERR, "You must specify a source and destination path");
         }
 
         MPI_Barrier(MPI_COMM_WORLD);
