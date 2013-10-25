@@ -261,7 +261,8 @@ int main(int argc, \
     DCOPY_user_opts.compare = false;
 
     /* By default, show info log messages. */
-    CIRCLE_loglevel CIRCLE_debug = CIRCLE_LOG_INFO;
+    /* we back off a level on CIRCLE verbosity since its INFO is verbose */
+    CIRCLE_loglevel CIRCLE_debug = CIRCLE_LOG_WARN;
     DCOPY_debug_level = DCOPY_LOG_INFO;
 
     /* By default, don't unlink destination files if an open() fails. */
@@ -339,7 +340,7 @@ int main(int argc, \
 
                 }
                 else if(strncmp(optarg, "info", 4) == 0) {
-                    CIRCLE_debug = CIRCLE_LOG_INFO;
+                    CIRCLE_debug = CIRCLE_LOG_WARN; /* we back off a level on CIRCLE verbosity */
                     DCOPY_debug_level = DCOPY_LOG_INFO;
 
                     if(DCOPY_global_rank == 0) {

@@ -267,7 +267,7 @@ static void DCOPY_check_paths()
         int num_readable = 0;
         for(i = 0; i < num_src_params; i++) {
             char* path = src_params[i].path;
-            if(access(path, R_OK) == 0) {
+            if(bayer_access(path, R_OK) == 0) {
                 num_readable++;
             }
             else {

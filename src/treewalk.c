@@ -242,30 +242,52 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op,
                        CIRCLE_handle* handle)
 {
     struct stat64 statbuf;
+    const char* path = op->operand;
 
     /* stat the item */
-    if(bayer_lstat64(op->operand, &statbuf) < 0) {
-        LOG(DCOPY_LOG_DBG, "Could not get info for `%s'. errno=%d %s", op->operand, errno, strerror(errno));
-        DCOPY_retry_failed_operation(TREEWALK, handle, op);
+    if(bayer_lstat64(path, &statbuf) < 0) {
+        /* this may happen while trying to stat whose parent directory
+         * does not have execute bit set */
+        LOG(DCOPY_LOG_WARN, "stat failed, skipping file `%s' errno=%d %s", path, errno, strerror(errno));
+        //DCOPY_retry_failed_operation(TREEWALK, handle, op);
         return;
     }
 
+    /* get the file mode */
+    mode_t mode = statbuf.st_mode;
+
     /* first check that we handle this file type */
-    if(! S_ISDIR(statbuf.st_mode) &&
-       ! S_ISREG(statbuf.st_mode) &&
-       ! S_ISLNK(statbuf.st_mode))
+    if(! S_ISDIR(mode) &&
+       ! S_ISREG(mode) &&
+       ! S_ISLNK(mode))
     {
-        if (S_ISCHR(statbuf.st_mode)) {
-          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISCHR at `%s'.", op->operand);
-        } else if (S_ISBLK(statbuf.st_mode)) {
-          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISBLK at `%s'.", op->operand);
-        } else if (S_ISFIFO(statbuf.st_mode)) {
-          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISFIFO at `%s'.", op->operand);
-        } else if (S_ISSOCK(statbuf.st_mode)) {
-          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISSOCK at `%s'.", op->operand);
+        if (S_ISCHR(mode)) {
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISCHR at `%s'.", path);
+        } else if (S_ISBLK(mode)) {
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISBLK at `%s'.", path);
+        } else if (S_ISFIFO(mode)) {
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISFIFO at `%s'.", path);
+        } else if (S_ISSOCK(mode)) {
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISSOCK at `%s'.", path);
         } else {
-          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type %x at `%s'.", statbuf.st_mode, op->operand);
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type mode=%x at `%s'.", mode, path);
         }
+        return;
+    }
+
+    /* TODO: Does access query the file system?  If so, it will be more
+     * efficient to do this check locally, e.g., get info like group
+     * lists once and then do all checks by hand */
+
+    /* skip files that aren't readable */
+    if(S_ISREG(mode) && bayer_access(path, R_OK) < 0) {
+        LOG(DCOPY_LOG_WARN, "Skipping unreadable file `%s' errno=%d %s", path, errno, strerror(errno));
+        return;
+    }
+
+    /* skip directories that aren't readable */
+    if(S_ISDIR(mode) && bayer_access(path, R_OK) < 0) {
+        LOG(DCOPY_LOG_WARN, "Skipping unreadable directory `%s' errno=%d %s", path, errno, strerror(errno));
         return;
     }
 
@@ -287,20 +309,20 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op,
     DCOPY_list_tail = elem;
 
     /* handle item depending on its type */
-    if(S_ISDIR(statbuf.st_mode)) {
-        /* LOG(DCOPY_LOG_DBG, "Stat operation found a directory at `%s'.", op->operand); */
+    if(S_ISDIR(mode)) {
+        /* LOG(DCOPY_LOG_DBG, "Stat operation found a directory at `%s'.", path); */
         DCOPY_stat_process_dir(op, &statbuf, handle);
     }
-    else if(S_ISREG(statbuf.st_mode)) {
-        /* LOG(DCOPY_LOG_DBG, "Stat operation found a file at `%s'.", op->operand); */
+    else if(S_ISREG(mode)) {
+        /* LOG(DCOPY_LOG_DBG, "Stat operation found a file at `%s'.", path); */
         DCOPY_stat_process_file(op, &statbuf, handle);
     }
-    else if(S_ISLNK(statbuf.st_mode)) {
-        /* LOG(DCOPY_LOG_DBG, "Stat operation found a link at `%s'.", op->operand); */
+    else if(S_ISLNK(mode)) {
+        /* LOG(DCOPY_LOG_DBG, "Stat operation found a link at `%s'.", path); */
         DCOPY_stat_process_link(op, &statbuf, handle);
     }
     else {
-        LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type %x at `%s'.", statbuf.st_mode, op->operand);
+        LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type mode=%x at `%s'.", mode, path);
         DCOPY_retry_failed_operation(TREEWALK, handle, op);
         return;
     }
