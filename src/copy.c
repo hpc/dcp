@@ -51,7 +51,7 @@ static int DCOPY_perform_copy(DCOPY_operation_t* op,
 {
     /* seek to offset in source file */
     if(bayer_lseek(op->operand, in_fd, offset, SEEK_SET) < 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s'. errno=%d %s", \
+        LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s' errno=%d %s", \
             op->operand, errno, strerror(errno));
         /* Handle operation requeue in parent function. */
         return -1;
@@ -59,7 +59,7 @@ static int DCOPY_perform_copy(DCOPY_operation_t* op,
 
     /* seek to offset in destination file */
     if(bayer_lseek(op->dest_full_path, out_fd, offset, SEEK_SET) < 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path `%s'. errno=%d %s", \
+        LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path `%s' errno=%d %s", \
             op->dest_full_path, errno, strerror(errno));
         return -1;
     }
@@ -111,7 +111,7 @@ static int DCOPY_perform_copy(DCOPY_operation_t* op,
 
         /* check that we wrote the same number of bytes that we read */
         if(num_of_bytes_written != bytes_to_write) {
-            LOG(DCOPY_LOG_ERR, "Write error when copying from `%s'. errno=%d %s",
+            LOG(DCOPY_LOG_ERR, "Write error when copying from `%s' errno=%d %s",
                 op->operand, errno, strerror(errno));
             return -1;
         }
@@ -132,7 +132,7 @@ static int DCOPY_perform_copy(DCOPY_operation_t* op,
     DCOPY_statistics.total_bytes_copied += total_bytes;
 
     LOG(DCOPY_LOG_DBG, "Wrote `%zu' bytes at segment `%" PRId64 \
-        "', offset `%" PRId64 "' (`%" PRId64 "' total).",
+        "', offset `%" PRId64 "' (`%" PRId64 "' total)",
         total_bytes, op->chunk, DCOPY_user_opts.chunk_size * op->chunk,
         DCOPY_statistics.total_bytes_copied);
 
@@ -147,7 +147,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op,
     //int in_fd = bayer_open(op->operand, O_RDONLY | O_NOATIME);
     int in_fd = DCOPY_open_file(op->operand, 1, &DCOPY_src_cache);
     if(in_fd < 0) {
-        LOG(DCOPY_LOG_DBG, "Failed to open input file `%s'. errno=%d %s",
+        LOG(DCOPY_LOG_DBG, "Failed to open input file `%s' errno=%d %s",
             op->operand, errno, strerror(errno));
         DCOPY_retry_failed_operation(COPY, handle, op);
         return;
@@ -188,13 +188,13 @@ void DCOPY_do_copy(DCOPY_operation_t* op,
 #if 0
     /* close destination file */
     if(bayer_close(op->dest_full_path, out_fd) < 0) {
-        LOG(DCOPY_LOG_DBG, "Close on destination file failed `%s'. errno=%d %s",
+        LOG(DCOPY_LOG_DBG, "Close on destination file failed `%s' errno=%d %s",
             op->dest_full_path, errno, strerror(errno));
     }
 
     /* close source file */
     if(bayer_close(op->operand, in_fd) < 0) {
-        LOG(DCOPY_LOG_DBG, "Close on source file failed `%s'. errno=%d %s",
+        LOG(DCOPY_LOG_DBG, "Close on source file failed `%s' errno=%d %s",
             op->operand, errno, strerror(errno));
     }
 #endif

@@ -111,7 +111,7 @@ static void DCOPY_stat_process_file(DCOPY_operation_t* op,
     int64_t num_chunks = file_size / (int64_t)DCOPY_user_opts.chunk_size;
 
     LOG(DCOPY_LOG_DBG, "File `%s' size is `%" PRId64 \
-        "' with chunks `%" PRId64 "' (total `%" PRId64 "').", \
+        "' with chunks `%" PRId64 "' (total `%" PRId64 "')", \
         op->operand, file_size, num_chunks, \
         num_chunks * DCOPY_user_opts.chunk_size);
 
@@ -181,10 +181,10 @@ static void DCOPY_stat_process_dir(DCOPY_operation_t* op,
     const char* dest_path = op->dest_full_path;
 
     /* first, create the destination directory */
-    LOG(DCOPY_LOG_DBG, "Creating directory: %s", dest_path);
+    LOG(DCOPY_LOG_DBG, "Creating directory `%s'", dest_path);
     int rc = bayer_mkdir(dest_path, DCOPY_DEF_PERMS_DIR);
     if(rc != 0) {
-        LOG(DCOPY_LOG_ERR, "Failed to create directory: %s (errno=%d %s)", \
+        LOG(DCOPY_LOG_ERR, "Failed to create directory `%s' (errno=%d %s)", \
             dest_path, errno, strerror(errno));
         return;
     }
@@ -199,7 +199,7 @@ static void DCOPY_stat_process_dir(DCOPY_operation_t* op,
 
     if(curr_dir == NULL) {
         /* failed to open directory */
-        LOG(DCOPY_LOG_ERR, "Unable to open dir `%s'. errno=%d %s", \
+        LOG(DCOPY_LOG_ERR, "Unable to open dir `%s' errno=%d %s", \
             op->operand, errno, strerror(errno));
 
         DCOPY_retry_failed_operation(TREEWALK, handle, op);
@@ -262,15 +262,15 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op,
        ! S_ISLNK(mode))
     {
         if (S_ISCHR(mode)) {
-          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISCHR at `%s'.", path);
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISCHR at `%s'", path);
         } else if (S_ISBLK(mode)) {
-          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISBLK at `%s'.", path);
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISBLK at `%s'", path);
         } else if (S_ISFIFO(mode)) {
-          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISFIFO at `%s'.", path);
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISFIFO at `%s'", path);
         } else if (S_ISSOCK(mode)) {
-          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISSOCK at `%s'.", path);
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type S_ISSOCK at `%s'", path);
         } else {
-          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type mode=%x at `%s'.", mode, path);
+          LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type mode=%x at `%s'", mode, path);
         }
         return;
     }
@@ -310,19 +310,19 @@ void DCOPY_do_treewalk(DCOPY_operation_t* op,
 
     /* handle item depending on its type */
     if(S_ISDIR(mode)) {
-        /* LOG(DCOPY_LOG_DBG, "Stat operation found a directory at `%s'.", path); */
+        /* LOG(DCOPY_LOG_DBG, "Stat operation found a directory at `%s'", path); */
         DCOPY_stat_process_dir(op, &statbuf, handle);
     }
     else if(S_ISREG(mode)) {
-        /* LOG(DCOPY_LOG_DBG, "Stat operation found a file at `%s'.", path); */
+        /* LOG(DCOPY_LOG_DBG, "Stat operation found a file at `%s'", path); */
         DCOPY_stat_process_file(op, &statbuf, handle);
     }
     else if(S_ISLNK(mode)) {
-        /* LOG(DCOPY_LOG_DBG, "Stat operation found a link at `%s'.", path); */
+        /* LOG(DCOPY_LOG_DBG, "Stat operation found a link at `%s'", path); */
         DCOPY_stat_process_link(op, &statbuf, handle);
     }
     else {
-        LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type mode=%x at `%s'.", mode, path);
+        LOG(DCOPY_LOG_ERR, "Encountered an unsupported file type mode=%x at `%s'", mode, path);
         DCOPY_retry_failed_operation(TREEWALK, handle, op);
         return;
     }
