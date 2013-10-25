@@ -209,12 +209,19 @@ static void DCOPY_print_version()
  */
 void DCOPY_print_usage(char** argv)
 {
+    /* The compare option isn't really effective because it often
+     * reads from the page cache and not the disk, which gives a
+     * false sense of validation.  Also, it tends to thrash the
+     * metadata server with lots of extra open/close calls.  Plan
+     * is to delete it here, and rely on dcmp instead.  For now
+     * we just hide it as an option. */
+
     printf("\n");
     printf("Usage: dcp [options] source target\n");
     printf("       dcp [options] source ... target_dir\n");
     printf("\n");
     printf("Options:\n");
-    printf("  -c, --compare       - read data back after writing to compare\n");
+    /* printf("  -c, --compare       - read data back after writing to compare\n"); */
     printf("  -d, --debug <level> - specify debug verbosity level (default info)\n");
     printf("  -f, --force         - delete destination file if error on open\n");
     printf("  -p, --preserve      - preserve permissions, ownership, timestamps, extended attributes\n");
