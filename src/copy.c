@@ -112,8 +112,8 @@ static int DCOPY_perform_copy(DCOPY_operation_t* op,
 
         /* check that we wrote the same number of bytes that we read */
         if(num_of_bytes_written != bytes_to_write) {
-            LOG(DCOPY_LOG_ERR, "Write error when copying from `%s' errno=%d %s",
-                op->operand, errno, strerror(errno));
+            LOG(DCOPY_LOG_ERR, "Write error when copying from `%s' to `%s' errno=%d %s",
+                op->operand, op->dest_full_path, errno, strerror(errno));
             /* Handle operation requeue in parent function. */
             return -1;
         }
@@ -187,9 +187,7 @@ void DCOPY_do_copy(DCOPY_operation_t* op,
 
     /* copy data */
     if(DCOPY_perform_copy(op, in_fd, out_fd, offset) < 0) {
-        LOG(DCOPY_LOG_ERR, "Data copy failed from `%s' to `%s' errno=%d %s",
-            op->operand, op->dest_full_path, errno, strerror(errno));
-
+        /* we already reported an error in perform_copy */
         DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
