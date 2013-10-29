@@ -46,7 +46,7 @@ void DCOPY_retry_failed_operation(DCOPY_operation_code_t target, \
     if(DCOPY_user_opts.reliable_filesystem) {
         LOG(DCOPY_LOG_ERR, "Not retrying failed operation. " \
             "Reliable filesystem is specified. (op=%d chunk=%ld src=%s dst=%s)",
-            target, op->chunk, op->operand, op->full_dest_path);
+            target, op->chunk, op->operand, op->dest_full_path);
 
         DCOPY_abort(EXIT_FAILURE);
     }
