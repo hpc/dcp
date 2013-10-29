@@ -286,17 +286,17 @@ int DCOPY_open_file(const char* file, int read, DCOPY_file_cache_t* cache)
 
     /* open the new file */
     if (read) {
+        int flags = O_RDONLY;
         if (DCOPY_user_opts.synchronous) {
-            newfd = bayer_open(file, O_RDONLY | O_NOATIME | O_DIRECT);
-        } else {
-            newfd = bayer_open(file, O_RDONLY | O_NOATIME);
+            flags |= O_DIRECT;
         }
+        newfd = bayer_open(file, flags);
     } else {
+        int flags = O_WRONLY | O_CREAT;
         if (DCOPY_user_opts.synchronous) {
-            newfd = bayer_open(file, O_WRONLY | O_CREAT | O_NOATIME | O_DIRECT, DCOPY_DEF_PERMS_FILE);
-        } else {
-            newfd = bayer_open(file, O_WRONLY | O_CREAT | O_NOATIME, DCOPY_DEF_PERMS_FILE);
+            flags |= O_DIRECT;
         }
+        newfd = bayer_open(file, flags, DCOPY_DEF_PERMS_FILE);
     }
 
     /* cache the file descriptor */
