@@ -45,7 +45,9 @@ void DCOPY_retry_failed_operation(DCOPY_operation_code_t target, \
 
     if(DCOPY_user_opts.reliable_filesystem) {
         LOG(DCOPY_LOG_ERR, "Not retrying failed operation. " \
-            "Reliable filesystem is specified.");
+            "Reliable filesystem is specified. (op=%d chunk=%ld src=%s dst=%s)",
+            target, op->chunk, op->operand, op->full_dest_path);
+
         DCOPY_abort(EXIT_FAILURE);
     }
     else {
@@ -94,7 +96,7 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
     /* snprintf returns number of bytes written excluding terminating NUL,
      * so if we're equal, we'd write one byte too many */
     if(written >= remaining) {
-        LOG(DCOPY_LOG_DBG, \
+        LOG(DCOPY_LOG_ERR, \
             "Exceeded libcircle message size due to large file path. " \
             "This is a known bug in dcp that we intend to fix. Sorry!");
         DCOPY_abort(EXIT_FAILURE);
@@ -113,7 +115,7 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
         /* snprintf returns number of bytes written excluding terminating NUL,
          * so if we're equal, we'd write one byte too many */
         if(written >= remaining) {
-            LOG(DCOPY_LOG_DBG, \
+            LOG(DCOPY_LOG_ERR, \
                 "Exceeded libcircle message size due to large file path. " \
                 "This is a known bug in dcp that we intend to fix. Sorry!");
             DCOPY_abort(EXIT_FAILURE);

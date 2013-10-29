@@ -99,8 +99,9 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
     int in_fd = DCOPY_open_file(op->operand, 1, &DCOPY_src_cache);
     if(in_fd < 0) {
         /* seems like we should retry the COMPARE here, may be overkill to COPY */
-        LOG(DCOPY_LOG_DBG, "Failed to open input file `%s' errno=%d %s",
+        LOG(DCOPY_LOG_ERR, "Failed to open source file for compare `%s' errno=%d %s",
             op->operand, errno, strerror(errno));
+
         DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
@@ -117,8 +118,9 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
     int out_fd = DCOPY_open_file(op->dest_full_path, 1, &DCOPY_dst_cache);
     if(out_fd < 0) {
         /* assume destination file does not exist, try copy again */
-        LOG(DCOPY_LOG_DBG, "Failed to open destination path for compare " \
-            "from source `%s' %s", op->operand, strerror(errno));
+        LOG(DCOPY_LOG_ERR, "Failed to open destination file for compare " \
+            "`%s' errno=%d %s", op->dest_full_path, errno, strerror(errno));
+
         DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
@@ -129,6 +131,9 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
     /* compare bytes */
     if(DCOPY_perform_compare(op, in_fd, out_fd, offset) < 0) {
         /* found incorrect data, try copy again */
+        LOG(DCOPY_LOG_ERR, "Corrupt data detected, retrying copy from `%s' to `%s'",
+            op->operand, op->dest_full_path);
+
         DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }

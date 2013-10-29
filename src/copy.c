@@ -147,8 +147,9 @@ void DCOPY_do_copy(DCOPY_operation_t* op,
     //int in_fd = bayer_open(op->operand, O_RDONLY | O_NOATIME);
     int in_fd = DCOPY_open_file(op->operand, 1, &DCOPY_src_cache);
     if(in_fd < 0) {
-        LOG(DCOPY_LOG_DBG, "Failed to open input file `%s' errno=%d %s",
+        LOG(DCOPY_LOG_ERR, "Failed to open input file `%s' errno=%d %s",
             op->operand, errno, strerror(errno));
+
         DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
@@ -174,6 +175,9 @@ void DCOPY_do_copy(DCOPY_operation_t* op,
 
         /* requeue operation */
         if(out_fd < 0) {
+            LOG(DCOPY_LOG_ERR, "Failed to open output file `%s' errno=%d %s",
+                op->dest_full_path, errno, strerror(errno));
+
             DCOPY_retry_failed_operation(COPY, handle, op);
             return;
         }
@@ -181,6 +185,9 @@ void DCOPY_do_copy(DCOPY_operation_t* op,
 
     /* copy data */
     if(DCOPY_perform_copy(op, in_fd, out_fd, offset) < 0) {
+        LOG(DCOPY_LOG_ERR, "Data copy failed from `%s' to `%s' errno=%d %s",
+            op->operand, op->dest_full_path, errno, strerror(errno));
+
         DCOPY_retry_failed_operation(COPY, handle, op);
         return;
     }
