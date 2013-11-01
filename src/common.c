@@ -553,6 +553,7 @@ void DCOPY_abort(int code)
 void DCOPY_exit(int code)
 {
     /* CIRCLE_finalize or will this hang? */
+    bayer_finalize();
     MPI_Finalize();
     exit(code);
 }

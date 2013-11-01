@@ -516,9 +516,6 @@ int main(int argc, \
     /* Print the results to the user. */
     DCOPY_epilogue();
 
-    bayer_finalize();
-    MPI_Finalize();
-
     DCOPY_exit(EXIT_SUCCESS);
 }
 
