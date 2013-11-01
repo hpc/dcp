@@ -469,9 +469,9 @@ int main(int argc, \
 
     /* allocate buffer to read/write files, aligned on 1MB boundaraies */
     size_t alignment = 1024*1024;
-    DCOPY_user_opts.block_buf1 = bayer_memalign(
+    DCOPY_user_opts.block_buf1 = (char*) bayer_memalign(
         DCOPY_user_opts.block_size, alignment, "Block for file I/O", __FILE__, __LINE__);
-    DCOPY_user_opts.block_buf2 = bayer_memalign(
+    DCOPY_user_opts.block_buf2 = (char*) bayer_memalign(
         DCOPY_user_opts.block_size, alignment, "Block for file I/O (2)", __FILE__, __LINE__);
 
     /* Set the log level for the processing library. */

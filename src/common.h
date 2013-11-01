@@ -165,7 +165,7 @@ typedef struct list_elem {
   struct list_elem* next; /* pointer to next item */
 } DCOPY_stat_elem_t;
 
-extern DCOPY_global_rank;
+extern int DCOPY_global_rank;
 
 extern DCOPY_stat_elem_t* DCOPY_list_head;
 extern DCOPY_stat_elem_t* DCOPY_list_tail;

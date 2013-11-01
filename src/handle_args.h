@@ -5,9 +5,9 @@
 
 #include "common.h"
 
-void DCOPY_parse_path_args(char** argv, \
-                           int optind, \
-                           int argc);
+void DCOPY_parse_path_args(char** argv, int optind, int argc);
+
+void DCOPY_free_path_args();
 
 void DCOPY_enqueue_work_objects(CIRCLE_handle* handle);
 
