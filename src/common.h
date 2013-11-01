@@ -34,9 +34,6 @@
 /* Autotool defines. */
 #include "../config.h"
 
-/* Common logging. */
-#include "log.h"
-
 #include "mpi.h"
 
 #include "bayer.h"

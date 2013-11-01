@@ -29,7 +29,7 @@ static int DCOPY_perform_compare(DCOPY_operation_t* op,
 {
     /* seek to offset in source file */
     if(bayer_lseek(op->operand, in_fd, offset, SEEK_SET) < 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't seek in source path `%s' errno=%d %s",
+        BAYER_LOG(BAYER_LOG_ERR, "Couldn't seek in source path `%s' errno=%d %s",
             op->operand, errno, strerror(errno));
         /* Handle operation requeue in parent function. */
         return -1;
@@ -37,7 +37,7 @@ static int DCOPY_perform_compare(DCOPY_operation_t* op,
 
     /* seek to offset in destination file */
     if(bayer_lseek(op->dest_full_path, out_fd, offset, SEEK_SET) < 0) {
-        LOG(DCOPY_LOG_ERR, "Couldn't seek in destination path `%s' errno=%d %s",
+        BAYER_LOG(BAYER_LOG_ERR, "Couldn't seek in destination path `%s' errno=%d %s",
             op->dest_full_path, errno, strerror(errno));
         return -1;
     }
@@ -63,7 +63,7 @@ static int DCOPY_perform_compare(DCOPY_operation_t* op,
 
         /* check that we got the same number of bytes from each */
         if(num_of_in_bytes != num_of_out_bytes) {
-            LOG(DCOPY_LOG_DBG, "Source byte count `%zu' does not match " \
+            BAYER_LOG(BAYER_LOG_DBG, "Source byte count `%zu' does not match " \
                 "destination byte count '%zu' of total file size `%zu'",
                 num_of_in_bytes, num_of_out_bytes, op->file_size);
 
@@ -77,7 +77,7 @@ static int DCOPY_perform_compare(DCOPY_operation_t* op,
 
         /* check that buffers are the same */
         if(memcmp(src_buf, dest_buf, num_of_in_bytes) != 0) {
-            LOG(DCOPY_LOG_ERR, "Compare mismatch when copying from file `%s'",
+            BAYER_LOG(BAYER_LOG_ERR, "Compare mismatch when copying from file `%s'",
                 op->operand);
 
             return -1;
@@ -99,7 +99,7 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
     int in_fd = DCOPY_open_file(op->operand, 1, &DCOPY_src_cache);
     if(in_fd < 0) {
         /* seems like we should retry the COMPARE here, may be overkill to COPY */
-        LOG(DCOPY_LOG_ERR, "Failed to open source file for compare `%s' errno=%d %s",
+        BAYER_LOG(BAYER_LOG_ERR, "Failed to open source file for compare `%s' errno=%d %s",
             op->operand, errno, strerror(errno));
 
         DCOPY_retry_failed_operation(COPY, handle, op);
@@ -118,7 +118,7 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
     int out_fd = DCOPY_open_file(op->dest_full_path, 1, &DCOPY_dst_cache);
     if(out_fd < 0) {
         /* assume destination file does not exist, try copy again */
-        LOG(DCOPY_LOG_ERR, "Failed to open destination file for compare " \
+        BAYER_LOG(BAYER_LOG_ERR, "Failed to open destination file for compare " \
             "`%s' errno=%d %s", op->dest_full_path, errno, strerror(errno));
 
         DCOPY_retry_failed_operation(COPY, handle, op);
@@ -131,7 +131,7 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
     /* compare bytes */
     if(DCOPY_perform_compare(op, in_fd, out_fd, offset) < 0) {
         /* found incorrect data, try copy again */
-        LOG(DCOPY_LOG_ERR, "Corrupt data detected, retrying copy from `%s' to `%s'",
+        BAYER_LOG(BAYER_LOG_ERR, "Corrupt data detected, retrying copy from `%s' to `%s'",
             op->operand, op->dest_full_path);
 
         DCOPY_retry_failed_operation(COPY, handle, op);
@@ -141,13 +141,13 @@ void DCOPY_do_compare(DCOPY_operation_t* op,
 #if 0
     /* close destination file */
     if(bayer_close(op->dest_full_path, out_fd) < 0) {
-        LOG(DCOPY_LOG_DBG, "Close on destination file failed `%s' errno=%d %s",
+        BAYER_LOG(BAYER_LOG_DBG, "Close on destination file failed `%s' errno=%d %s",
             op->dest_full_path, errno, strerror(errno));
     }
 
     /* close source file */
     if(bayer_close(op->operand, in_fd) < 0) {
-        LOG(DCOPY_LOG_DBG, "Close on source file failed `%s' errno=%d %s",
+        BAYER_LOG(BAYER_LOG_DBG, "Close on source file failed `%s' errno=%d %s",
             op->operand, errno, strerror(errno));
     }
 #endif

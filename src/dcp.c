@@ -62,7 +62,7 @@ static void DCOPY_process_objects(CIRCLE_handle* handle)
     DCOPY_operation_t* opt = DCOPY_decode_operation(op);
 
     /*
-        LOG(DCOPY_LOG_DBG, "Performing operation `%s' on operand `%s' (`%d' remain on local queue).", \
+        BAYER_LOG(BAYER_LOG_DBG, "Performing operation `%s' on operand `%s' (`%d' remain on local queue).", \
             DCOPY_op_string_table[opt->code], opt->operand, handle->local_queue_size());
     */
 
@@ -80,10 +80,10 @@ static void DCOPY_set_metadata()
 
     if (DCOPY_global_rank == 0) {
         if(DCOPY_user_opts.preserve) {
-            LOG(DCOPY_LOG_INFO, "Setting ownership, permissions, and timestamps.");
+            BAYER_LOG(BAYER_LOG_INFO, "Setting ownership, permissions, and timestamps.");
         }
         else {
-            LOG(DCOPY_LOG_INFO, "Fixing permissions.");
+            BAYER_LOG(BAYER_LOG_INFO, "Fixing permissions.");
         }
     }
 
@@ -171,17 +171,17 @@ static void DCOPY_epilogue(void)
         const char* agg_rate_units;
         bayer_format_bw(agg_rate, &agg_rate_tmp, &agg_rate_units);
 
-        LOG(DCOPY_LOG_INFO, "Started: %s", starttime_str);
-        LOG(DCOPY_LOG_INFO, "Completed: %s", endtime_str);
-        LOG(DCOPY_LOG_INFO, "Seconds: %.3lf", rel_time);
-        LOG(DCOPY_LOG_INFO, "Items: %" PRId64, agg_items);
-        LOG(DCOPY_LOG_INFO, "  Directories: %" PRId64, agg_dirs);
-        LOG(DCOPY_LOG_INFO, "  Files: %" PRId64, agg_files);
-        LOG(DCOPY_LOG_INFO, "  Links: %" PRId64, agg_links);
-        LOG(DCOPY_LOG_INFO, "Data: %.3lf %s (%" PRId64 " bytes)",
+        BAYER_LOG(BAYER_LOG_INFO, "Started: %s", starttime_str);
+        BAYER_LOG(BAYER_LOG_INFO, "Completed: %s", endtime_str);
+        BAYER_LOG(BAYER_LOG_INFO, "Seconds: %.3lf", rel_time);
+        BAYER_LOG(BAYER_LOG_INFO, "Items: %" PRId64, agg_items);
+        BAYER_LOG(BAYER_LOG_INFO, "  Directories: %" PRId64, agg_dirs);
+        BAYER_LOG(BAYER_LOG_INFO, "  Files: %" PRId64, agg_files);
+        BAYER_LOG(BAYER_LOG_INFO, "  Links: %" PRId64, agg_links);
+        BAYER_LOG(BAYER_LOG_INFO, "Data: %.3lf %s (%" PRId64 " bytes)",
             agg_size_tmp, agg_size_units, agg_size);
 
-        LOG(DCOPY_LOG_INFO, "Rate: %.3lf %s " \
+        BAYER_LOG(BAYER_LOG_INFO, "Rate: %.3lf %s " \
             "(%.3" PRId64 " bytes in %.3lf seconds)", \
             agg_rate_tmp, agg_rate_units, agg_copied, rel_time);
     }
@@ -241,6 +241,7 @@ int main(int argc, \
     int option_index = 0;
 
     MPI_Init(&argc, &argv);
+    bayer_init();
 
     /* Initialize our processing library and related callbacks. */
     /* This is a bit of chicken-and-egg problem, because we'd like
@@ -250,8 +251,6 @@ int main(int argc, \
     DCOPY_global_rank = CIRCLE_init(argc, argv, CIRCLE_DEFAULT_FLAGS);
     CIRCLE_cb_create(&DCOPY_add_objects);
     CIRCLE_cb_process(&DCOPY_process_objects);
-
-    DCOPY_debug_stream = stdout;
 
     /* Initialize statistics */
     DCOPY_statistics.total_dirs  = 0;
@@ -270,7 +269,7 @@ int main(int argc, \
     /* By default, show info log messages. */
     /* we back off a level on CIRCLE verbosity since its INFO is verbose */
     CIRCLE_loglevel CIRCLE_debug = CIRCLE_LOG_WARN;
-    DCOPY_debug_level = DCOPY_LOG_INFO;
+    bayer_debug_level = BAYER_LOG_INFO;
 
     /* By default, don't unlink destination files if an open() fails. */
     DCOPY_user_opts.force = false;
@@ -311,7 +310,7 @@ int main(int argc, \
                 DCOPY_user_opts.compare = true;
 
                 if(DCOPY_global_rank == 0) {
-                    LOG(DCOPY_LOG_INFO, "Compare source and destination " \
+                    BAYER_LOG(BAYER_LOG_INFO, "Compare source and destination " \
 			"after copy to detect corruption.");
                 }
 
@@ -321,52 +320,52 @@ int main(int argc, \
 
                 if(strncmp(optarg, "fatal", 5) == 0) {
                     CIRCLE_debug = CIRCLE_LOG_FATAL;
-                    DCOPY_debug_level = DCOPY_LOG_FATAL;
+                    bayer_debug_level = BAYER_LOG_FATAL;
 
                     if(DCOPY_global_rank == 0) {
-                        LOG(DCOPY_LOG_INFO, "Debug level set to: fatal");
+                        BAYER_LOG(BAYER_LOG_INFO, "Debug level set to: fatal");
                     }
 
                 }
                 else if(strncmp(optarg, "err", 3) == 0) {
                     CIRCLE_debug = CIRCLE_LOG_ERR;
-                    DCOPY_debug_level = DCOPY_LOG_ERR;
+                    bayer_debug_level = BAYER_LOG_ERR;
 
                     if(DCOPY_global_rank == 0) {
-                        LOG(DCOPY_LOG_INFO, "Debug level set to: errors");
+                        BAYER_LOG(BAYER_LOG_INFO, "Debug level set to: errors");
                     }
 
                 }
                 else if(strncmp(optarg, "warn", 4) == 0) {
                     CIRCLE_debug = CIRCLE_LOG_WARN;
-                    DCOPY_debug_level = DCOPY_LOG_WARN;
+                    bayer_debug_level = BAYER_LOG_WARN;
 
                     if(DCOPY_global_rank == 0) {
-                        LOG(DCOPY_LOG_INFO, "Debug level set to: warnings");
+                        BAYER_LOG(BAYER_LOG_INFO, "Debug level set to: warnings");
                     }
 
                 }
                 else if(strncmp(optarg, "info", 4) == 0) {
                     CIRCLE_debug = CIRCLE_LOG_WARN; /* we back off a level on CIRCLE verbosity */
-                    DCOPY_debug_level = DCOPY_LOG_INFO;
+                    bayer_debug_level = BAYER_LOG_INFO;
 
                     if(DCOPY_global_rank == 0) {
-                        LOG(DCOPY_LOG_INFO, "Debug level set to: info");
+                        BAYER_LOG(BAYER_LOG_INFO, "Debug level set to: info");
                     }
 
                 }
                 else if(strncmp(optarg, "dbg", 3) == 0) {
                     CIRCLE_debug = CIRCLE_LOG_DBG;
-                    DCOPY_debug_level = DCOPY_LOG_DBG;
+                    bayer_debug_level = BAYER_LOG_DBG;
 
                     if(DCOPY_global_rank == 0) {
-                        LOG(DCOPY_LOG_INFO, "Debug level set to: debug");
+                        BAYER_LOG(BAYER_LOG_INFO, "Debug level set to: debug");
                     }
 
                 }
                 else {
                     if(DCOPY_global_rank == 0) {
-                        LOG(DCOPY_LOG_INFO, "Debug level `%s' not recognized. " \
+                        BAYER_LOG(BAYER_LOG_INFO, "Debug level `%s' not recognized. " \
                             "Defaulting to `info'.", optarg);
                     }
                 }
@@ -377,7 +376,7 @@ int main(int argc, \
                 DCOPY_user_opts.force = true;
 
                 if(DCOPY_global_rank == 0) {
-                    LOG(DCOPY_LOG_INFO, "Deleting destination on errors.");
+                    BAYER_LOG(BAYER_LOG_INFO, "Deleting destination on errors.");
                 }
 
                 break;
@@ -395,7 +394,7 @@ int main(int argc, \
                 DCOPY_user_opts.preserve = true;
 
                 if(DCOPY_global_rank == 0) {
-                    LOG(DCOPY_LOG_INFO, "Preserving file attributes.");
+                    BAYER_LOG(BAYER_LOG_INFO, "Preserving file attributes.");
                 }
 
                 break;
@@ -404,7 +403,7 @@ int main(int argc, \
                 DCOPY_user_opts.reliable_filesystem = false;
 
                 if(DCOPY_global_rank == 0) {
-                    LOG(DCOPY_LOG_INFO, "Unreliable filesystem specified. " \
+                    BAYER_LOG(BAYER_LOG_INFO, "Unreliable filesystem specified. " \
                         "Retry mode enabled.");
                 }
 
@@ -414,7 +413,7 @@ int main(int argc, \
                 DCOPY_user_opts.synchronous = true;
 
                 if(DCOPY_global_rank == 0) {
-                    LOG(DCOPY_LOG_INFO, "Using synchronous read/write (O_DIRECT)");
+                    BAYER_LOG(BAYER_LOG_INFO, "Using synchronous read/write (O_DIRECT)");
                 }
 
                 break;
@@ -500,7 +499,7 @@ int main(int argc, \
 
     /* force updates to disk */
     if (DCOPY_global_rank == 0) {
-        LOG(DCOPY_LOG_INFO, "Syncing updates to disk.");
+        BAYER_LOG(BAYER_LOG_INFO, "Syncing updates to disk.");
     }
     sync();
 
@@ -516,6 +515,9 @@ int main(int argc, \
 
     /* Print the results to the user. */
     DCOPY_epilogue();
+
+    bayer_finalize();
+    MPI_Finalize();
 
     DCOPY_exit(EXIT_SUCCESS);
 }

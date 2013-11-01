@@ -12,9 +12,6 @@
 #include <sys/time.h>
 #include <fcntl.h>
 
-/** The loglevel that this instance of dcopy will output. */
-DCOPY_loglevel DCOPY_debug_level;
-
 /** Where we should keep statistics related to this file copy. */
 DCOPY_statistics_t DCOPY_statistics;
 
@@ -24,9 +21,6 @@ DCOPY_options_t DCOPY_user_opts;
 /** Cache most recent open file descriptor to avoid opening / closing the same file */
 DCOPY_file_cache_t DCOPY_src_cache;
 DCOPY_file_cache_t DCOPY_dst_cache;
-
-/** Where debug output should go. */
-FILE* DCOPY_debug_stream;
 
 /** What rank the current process is. */
 int DCOPY_global_rank;
@@ -45,14 +39,14 @@ void DCOPY_retry_failed_operation(DCOPY_operation_code_t target, \
     char* new_op;
 
     if(DCOPY_user_opts.reliable_filesystem) {
-        LOG(DCOPY_LOG_ERR, "Not retrying failed operation. " \
+        BAYER_LOG(BAYER_LOG_ERR, "Not retrying failed operation. " \
             "Reliable filesystem is specified. (op=%d chunk=%ld src=%s dst=%s)",
             target, op->chunk, op->operand, op->dest_full_path);
 
         DCOPY_abort(EXIT_FAILURE);
     }
     else {
-        LOG(DCOPY_LOG_INFO, "Attempting to retry operation.");
+        BAYER_LOG(BAYER_LOG_INFO, "Attempting to retry operation.");
 
         new_op = DCOPY_encode_operation(target, op->chunk, op->operand, \
                                         op->source_base_offset, \
@@ -97,7 +91,7 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
     /* snprintf returns number of bytes written excluding terminating NUL,
      * so if we're equal, we'd write one byte too many */
     if(written >= remaining) {
-        LOG(DCOPY_LOG_ERR, \
+        BAYER_LOG(BAYER_LOG_ERR, \
             "Exceeded libcircle message size due to large file path. " \
             "This is a known bug in dcp that we intend to fix. Sorry!");
         DCOPY_abort(EXIT_FAILURE);
@@ -116,7 +110,7 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
         /* snprintf returns number of bytes written excluding terminating NUL,
          * so if we're equal, we'd write one byte too many */
         if(written >= remaining) {
-            LOG(DCOPY_LOG_ERR, \
+            BAYER_LOG(BAYER_LOG_ERR, \
                 "Exceeded libcircle message size due to large file path. " \
                 "This is a known bug in dcp that we intend to fix. Sorry!");
             DCOPY_abort(EXIT_FAILURE);
@@ -139,22 +133,22 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
     DCOPY_operation_t* ret = (DCOPY_operation_t*) malloc(sizeof(DCOPY_operation_t));
 
     if(sscanf(strtok(op, ":"), "%" SCNd64, &(ret->file_size)) != 1) {
-        LOG(DCOPY_LOG_ERR, "Could not decode file size attribute");
+        BAYER_LOG(BAYER_LOG_ERR, "Could not decode file size attribute");
         DCOPY_abort(EXIT_FAILURE);
     }
 
     if(sscanf(strtok(NULL, ":"), "%" SCNd64, &(ret->chunk)) != 1) {
-        LOG(DCOPY_LOG_ERR, "Could not decode chunk index attribute");
+        BAYER_LOG(BAYER_LOG_ERR, "Could not decode chunk index attribute");
         DCOPY_abort(EXIT_FAILURE);
     }
 
     if(sscanf(strtok(NULL, ":"), "%" SCNu16, &(ret->source_base_offset)) != 1) {
-        LOG(DCOPY_LOG_ERR, "Could not decode source base offset attribute");
+        BAYER_LOG(BAYER_LOG_ERR, "Could not decode source base offset attribute");
         DCOPY_abort(EXIT_FAILURE);
     }
 
     if(sscanf(strtok(NULL, ":"), "%d", (int*) &(ret->code)) != 1) {
-        LOG(DCOPY_LOG_ERR, "Could not decode stage code attribute");
+        BAYER_LOG(BAYER_LOG_ERR, "Could not decode stage code attribute");
         DCOPY_abort(EXIT_FAILURE);
     }
 
@@ -162,7 +156,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
     int op_len;
     char* str = strtok(NULL, ":");
     if(sscanf(str, "%d", &op_len) != 1) {
-        LOG(DCOPY_LOG_ERR, "Could not decode operand string length");
+        BAYER_LOG(BAYER_LOG_ERR, "Could not decode operand string length");
         DCOPY_abort(EXIT_FAILURE);
     }
 
@@ -188,7 +182,7 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
         int dest_len;
         str = strtok(str, ":");
         if(sscanf(str, "%d", &dest_len) != 1) {
-            LOG(DCOPY_LOG_ERR, "Could not decode destination base appendix string length");
+            BAYER_LOG(BAYER_LOG_ERR, "Could not decode destination base appendix string length");
             DCOPY_abort(EXIT_FAILURE);
         }
 
@@ -229,14 +223,14 @@ DCOPY_operation_t* DCOPY_decode_operation(char* op)
 
     /* fail if we would have overwritten the buffer */
     if(written >= sizeof(dest_path_recursive)) {
-        LOG(DCOPY_LOG_ERR, "Destination path buffer too small");
+        BAYER_LOG(BAYER_LOG_ERR, "Destination path buffer too small");
         DCOPY_abort(EXIT_FAILURE);
     }
 
     /* record destination path in operation descriptor */
     ret->dest_full_path = BAYER_STRDUP(dest_path_recursive);
     if(ret->dest_full_path == NULL) {
-        LOG(DCOPY_LOG_ERR, "Failed to allocate full destination path");
+        BAYER_LOG(BAYER_LOG_ERR, "Failed to allocate full destination path");
         DCOPY_abort(EXIT_FAILURE);
     }
 
@@ -362,7 +356,7 @@ void DCOPY_copy_xattrs(
             }
             else {
                 /* this is a real error */
-                LOG(DCOPY_LOG_ERR, "Failed to get list of extended attributes on %s llistxattr() errno=%d %s",
+                BAYER_LOG(BAYER_LOG_ERR, "Failed to get list of extended attributes on %s llistxattr() errno=%d %s",
                     src_path, errno, strerror(errno)
                    );
                 break;
@@ -422,7 +416,7 @@ void DCOPY_copy_xattrs(
                     }
                     else {
                         /* this is a real error */
-                        LOG(DCOPY_LOG_ERR, "Failed to get value for name=%s on %s llistxattr() errno=%d %s",
+                        BAYER_LOG(BAYER_LOG_ERR, "Failed to get value for name=%s on %s llistxattr() errno=%d %s",
                             name, src_path, errno, strerror(errno)
                            );
                         break;
@@ -454,7 +448,7 @@ void DCOPY_copy_xattrs(
                 int setrc = lsetxattr(dest_path, name, val, val_size, 0);
 
                 if(setrc != 0) {
-                    LOG(DCOPY_LOG_ERR, "Failed to set value for name=%s on %s llistxattr() errno=%d %s",
+                    BAYER_LOG(BAYER_LOG_ERR, "Failed to set value for name=%s on %s llistxattr() errno=%d %s",
                         name, dest_path, errno, strerror(errno)
                        );
                 }
@@ -488,7 +482,7 @@ void DCOPY_copy_ownership(
 {
     /* note that we use lchown to change ownership of link itself, it path happens to be a link */
     if(lchown(dest_path, statbuf->st_uid, statbuf->st_gid) != 0) {
-        LOG(DCOPY_LOG_ERR, "Failed to change ownership on %s lchown() errno=%d %s",
+        BAYER_LOG(BAYER_LOG_ERR, "Failed to change ownership on %s lchown() errno=%d %s",
             dest_path, errno, strerror(errno)
            );
     }
@@ -504,7 +498,7 @@ void DCOPY_copy_permissions(
     /* change mode */
     if(! S_ISLNK(statbuf->st_mode)) {
         if(chmod(dest_path, statbuf->st_mode) != 0) {
-            LOG(DCOPY_LOG_ERR, "Failed to change permissions on %s chmod() errno=%d %s",
+            BAYER_LOG(BAYER_LOG_ERR, "Failed to change permissions on %s chmod() errno=%d %s",
                 dest_path, errno, strerror(errno)
                );
         }
@@ -526,7 +520,7 @@ void DCOPY_copy_timestamps(
         times.modtime = statbuf->st_mtime;
 
         if(utime(dest_path, &times) != 0) {
-            LOG(DCOPY_LOG_ERR, "Failed to change timestamps on %s utime() errno=%d %s",
+            BAYER_LOG(BAYER_LOG_ERR, "Failed to change timestamps on %s utime() errno=%d %s",
                 dest_path, errno, strerror(errno)
                );
         }
@@ -539,7 +533,7 @@ void DCOPY_copy_timestamps(
         tv[1].tv_usec = 0;
 
         if(lutimes(dest_path, tv) != 0) {
-            LOG(DCOPY_LOG_ERR, "Failed to change timestamps on %s utime() errno=%d %s",
+            BAYER_LOG(BAYER_LOG_ERR, "Failed to change timestamps on %s utime() errno=%d %s",
                 dest_path, errno, strerror(errno)
                );
         }
