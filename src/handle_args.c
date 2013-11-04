@@ -24,89 +24,9 @@
 /** Where we should store options specified by the user. */
 DCOPY_options_t DCOPY_user_opts;
 
-typedef struct param_file {
-    char* orig;                /* original path as specified by user */
-    char* path;                /* reduced path, but still includes symlinks */
-    int   path_stat_valid;     /* flag to indicate whether path_stat is valid */
-    struct stat64 path_stat;   /* stat of path */
-    char* target;              /* fully resolved path, no more symlinks */
-    int   target_stat_valid;   /* flag to indicate whether target_stat is valid */
-    struct stat64 target_stat; /* stat of target path */
-} param_file_t;
-
-static param_file_t  dest_param;
-static param_file_t* src_params;
 static int num_src_params;
-
-/* initialize fields in param */
-static void DCOPY_param_init(param_file_t* param)
-{
-    /* initialize all fields */
-    if(param != NULL) {
-        param->orig = NULL;
-        param->path = NULL;
-        param->path_stat_valid = 0;
-        param->target = NULL;
-        param->target_stat_valid = 0;
-    }
-
-    return;
-}
-
-/* set fields in param according to path */
-static void DCOPY_param_set(const char* path, param_file_t* param)
-{
-    /* initialize all fields */
-    DCOPY_param_init(param);
-
-    if(path != NULL) {
-        /* make a copy of original path */
-        param->orig = BAYER_STRDUP(path);
-
-        /* get absolute path and remove ".", "..", consecutive "/",
-         * and trailing "/" characters */
-        param->path = bayer_path_strdup_abs_reduce_str(path);
-
-        /* get stat info for simplified path */
-        if(lstat64(param->path, &param->path_stat) == 0) {
-            param->path_stat_valid = 1;
-        }
-
-        /* TODO: we use realpath below, which is nice since it takes out
-         * ".", "..", symlinks, and adds the absolute path, however, it
-         * fails if the file/directory does not already exist, which is
-         * often the case for dest path. */
-
-        /* resolve any symlinks */
-        char target[PATH_MAX];
-        if(realpath(path, target) != NULL) {
-            /* make a copy of resolved name */
-            param->target = BAYER_STRDUP(target);
-
-            /* get stat info for resolved path */
-            if(lstat64(param->target, &param->target_stat) == 0) {
-                param->target_stat_valid = 1;
-            }
-        }
-    }
-
-    return;
-}
-
-/* free memory associated with param */
-static void DCOPY_param_free(param_file_t* param)
-{
-    if(param != NULL) {
-        /* free all mememory */
-        bayer_free(&param->orig);
-        bayer_free(&param->path);
-        bayer_free(&param->target);
-
-        /* initialize all fields */
-        DCOPY_param_init(param);
-    }
-    return;
-}
+static bayer_param_path* src_params;
+static bayer_param_path  dest_param;
 
 /**
  * Determine if the destination path is a file or directory.
@@ -211,7 +131,7 @@ static void DCOPY_parse_dest_path(char* path)
 
     /* standardize destination path */
     if(DCOPY_global_rank == 0) {
-        DCOPY_param_set(path, &dest_param);
+        bayer_param_path_set(path, &dest_param);
         strncpy(dest_path, dest_param.path, sizeof(dest_path));
     }
 
@@ -237,17 +157,15 @@ static void DCOPY_parse_src_paths(char** argv, \
     /* only rank 0 resolves the path(s) */
     if(DCOPY_global_rank == 0) {
         /* allocate space to record info about each source */
-        if(num_src_params > 0) {
-            size_t src_params_bytes = (size_t)(num_src_params) * sizeof(param_file_t);
-            src_params = (param_file_t*) BAYER_MALLOC(src_params_bytes);
-        }
+        size_t src_params_bytes = ((size_t) num_src_params) * sizeof(bayer_param_path);
+        src_params = (bayer_param_path*) BAYER_MALLOC(src_params_bytes);
 
         /* record standardized paths and stat info for each source. */
         int opt_index;
         for(opt_index = optind_local; opt_index < last_arg_index; opt_index++) {
             char* path = argv[opt_index];
             int idx = opt_index - optind_local;
-            DCOPY_param_set(path, &src_params[idx]);
+            bayer_param_path_set(path, &src_params[idx]);
         }
     }
 
@@ -462,12 +380,12 @@ void DCOPY_free_path_args()
     /* only rank 0 allocated memory */
     if(DCOPY_global_rank == 0) {
         /* free memory associated with destination path */
-        DCOPY_param_free(&dest_param);
+        bayer_param_path_free(&dest_param);
 
         /* free memory associated with source paths */
         int i;
         for(i = 0; i < num_src_params; i++) {
-            DCOPY_param_free(&src_params[i]);
+            bayer_param_path_free(&src_params[i]);
         }
         num_src_params = 0;
         bayer_free(&src_params);
