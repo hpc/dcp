@@ -45,7 +45,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <utime.h>
+
+#if DCOPY_USE_XATTRS
 #include <attr/xattr.h>
+#endif
 
 /* default mode to create new files or directories */
 #define DCOPY_DEF_PERMS_FILE (S_IRUSR | S_IWUSR)

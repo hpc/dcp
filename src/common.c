@@ -325,6 +325,7 @@ void DCOPY_copy_xattrs(
     const struct stat64* statbuf,
     const char* dest_path)
 {
+#if DCOPY_USE_XATTRS
     char* src_path = op->operand;
 
     /* copy extended attributes */
@@ -474,6 +475,7 @@ void DCOPY_copy_xattrs(
     }
 
     return;
+#endif /* DCOPY_USE_XATTR */
 }
 
 void DCOPY_copy_ownership(
