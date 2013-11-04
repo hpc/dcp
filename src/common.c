@@ -53,7 +53,7 @@ void DCOPY_retry_failed_operation(DCOPY_operation_code_t target, \
                                         op->dest_base_appendix, op->file_size);
 
         handle->enqueue(new_op);
-        free(new_op);
+        bayer_free(&new_op);
     }
 
     return;
@@ -77,7 +77,7 @@ char* DCOPY_encode_operation(DCOPY_operation_code_t code, \
      */
 
     /* allocate memory to encode op */
-    char* op = (char*) malloc(sizeof(char) * CIRCLE_MAX_STRING_LEN);
+    char* op = (char*) BAYER_MALLOC(CIRCLE_MAX_STRING_LEN);
 
     /* set pointer to next byte to write to and record number of bytes left */
     char* ptr = op;
@@ -247,8 +247,8 @@ void DCOPY_opt_free(DCOPY_operation_t** optptr)
 
         if(opt != NULL) {
             /* free memory and then the object itself */
-            free(opt->dest_full_path);
-            free(opt);
+            bayer_free(&opt->dest_full_path);
+            bayer_free(&opt);
         }
 
         /* set caller's pointer to NULL to catch bugs */
@@ -483,10 +483,18 @@ void DCOPY_copy_ownership(
     const char* dest_path)
 {
     /* note that we use lchown to change ownership of link itself, it path happens to be a link */
-    if(lchown(dest_path, statbuf->st_uid, statbuf->st_gid) != 0) {
-        BAYER_LOG(BAYER_LOG_ERR, "Failed to change ownership on %s lchown() errno=%d %s",
-            dest_path, errno, strerror(errno)
-           );
+    if(bayer_lchown(dest_path, statbuf->st_uid, statbuf->st_gid) != 0) {
+        /* TODO: are there other EPERM conditions we do want to report? */
+
+        /* since the user running dcp may not be the owner of the
+         * file, we could hit an EPERM error here, and the file
+         * will be left with the effective uid and gid of the dcp
+         * process, don't bother reporting an error for that case */
+        if (errno != EPERM) {
+            BAYER_LOG(BAYER_LOG_ERR, "Failed to change ownership on %s lchown() errno=%d %s",
+                dest_path, errno, strerror(errno)
+               );
+        }
     }
 
     return;
@@ -499,7 +507,7 @@ void DCOPY_copy_permissions(
 {
     /* change mode */
     if(! S_ISLNK(statbuf->st_mode)) {
-        if(chmod(dest_path, statbuf->st_mode) != 0) {
+        if(bayer_chmod(dest_path, statbuf->st_mode) != 0) {
             BAYER_LOG(BAYER_LOG_ERR, "Failed to change permissions on %s chmod() errno=%d %s",
                 dest_path, errno, strerror(errno)
                );
