@@ -121,57 +121,6 @@ void DCOPY_enqueue_work_objects(CIRCLE_handle* handle)
     }
 }
 
-/**
- * Convert the destination to an absolute path and check sanity.
- */
-static void DCOPY_parse_dest_path(char* path)
-{
-    /* identify destination path */
-    char dest_path[PATH_MAX];
-
-    /* standardize destination path */
-    if(DCOPY_global_rank == 0) {
-        bayer_param_path_set(path, &dest_param);
-        strncpy(dest_path, dest_param.path, sizeof(dest_path));
-    }
-
-    /* Copy the destination path to user opts structure on each rank. */
-    bayer_bcast_strdup(
-        dest_path, &DCOPY_user_opts.dest_path, 0, MPI_COMM_WORLD
-    );
-
-    return;
-}
-
-/**
- * Grab the source paths.
- */
-static void DCOPY_parse_src_paths(char** argv, \
-                                  int last_arg_index, \
-                                  int optind_local)
-{
-    /* allocate memory to store pointers to source path info */
-    src_params = NULL;
-    num_src_params = last_arg_index - optind_local;
-
-    /* only rank 0 resolves the path(s) */
-    if(DCOPY_global_rank == 0) {
-        /* allocate space to record info about each source */
-        size_t src_params_bytes = ((size_t) num_src_params) * sizeof(bayer_param_path);
-        src_params = (bayer_param_path*) BAYER_MALLOC(src_params_bytes);
-
-        /* record standardized paths and stat info for each source. */
-        int opt_index;
-        for(opt_index = optind_local; opt_index < last_arg_index; opt_index++) {
-            char* path = argv[opt_index];
-            int idx = opt_index - optind_local;
-            bayer_param_path_set(path, &src_params[idx]);
-        }
-    }
-
-    return;
-}
-
 /* check that source and destination paths are valid */
 static void DCOPY_check_paths()
 {
@@ -351,9 +300,12 @@ void DCOPY_parse_path_args(char** argv, \
                            int optind_local, \
                            int argc)
 {
+    /* compute number of paths and index of last argument */
     int num_args = argc - optind_local;
     int last_arg_index = num_args + optind_local - 1;
 
+    /* we need to have at least two paths,
+     * one or more sources and one destination */
     if(argv == NULL || num_args < 2) {
         if(DCOPY_global_rank == 0) {
             DCOPY_print_usage(argv);
@@ -364,11 +316,28 @@ void DCOPY_parse_path_args(char** argv, \
         DCOPY_exit(EXIT_FAILURE);
     }
 
-    /* Grab the destination path. */
-    DCOPY_parse_dest_path(argv[last_arg_index]);
+    /* determine number of source paths */
+    src_params = NULL;
+    num_src_params = last_arg_index - optind_local;
 
-    /* Grab the source paths. */
-    DCOPY_parse_src_paths(argv, last_arg_index, optind_local);
+    /* allocate space to record info about each source */
+    size_t src_params_bytes = ((size_t) num_src_params) * sizeof(bayer_param_path);
+    src_params = (bayer_param_path*) BAYER_MALLOC(src_params_bytes);
+
+    /* record standardized paths and stat info for each source */
+    int opt_index;
+    for(opt_index = optind_local; opt_index < last_arg_index; opt_index++) {
+        char* path = argv[opt_index];
+        int idx = opt_index - optind_local;
+        bayer_param_path_set(path, &src_params[idx]);
+    }
+
+    /* standardize destination path */
+    const char* dstpath = argv[last_arg_index];
+    bayer_param_path_set(dstpath, &dest_param);
+
+    /* copy the destination path to user opts structure */
+    DCOPY_user_opts.dest_path = BAYER_STRDUP(dest_param.path);
 
     /* check that source and destinations are ok */
     DCOPY_check_paths();
@@ -377,19 +346,16 @@ void DCOPY_parse_path_args(char** argv, \
 /* frees resources allocated in call to parse_path_args() */
 void DCOPY_free_path_args()
 {
-    /* only rank 0 allocated memory */
-    if(DCOPY_global_rank == 0) {
-        /* free memory associated with destination path */
-        bayer_param_path_free(&dest_param);
+    /* free memory associated with destination path */
+    bayer_param_path_free(&dest_param);
 
-        /* free memory associated with source paths */
-        int i;
-        for(i = 0; i < num_src_params; i++) {
-            bayer_param_path_free(&src_params[i]);
-        }
-        num_src_params = 0;
-        bayer_free(&src_params);
+    /* free memory associated with source paths */
+    int i;
+    for(i = 0; i < num_src_params; i++) {
+        bayer_param_path_free(&src_params[i]);
     }
+    num_src_params = 0;
+    bayer_free(&src_params);
 }
 
 /* EOF */
