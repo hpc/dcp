@@ -521,6 +521,57 @@ void DCOPY_copy_timestamps(
     const struct stat64* statbuf,
     const char* dest_path)
 {
+    /* read atime, mtime, and ctime second values from stat */
+    uint64_t atime = (uint64_t) statbuf->st_atime;
+    uint64_t mtime = (uint64_t) statbuf->st_mtime;
+    uint64_t ctime = (uint64_t) statbuf->st_ctime;
+
+    /* now read nanoseconds if we can */
+    uint64_t atime_nsec, mtime_nsec, ctime_nsec;
+#if HAVE_STRUCT_STAT_ST_MTIMESPEC_TV_NSEC
+    atime_nsec = (uint64_t) statbuf->st_atimespec.tv_nsec;
+    ctime_nsec = (uint64_t) statbuf->st_ctimespec.tv_nsec;
+    mtime_nsec = (uint64_t) statbuf->st_mtimespec.tv_nsec;
+#elif HAVE_STRUCT_STAT_ST_MTIM_TV_NSEC
+    atime_nsec = (uint64_t) statbuf->st_atim.tv_nsec;
+    ctime_nsec = (uint64_t) statbuf->st_ctim.tv_nsec;
+    mtime_nsec = (uint64_t) statbuf->st_mtim.tv_nsec;
+#elif HAVE_STRUCT_STAT_ST_MTIME_N
+    atime_nsec = (uint64_t) statbuf->st_atime_n;
+    ctime_nsec = (uint64_t) statbuf->st_ctime_n;
+    mtime_nsec = (uint64_t) statbuf->st_mtime_n;
+#elif HAVE_STRUCT_STAT_ST_UMTIME
+    atime_nsec = (uint64_t) statbuf->st_uatime * 1000;
+    ctime_nsec = (uint64_t) statbuf->st_uctime * 1000;
+    mtime_nsec = (uint64_t) statbuf->st_umtime * 1000;
+#elif HAVE_STRUCT_STAT_ST_MTIME_USEC
+    atime_nsec = (uint64_t) statbuf->st_atime_usec * 1000;
+    ctime_nsec = (uint64_t) statbuf->st_ctime_usec * 1000;
+    mtime_nsec = (uint64_t) statbuf->st_mtime_usec * 1000;
+#else
+    atime_nsec = 0;
+    ctime_nsec = 0;
+    mtime_nsec = 0;
+#endif
+
+    /* fill in time structures */
+    struct timespec times[2];
+    times[0].tv_sec  = (time_t) atime;
+    times[0].tv_nsec = (long)   atime_nsec;
+    times[1].tv_sec  = (time_t) mtime;
+    times[1].tv_nsec = (long)   mtime_nsec;
+
+    /* set times with nanosecond precision using utimensat,
+     * assume path is relative to current working directory,
+     * if it's not absolute, and set times on link (not target file)
+     * if dest_path refers to a link */
+    if(utimensat(AT_FDCWD, dest_path, times, AT_SYMLINK_NOFOLLOW) != 0) {
+        BAYER_LOG(BAYER_LOG_ERR, "Failed to change timestamps on %s utime() errno=%d %s",
+            dest_path, errno, strerror(errno)
+           );
+    }
+
+#if 0
     /* TODO: see stat-time.h and get_stat_atime/mtime/ctime to read sub-second times,
      * and use utimensat to set sub-second times */
     /* as last step, change timestamps */
@@ -528,7 +579,6 @@ void DCOPY_copy_timestamps(
         struct utimbuf times;
         times.actime  = statbuf->st_atime;
         times.modtime = statbuf->st_mtime;
-
         if(utime(dest_path, &times) != 0) {
             BAYER_LOG(BAYER_LOG_ERR, "Failed to change timestamps on %s utime() errno=%d %s",
                 dest_path, errno, strerror(errno)
@@ -541,13 +591,13 @@ void DCOPY_copy_timestamps(
         tv[0].tv_usec = 0;
         tv[1].tv_sec  = statbuf->st_mtime;
         tv[1].tv_usec = 0;
-
         if(lutimes(dest_path, tv) != 0) {
             BAYER_LOG(BAYER_LOG_ERR, "Failed to change timestamps on %s utime() errno=%d %s",
                 dest_path, errno, strerror(errno)
                );
         }
     }
+#endif
 
     return;
 }
