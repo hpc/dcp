@@ -28,7 +28,7 @@ static int DCOPY_perform_compare(DCOPY_operation_t* op,
                           off_t offset)
 {
     /* seek to offset in source file */
-    if(bayer_lseek(op->operand, in_fd, offset, SEEK_SET) < 0) {
+    if(bayer_lseek(op->operand, in_fd, offset, SEEK_SET) == (off_t)-1) {
         BAYER_LOG(BAYER_LOG_ERR, "Couldn't seek in source path `%s' errno=%d %s",
             op->operand, errno, strerror(errno));
         /* Handle operation requeue in parent function. */
@@ -36,7 +36,7 @@ static int DCOPY_perform_compare(DCOPY_operation_t* op,
     }
 
     /* seek to offset in destination file */
-    if(bayer_lseek(op->dest_full_path, out_fd, offset, SEEK_SET) < 0) {
+    if(bayer_lseek(op->dest_full_path, out_fd, offset, SEEK_SET) == (off_t)-1) {
         BAYER_LOG(BAYER_LOG_ERR, "Couldn't seek in destination path `%s' errno=%d %s",
             op->dest_full_path, errno, strerror(errno));
         return -1;
