@@ -320,18 +320,19 @@ int DCOPY_close_file(DCOPY_file_cache_t* cache)
     return rc;
 }
 
+/* copy all extended attributes from op->operand to dest_path */
 void DCOPY_copy_xattrs(
     DCOPY_operation_t* op,
     const struct stat64* statbuf,
     const char* dest_path)
 {
 #if DCOPY_USE_XATTRS
+    /* get source file name */
     char* src_path = op->operand;
 
-    /* copy extended attributes */
-    /* allocate space for list_size names */
-    size_t list_bufsize = 0;
-    char* list = NULL;
+    /* start with a reasonable buffer, we'll allocate more as needed */
+    size_t list_bufsize = 1204;
+    char* list = (char*) BAYER_MALLOC(list_bufsize);
 
     /* get list, if list_size == ERANGE, try again */
     ssize_t list_size;
@@ -345,10 +346,7 @@ void DCOPY_copy_xattrs(
             if(errno == ERANGE) {
                 /* buffer is too small, free our current buffer
                  * and call it again with size==0 to get new size */
-                if(list != NULL) {
-                    free(list);
-                    list = NULL;
-                }
+                bayer_free(&list);
                 list_bufsize = 0;
             }
             else if(errno == ENOTSUP) {
@@ -368,14 +366,7 @@ void DCOPY_copy_xattrs(
                 /* called llistxattr with size==0 and got back positive
                  * number indicating size of buffer we need to allocate */
                 list_bufsize = (size_t) list_size;
-
-                if(list_bufsize > 0) {
-                    list = (char*) malloc(list_bufsize);
-
-                    if(list == NULL) {
-                        /* ERROR */
-                    }
-                }
+                list = (char*) BAYER_MALLOC(list_bufsize);
             }
             else {
                 /* got our list, it's size is in list_size, which may be 0 */
@@ -389,9 +380,10 @@ void DCOPY_copy_xattrs(
         char* name = list;
 
         while(name < list + list_size) {
-            /* allocate a string to hold value */
-            size_t val_bufsize = 0;
-            void* val = NULL;
+            /* start with a reasonable buffer,
+             * allocate something bigger as needed */
+            size_t val_bufsize = 1024;
+            void* val = (void*) BAYER_MALLOC(val_bufsize);
 
             /* lookup value for name */
             ssize_t val_size;
@@ -404,10 +396,7 @@ void DCOPY_copy_xattrs(
                     if(errno == ERANGE) {
                         /* buffer is too small, free our current buffer
                          * and call it again with size==0 to get new size */
-                        if(val != NULL) {
-                            free(val);
-                            val = NULL;
-                        }
+                        bayer_free(&val);
                         val_bufsize = 0;
                     }
                     else if(errno == ENOATTR) {
@@ -428,14 +417,7 @@ void DCOPY_copy_xattrs(
                         /* called lgetxattr with size==0 and got back positive
                          * number indicating size of buffer we need to allocate */
                         val_bufsize = (size_t) val_size;
-
-                        if(val_bufsize > 0) {
-                            val = malloc(val_bufsize);
-
-                            if(val == NULL) {
-                                /* ERROR */
-                            }
-                        }
+                        val = (void*) BAYER_MALLOC(val_bufsize);
                     }
                     else {
                         /* got our value, it's size is in val_size, which may be 0 */
@@ -456,10 +438,7 @@ void DCOPY_copy_xattrs(
             }
 
             /* free value string */
-            if(val != NULL) {
-                free(val);
-                val = NULL;
-            }
+            bayer_free(&val);
             val_bufsize = 0;
 
             /* jump to next name */
@@ -469,10 +448,8 @@ void DCOPY_copy_xattrs(
     }
 
     /* free space allocated for list */
-    if(list != NULL) {
-        free(list);
-        list = NULL;
-    }
+    bayer_free(&list);
+    list_bufsize = 0;
 
     return;
 #endif /* DCOPY_USE_XATTR */
