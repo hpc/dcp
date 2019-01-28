@@ -57,7 +57,7 @@ Print version information and exit.
 ### Known bugs
 When the force option is specified and truncation fails, the copy and truncation will be stuck in an infinite loop until the truncation operation returns with success.
 
-The maximum supported filename length for any file transfered is approximately 4068 characters. This may be less than the number of characters that your operating system supports.
+The maximum supported filename length for any file transferred is approximately 4068 characters. This may be less than the number of characters that your operating system supports.
 
 ### RPM Creation
 First, check the [![Build Status](https://travis-ci.org/hpc/dcp.png?branch=master)](https://travis-ci.org/hpc/dcp). If all tests are passing, create an rpm using the following instructions:
